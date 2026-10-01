@@ -163,6 +163,7 @@ const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toStri
 let view = 'tiles';
 try { view = localStorage.getItem(VIEW_KEY) || 'tiles' } catch(e){}
 const open = new Set();             // maszyny z rozwiniętą listą IP
+const openNotes = new Set();        // maszyny z rozwiniętą notatką
 let sort = { k: '', d: 1 };         // sortowanie tabeli
 const SORTERS = {
   name:     m => m.name || '',
@@ -235,6 +236,16 @@ const nameBlock = m => `<div class="flex items-center gap-1.5">
   ${tools(m.name)}
 </div>`;
 
+/* notatka: domyślnie jedna linia, po kliknięciu rozwijana */
+const noteHtml = (m, extra = '') => {
+  if (!m.note) return '';
+  const o = openNotes.has(m.id);
+  return `<button data-act="note" data-id="${m.id}" title="${o ? 'Zwiń' : 'Rozwiń'} notatkę" class="${extra} flex w-full items-start gap-1 text-left text-xs text-slate-500 hover:text-slate-700">
+    <span class="min-w-0 flex-1 ${o ? 'whitespace-pre-wrap break-words' : 'truncate'}">${esc(m.note)}</span>
+    <span class="shrink-0 text-[10px] text-slate-400">${o ? '▲' : '▼'}</span>
+  </button>`;
+};
+
 const actions = m => `<button data-act="edit" data-id="${m.id}" title="Edytuj" class="${ICON_BTN}">${svg(I.edit)}</button>
   <button data-act="del" data-id="${m.id}" title="Usuń" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>`;
 
@@ -246,7 +257,7 @@ function row(m, M, rev){
   return `<tr class="border-b border-slate-100 align-top hover:bg-slate-50">
     <td class="px-4 py-3"><div class="flex items-start gap-2">
       <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-5 w-5')}</span>
-      <div class="min-w-0">${nameBlock(m)}${m.note ? `<div class="mt-0.5 text-xs text-slate-500">${esc(m.note)}</div>` : ''}</div>
+      <div class="min-w-0">${nameBlock(m)}${noteHtml(m, 'mt-0.5 max-w-[260px]')}</div>
     </div></td>
     <td class="px-4 py-3 text-slate-600">${T(m)[0]}</td>
     <td class="px-4 py-3">${locBadge(m) || '<span class="text-slate-400">—</span>'}</td>
@@ -271,7 +282,7 @@ function card(m, M, rev){
     </div>
     ${ips ? `<div class="mt-3 flex flex-wrap items-center gap-1.5">${ips}</div>` : ''}
     ${deps ? `<div class="mt-3 flex flex-wrap gap-1">${deps}</div>` : ''}
-    ${m.note ? `<div class="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">${esc(m.note)}</div>` : ''}
+    ${m.note ? `<div class="mt-3 border-t border-slate-100 pt-3">${noteHtml(m)}</div>` : ''}
   </article>`;
 }
 
@@ -418,6 +429,7 @@ function handleClick(e){
   if (!b) return;
   const id = b.dataset.id, act = b.dataset.act;
   const m = db.find(x => x.id === id);
+  if (act === 'note') { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
   if (act === 'more') { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
   if (act === 'ping' || act === 'vnc') {
     const h = b.dataset.ip;
