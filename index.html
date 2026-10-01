@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rejestr maszyn</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } }
+</script>
+<style>
+  body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+</style>
+</head>
+<body class="min-h-screen bg-page text-slate-800">
+
+<div class="mx-auto max-w-6xl space-y-6 px-4 py-8">
+
+  <!-- Nagłówek -->
+  <header class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-800">Rejestr maszyn</h1>
+      <p id="count" class="mt-1 text-sm text-slate-500"></p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button id="add" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoAdd"></span>Dodaj</button>
+      <button id="view" class="hidden items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:inline-flex"></button>
+      <button id="exp" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoExp"></span>Eksport</button>
+      <button id="imp" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span>Import</button>
+      <input type="file" id="file" accept=".json,application/json" class="hidden">
+    </div>
+  </header>
+
+  <!-- Ostrzeżenie: brak dostępu do localStorage -->
+  <div id="warn" class="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    Ta strona nie ma dostępu do pamięci przeglądarki (localStorage), więc nie wczyta ani nie zapisze danych. Otwórz ją bezpośrednio w karcie (nie w ramce) pod stałym adresem albo użyj Importu JSON.
+  </div>
+
+  <!-- Filtry i liczniki -->
+  <section class="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex flex-wrap gap-2">
+      <input id="q" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…"
+        class="w-full min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <select id="loc" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-auto"></select>
+      <select id="typ" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-auto"></select>
+    </div>
+    <div id="stats" class="flex flex-wrap gap-2"></div>
+  </section>
+
+  <!-- Widok tabeli -->
+  <div id="tbl" class="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+    <table class="w-full min-w-[860px] text-left text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th data-sort="name" data-label="Nazwa" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Nazwa</th>
+          <th data-sort="type" data-label="Typ" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Typ</th>
+          <th data-sort="location" data-label="Lokalizacja" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Lokalizacja</th>
+          <th data-sort="ip" data-label="Adresy IP" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Adresy IP</th>
+          <th class="px-4 py-3 font-medium">Zależności</th>
+          <th class="px-4 py-3 text-right font-medium">Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <!-- Widok kafelków (domyślny) -->
+  <div id="cards" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+  <!-- Stan pusty -->
+  <div id="empty" class="hidden rounded-xl border border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500"></div>
+</div>
+
+<!-- Modal -->
+<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <form id="form" class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
+    <h2 id="mtitle" class="text-lg font-semibold text-slate-800"></h2>
+    <input type="hidden" id="fId">
+    <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="fName">Nazwa hosta *</label>
+      <input id="fName" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700" for="fType">Typ</label>
+        <select id="fType" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></select>
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700" for="fLoc">Lokalizacja</label>
+        <input id="fLoc" list="locList" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      </div>
+    </div>
+    <datalist id="locList"></datalist>
+    <div>
+      <div class="mb-1 flex items-center justify-between">
+        <span class="text-sm font-medium text-slate-700">Adresy IP</span>
+        <button type="button" id="addIp" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Dodaj IP</button>
+      </div>
+      <div id="ips" class="space-y-2"></div>
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="fDeps">Zależy od (Ctrl/Cmd = wiele)</label>
+      <select id="fDeps" multiple size="4" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></select>
+    </div>
+    <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="fNote">Notatka</label>
+      <textarea id="fNote" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
+    </div>
+    <div class="flex justify-end gap-2 pt-1">
+      <button type="button" id="cancel" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
+      <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zapisz</button>
+    </div>
+  </form>
+</div>
+
+<div id="toast" class="pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2 translate-y-2 rounded-lg bg-slate-800 px-4 py-2 text-sm text-white opacity-0 shadow-lg transition-all"></div>
+
+<script>
+/* ===== Stałe ===== */
+const KEY = 'machines_v1';          // klucz danych w localStorage
+const VIEW_KEY = 'view';            // klucz zapamiętanego widoku
+const SSH_USER = 'su-t';            // login do tunelu SSH
+const VNC_PORT = 5900;              // port VNC
+const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ===== Ikony (inline SVG, outline) ===== */
+const svg = (d, c = 'h-4 w-4') =>
+  `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const I = {
+  plus:  '<path d="M12 5v14M5 12h14"/>',
+  edit:  '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  down:  '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
+  up:    '<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',
+  grid:  '<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',
+  list:  '<path d="M4 6h16M4 12h16M4 18h16"/>',
+  pin:   '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  term:  '<path d="M5 8l4 4-4 4M12 17h7"/>'
+};
+
+/* Typy maszyn: [etykieta, ikona] */
+const TYPES = {
+  pc:      ['Komputer',        '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'],
+  printer: ['Drukarka',        '<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/>'],
+  scanner: ['Skaner',          '<path d="M3 12h18M5 7V5h2M17 5h2v2M5 17v2h2M17 19h2v-2"/>'],
+  camera:  ['Kamera',          '<path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>'],
+  rpi:     ['Raspberry Pi',    '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h2v2H8zM14 14h2M8 3v3M12 3v3M16 3v3"/>'],
+  bizerba: ['Bizerba',         '<path d="M5 20h14M12 20V8M6 8h12M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>'],
+  metal:   ['Detektor metalu', '<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'],
+  other:   ['Inne',            '<path d="M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8"/>']
+};
+const T = m => TYPES[m.type] || TYPES.other;
+
+/* ===== Stan ===== */
+let db = [];
+try { db = JSON.parse(localStorage.getItem(KEY)) || [] } catch(e){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch(e){ alert('Brak miejsca w pamięci przeglądarki!') } };
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+
+let view = 'tiles';
+try { view = localStorage.getItem(VIEW_KEY) || 'tiles' } catch(e){}
+const open = new Set();             // maszyny z rozwiniętą listą IP
+let sort = { k: '', d: 1 };         // sortowanie tabeli
+const SORTERS = {
+  name:     m => m.name || '',
+  type:     m => T(m)[0],
+  location: m => m.location || '',
+  ip: m => {
+    const ip = (m.ips || []).find(x => x.ip)?.ip || '';
+    return ip.split('.').map(n => /^\d+$/.test(n) ? n.padStart(3,'0') : n).join('.');
+  }
+};
+
+/* ===== Toast i kopiowanie ===== */
+let toastT;
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.remove('opacity-0','translate-y-2');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.add('opacity-0','translate-y-2'), 1800);
+}
+function copy(text){
+  const ok = () => toast('Skopiowano: ' + text);
+  const fb = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok() } catch(e){ toast('Nie udało się skopiować') }
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
+  else fb();
+}
+
+/* ===== Elementy widoku ===== */
+const MINI = 'inline-flex items-center rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-500 hover:bg-slate-50 hover:text-blue-700';
+const ICON_BTN = 'rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800';
+const BADGE = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
+
+/* przyciski ping + tunel VNC dla nazwy lub IP */
+const tools = host => `<span class="inline-flex shrink-0 items-center gap-1">
+  <button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ping -a -t ${esc(host)}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>
+  <button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ssh -L ${VNC_PORT}:localhost:${VNC_PORT} ${SSH_USER}@${esc(host)}" class="${MINI}">VNC</button>
+</span>`;
+
+function ipChips(m){
+  const all = (m.ips || []).filter(x => x.ip);
+  const isOpen = open.has(m.id);
+  const chips = (isOpen ? all : all.slice(0,1)).map(i =>
+    `<span class="inline-flex max-w-full items-center gap-1">
+      <button data-act="copyip" data-ip="${esc(i.ip)}" title="Kopiuj IP" class="inline-flex min-w-0 items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 hover:bg-slate-100">
+        <span class="font-mono text-xs text-blue-700">${esc(i.ip)}</span>
+        ${i.label ? `<span class="truncate text-[10px] text-slate-500">${esc(i.label)}</span>` : ''}
+      </button>${tools(i.ip)}
+    </span>`).join('');
+  const more = all.length > 1
+    ? `<button data-act="more" data-id="${m.id}" class="${BADGE} bg-blue-50 text-blue-700 hover:bg-blue-100">${isOpen ? 'zwiń' : '+' + (all.length - 1)}</button>` : '';
+  return chips + more;
+}
+
+const depBtn = (d, arrow, cls) =>
+  `<button data-act="jump" data-id="${d.id}" class="${BADGE} ${cls} hover:bg-slate-200"><span class="mr-1 text-slate-400">${arrow}</span>${esc(d.name)}</button>`;
+function depChips(m, M, rev){
+  const deps  = (m.deps || []).map(id => M.get(id)).filter(Boolean).map(d => depBtn(d, '←', 'bg-slate-100 text-slate-700')).join('');
+  const users = (rev[m.id] || []).map(d => depBtn(d, '→', 'bg-slate-50 text-slate-500')).join('');
+  return deps + users;
+}
+
+const nameBlock = m => `<div class="flex items-center gap-1.5">
+  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="min-w-0 break-all text-left font-semibold text-slate-800 hover:text-blue-600">${esc(m.name)}</button>
+  ${tools(m.name)}
+</div>`;
+
+const actions = m => `<button data-act="edit" data-id="${m.id}" title="Edytuj" class="${ICON_BTN}">${svg(I.edit)}</button>
+  <button data-act="del" data-id="${m.id}" title="Usuń" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>`;
+
+const locBadge = m => m.location
+  ? `<span class="${BADGE} bg-sky-50 text-sky-700">${svg(I.pin,'mr-1 h-3 w-3')}${esc(m.location)}</span>` : '';
+
+function row(m, M, rev){
+  const deps = depChips(m, M, rev), ips = ipChips(m);
+  return `<tr class="border-b border-slate-100 align-top hover:bg-slate-50">
+    <td class="px-4 py-3"><div class="flex items-start gap-2">
+      <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-5 w-5')}</span>
+      <div class="min-w-0">${nameBlock(m)}${m.note ? `<div class="mt-0.5 text-xs text-slate-500">${esc(m.note)}</div>` : ''}</div>
+    </div></td>
+    <td class="px-4 py-3 text-slate-600">${T(m)[0]}</td>
+    <td class="px-4 py-3">${locBadge(m) || '<span class="text-slate-400">—</span>'}</td>
+    <td class="px-4 py-3"><div class="flex flex-wrap items-center gap-1.5">${ips || '<span class="text-slate-400">—</span>'}</div></td>
+    <td class="px-4 py-3"><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">—</span>'}</div></td>
+    <td class="whitespace-nowrap px-4 py-3 text-right">${actions(m)}</td>
+  </tr>`;
+}
+
+function card(m, M, rev){
+  const deps = depChips(m, M, rev), ips = ipChips(m);
+  return `<article class="h-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <div class="flex items-start gap-3">
+      <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-6 w-6')}</span>
+      <div class="min-w-0 flex-1">
+        ${nameBlock(m)}
+        <div class="mt-1.5 flex flex-wrap gap-1.5">
+          <span class="${BADGE} bg-slate-100 text-slate-700">${T(m)[0]}</span>${locBadge(m)}
+        </div>
+      </div>
+      <div class="flex shrink-0">${actions(m)}</div>
+    </div>
+    ${ips ? `<div class="mt-3 flex flex-wrap items-center gap-1.5">${ips}</div>` : ''}
+    ${deps ? `<div class="mt-3 flex flex-wrap gap-1">${deps}</div>` : ''}
+    ${m.note ? `<div class="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-500">${esc(m.note)}</div>` : ''}
+  </article>`;
+}
+
+/* ===== Render ===== */
+function render(){
+  const M = new Map(db.map(m => [m.id, m]));
+  const rev = {};
+  db.forEach(m => (m.deps || []).forEach(id => (rev[id] ||= []).push(m)));
+
+  // filtry
+  const locs = [...new Set(db.map(m => m.location).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pl'));
+  const lv = $('loc').value, tv = $('typ').value;
+  $('loc').innerHTML = '<option value="">Wszystkie lokalizacje</option>' + locs.map(l => `<option>${esc(l)}</option>`).join('');
+  $('loc').value = locs.includes(lv) ? lv : '';
+  $('typ').innerHTML = '<option value="">Wszystkie typy</option>' +
+    Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+  $('typ').value = TYPES[tv] ? tv : '';
+  $('locList').innerHTML = locs.map(l => `<option value="${esc(l)}">`).join('');
+
+  const qs = $('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const lf = $('loc').value, tf = $('typ').value;
+
+  // liczniki typów (klikalne)
+  const cnt = {};
+  db.forEach(m => cnt[m.type] = (cnt[m.type] || 0) + 1);
+  const chip = on => 'rounded-full border px-3 py-1 text-xs font-medium transition ' +
+    (on ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50');
+  $('stats').innerHTML =
+    `<button data-type="" class="${chip(!tf)}">Wszystkie ${db.length}</button>` +
+    Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k,v]) =>
+      `<button data-type="${k}" class="${chip(tf === k)}">${v[0]} ${cnt[k]}</button>`).join('');
+
+  // widok: kafelki / tabela (na telefonie zawsze kafelki)
+  const tiles = view === 'tiles' || innerWidth < 768;
+  $('tbl').classList.toggle('hidden', tiles);
+  $('cards').classList.toggle('hidden', !tiles);
+  $('view').innerHTML = view === 'tiles' ? svg(I.list) + 'Tabela' : svg(I.grid) + 'Kafelki';
+  document.querySelectorAll('#tbl th[data-sort]').forEach(th => {
+    th.textContent = th.dataset.label + (sort.k === th.dataset.sort ? (sort.d > 0 ? ' ▲' : ' ▼') : '');
+  });
+
+  // wyszukiwanie
+  const H = new Map(db.map(m => [m.id, [
+    m.name, m.location, m.note, T(m)[0], m.type,
+    ...(m.ips || []).flatMap(i => [i.ip, i.label]),
+    ...(m.deps || []).map(id => M.get(id)?.name),
+    ...(rev[m.id] || []).map(x => x.name)
+  ].filter(Boolean).join(' ').toLowerCase()]));
+
+  const list = db
+    .filter(m => (!lf || m.location === lf) && (!tf || m.type === tf) && qs.every(t => H.get(m.id).includes(t)))
+    .sort((a,b) => {
+      if (sort.k) {
+        const f = SORTERS[sort.k], x = f(a), y = f(b);
+        if (x !== y) {
+          if (!x) return 1;
+          if (!y) return -1;
+          const c = x.localeCompare(y, 'pl', { numeric: true });
+          if (c) return c * sort.d;
+        }
+      }
+      return (a.location || '').localeCompare(b.location || '', 'pl') || a.name.localeCompare(b.name, 'pl', { numeric: true });
+    });
+
+  if (!list.length){
+    $('rows').innerHTML = ''; $('cards').innerHTML = '';
+    $('empty').classList.remove('hidden');
+    $('empty').textContent = db.length ? 'Brak wyników dla wybranych filtrów.' : 'Brak maszyn. Kliknij „Dodaj”, aby dodać pierwszą.';
+  } else {
+    $('empty').classList.add('hidden');
+    $('rows').innerHTML  = tiles ? '' : list.map(m => row(m, M, rev)).join('');
+    $('cards').innerHTML = tiles ? list.map(m => card(m, M, rev)).join('') : '';
+  }
+  $('count').textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` • lokalizacja: ${lf}` : '');
+}
+
+/* ===== Modal ===== */
+const FIELD = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
+function ipRow(ip = '', label = ''){
+  const d = document.createElement('div');
+  d.className = 'flex gap-2';
+  d.innerHTML = `<input class="ipv min-w-0 flex-1 font-mono ${FIELD}" placeholder="10.0.0.1" value="${esc(ip)}">
+    <input class="ipl w-32 ${FIELD}" placeholder="opis" value="${esc(label)}">
+    <button type="button" title="Usuń adres" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>`;
+  d.querySelector('button').onclick = () => d.remove();
+  return d;
+}
+function openModal(m){
+  $('mtitle').textContent = m ? 'Edytuj maszynę' : 'Nowa maszyna';
+  $('fId').value   = m?.id || '';
+  $('fName').value = m?.name || '';
+  $('fType').innerHTML = Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+  $('fType').value = m?.type || 'pc';
+  $('fLoc').value  = m?.location || '';
+  $('fNote').value = m?.note || '';
+  $('ips').innerHTML = '';
+  ((m?.ips?.length) ? m.ips : [{ ip: '', label: '' }]).forEach(x => $('ips').appendChild(ipRow(x.ip, x.label)));
+  $('fDeps').innerHTML = db.filter(x => x.id !== m?.id)
+    .sort((a,b) => a.name.localeCompare(b.name, 'pl'))
+    .map(x => `<option value="${x.id}">${esc(x.name)}${x.location ? ' — ' + esc(x.location) : ''}</option>`).join('');
+  const sel = m?.deps || [];
+  [...$('fDeps').options].forEach(o => o.selected = sel.includes(o.value));
+  $('modal').classList.remove('hidden'); $('modal').classList.add('flex');
+  $('fName').focus();
+}
+function closeModal(){ $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+
+/* ===== Zdarzenia ===== */
+$('icoAdd').innerHTML = svg(I.plus);
+$('icoExp').innerHTML = svg(I.down);
+$('icoImp').innerHTML = svg(I.up);
+
+let raf;
+$('q').oninput = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render) };
+$('loc').onchange = render;
+$('typ').onchange = render;
+$('add').onclick = () => openModal(null);
+$('cancel').onclick = closeModal;
+$('addIp').onclick = () => $('ips').appendChild(ipRow());
+$('modal').onclick = e => { if (e.target === $('modal')) closeModal() };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() });
+
+$('form').onsubmit = e => {
+  e.preventDefault();
+  const id = $('fId').value;
+  const ips = [...$('ips').children]
+    .map(r => ({ ip: r.querySelector('.ipv').value.trim(), label: r.querySelector('.ipl').value.trim() }))
+    .filter(x => x.ip);
+  const obj = {
+    id: id || uid(),
+    name: $('fName').value.trim(),
+    type: $('fType').value,
+    location: $('fLoc').value.trim(),
+    ips, deps: [...$('fDeps').selectedOptions].map(o => o.value),
+    note: $('fNote').value.trim()
+  };
+  if (id) db[db.findIndex(m => m.id === id)] = obj; else db.push(obj);
+  save(); closeModal(); render();
+  toast(id ? 'Zapisano zmiany' : 'Dodano maszynę');
+};
+
+function handleClick(e){
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  const m = db.find(x => x.id === id);
+  if (act === 'more') { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
+  if (act === 'ping' || act === 'vnc') {
+    const h = b.dataset.ip;
+    if (!SAFE.test(h)) { toast('Adres zawiera niedozwolone znaki'); return; }
+    copy(act === 'ping' ? `ping -a -t ${h}` : `ssh -L ${VNC_PORT}:localhost:${VNC_PORT} ${SSH_USER}@${h}`);
+    return;
+  }
+  if (act === 'copy')   copy(m.name);
+  if (act === 'copyip') copy(b.dataset.ip);
+  if (act === 'edit')   openModal(m);
+  if (act === 'jump')   { $('q').value = m.name; render(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  if (act === 'del' && confirm('Usunąć „' + m.name + '”?')) {
+    db = db.filter(x => x.id !== id);
+    db.forEach(x => x.deps = (x.deps || []).filter(d => d !== id));
+    save(); render(); toast('Usunięto');
+  }
+}
+$('rows').addEventListener('click', handleClick);
+$('cards').addEventListener('click', handleClick);
+
+$('stats').onclick = e => {
+  const b = e.target.closest('[data-type]');
+  if (!b) return;
+  $('typ').value = b.dataset.type; render();
+};
+$('view').onclick = () => {
+  view = view === 'tiles' ? 'table' : 'tiles';
+  try { localStorage.setItem(VIEW_KEY, view) } catch(e){}
+  render();
+};
+$('tbl').querySelector('thead').onclick = e => {
+  const th = e.target.closest('[data-sort]');
+  if (!th) return;
+  const k = th.dataset.sort;
+  sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
+  render();
+};
+addEventListener('resize', render);
+
+/* ===== Kopia zapasowa ===== */
+$('exp').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' }));
+  a.download = 'maszyny-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+};
+$('imp').onclick = () => $('file').click();
+$('file').onchange = async () => {
+  try {
+    const d = JSON.parse(await $('file').files[0].text());
+    if (!Array.isArray(d)) alert('Nieprawidłowy plik');
+    else if (!db.length || confirm('Zastąpić obecne dane (' + db.length + ' maszyn) importowanymi?')) {
+      db = d; save(); render(); toast('Zaimportowano ' + d.length + ' maszyn');
+    }
+  } catch(e){ alert('Błąd odczytu JSON') }
+  $('file').value = '';
+};
+
+/* ===== Start ===== */
+try { localStorage.setItem('_t','1'); localStorage.removeItem('_t') }
+catch(e){ $('warn').classList.remove('hidden') }
+
+render();
+</script>
+</body>
+</html>
