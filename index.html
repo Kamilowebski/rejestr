@@ -32,6 +32,7 @@
       <button id="imp" title="Import danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
       <button id="cfgBtn" title="Ustawienia" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
       <input type="file" id="file" accept=".json,application/json" class="hidden">
+      <div id="hub-apps"></div>
     </div>
   </header>
 
@@ -786,5 +787,6 @@ try {
 
 render();
 </script>
+  <script src="https://kamilowebski.github.io/hub/apps.js"></script>
 </body>
 </html>
