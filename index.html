@@ -31,7 +31,6 @@
       <button id="exp" title="Eksport danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoExp"></span><span class="hidden sm:inline">Eksport</span></button>
       <button id="imp" title="Import danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
       <button id="cfgBtn" title="Ustawienia" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
-      <div id="hub-apps"></div>
       <input type="file" id="file" accept=".json,application/json" class="hidden">
     </div>
   </header>
@@ -105,8 +104,10 @@
       <div id="ips" class="space-y-2"></div>
     </div>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="fDeps">Zależy od (Ctrl/Cmd = wiele)</label>
-      <select id="fDeps" multiple size="4" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></select>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="depQ">Zależy od</label>
+      <div id="depChips" class="mb-2 flex flex-wrap gap-1.5"></div>
+      <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <div id="depList" class="mt-1 hidden max-h-44 overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm"></div>
     </div>
     <div>
       <label class="mb-1 block text-sm font-medium text-slate-700" for="fNote">Notatka</label>
@@ -121,22 +122,72 @@
 
 <!-- Modal ustawień -->
 <div id="cfgModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <form id="cfgForm" class="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+  <form id="cfgForm" class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
     <h2 class="text-lg font-semibold text-slate-800">Ustawienia</h2>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="cSsh">Login SSH (tunel VNC)</label>
-      <input id="cSsh" autocomplete="off" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="cPing">Parametry ping</label>
+      <input id="cPing" autocomplete="off" placeholder="np. -a -t" class="w-full font-mono rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
     </div>
-    <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="cPort">Port VNC</label>
-      <input id="cPort" type="number" min="1" max="65535" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700" for="cSsh">Login SSH (tunel VNC)</label>
+        <input id="cSsh" autocomplete="off" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium text-slate-700" for="cPort">Port VNC</label>
+        <input id="cPort" type="number" min="1" max="65535" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      </div>
     </div>
-    <p id="cPrev" class="break-all rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"></p>
+    <p id="cPrev" class="break-all whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"></p>
+    <div class="space-y-2 border-t border-slate-100 pt-4">
+      <div class="text-sm font-medium text-slate-700">Własne komendy</div>
+      <p class="text-xs text-slate-500">Zmienne: <span class="rounded bg-slate-100 px-1 font-mono">{host}</span> (nazwa lub IP, zależnie od przycisku), <span class="rounded bg-slate-100 px-1 font-mono">{name}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{ip}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{user}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{port}</span></p>
+      <div id="cList" class="space-y-1.5"></div>
+      <div class="grid gap-2 sm:grid-cols-[6rem_1fr_7rem]">
+        <input id="cmdLabel" maxlength="12" placeholder="Etykieta" class="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <input id="cmdTpl" placeholder="np. mstsc /v:{host}" class="min-w-0 font-mono rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <select id="cmdTarget" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"><option value="ip">Do IP</option><option value="name">Do nazwy</option><option value="both">Do obu</option></select>
+      </div>
+      <button type="button" id="cmdAdd" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Dodaj komendę</button>
+    </div>
     <div class="flex justify-end gap-2 pt-1">
       <button type="button" id="cCancel" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
       <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zapisz</button>
     </div>
   </form>
+</div>
+
+<!-- Modal kopii zapasowej (podgląd JSON, działa też w ramkach) -->
+<div id="bkModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
+    <h2 id="bkTitle" class="text-lg font-semibold text-slate-800"></h2>
+    <p id="bkHelp" class="text-sm text-slate-500"></p>
+    <div id="bkImpBox" class="flex flex-wrap items-center gap-2">
+      <button type="button" id="bkPick" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Wybierz plik JSON</button>
+      <select id="bkMode" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <option value="merge">Dołącz i zaktualizuj</option>
+        <option value="replace">Zastąp wszystkie dane</option>
+      </select>
+    </div>
+    <textarea id="bkText" rows="8" spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
+    <div class="flex flex-wrap justify-end gap-2">
+      <button type="button" id="bkClose" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zamknij</button>
+      <button type="button" id="bkCopy" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Kopiuj</button>
+      <button type="button" id="bkDl" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Pobierz plik</button>
+      <button type="button" id="bkGo" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Wczytaj</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal potwierdzenia (zamiast confirm(), który bywa blokowany w ramkach) -->
+<div id="cfmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
+    <p id="cfmMsg" class="text-sm text-slate-700"></p>
+    <div class="flex justify-end gap-2">
+      <button type="button" id="cfmNo" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
+      <button type="button" id="cfmOk" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Usuń</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2 translate-y-2 rounded-lg bg-slate-800 px-4 py-2 text-sm text-white opacity-0 shadow-lg transition-all"></div>
@@ -146,7 +197,8 @@
 const KEY = 'machines_v1';          // klucz danych w localStorage
 const VIEW_KEY = 'view';            // klucz zapamiętanego widoku
 const CFG_KEY = 'machines_settings';  // klucz ustawień w localStorage
-const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900 };  // domyślny login SSH i port VNC
+const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [] };  // ustawienia domyślne
+const UI_KEY = 'machines_ui';        // zapamiętane wyszukiwanie i sortowanie
 const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
 
 const $ = id => document.getElementById(id);
@@ -185,7 +237,7 @@ const T = m => TYPES[m.type] || TYPES.other;
 /* ===== Stan ===== */
 let db = [];
 try { db = JSON.parse(localStorage.getItem(KEY)) || [] } catch(e){}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch(e){ alert('Brak miejsca w pamięci przeglądarki!') } };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch(e){ toast('Brak miejsca w pamięci przeglądarki!', 4000) } };
 const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
 
 let view = 'tiles';
@@ -196,6 +248,7 @@ let dupOnly = false;                // filtr: tylko maszyny z duplikatem IP
 const hasDup = m => (m.ips || []).some(i => dups.has(i.ip));
 let cfg = { ...CFG_DEFAULT };       // ustawienia (login SSH, port VNC)
 try { cfg = { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem(CFG_KEY)) } } catch(e){}
+if (!Array.isArray(cfg.cmds)) cfg.cmds = [];
 const openNotes = new Set();        // maszyny z rozwiniętą notatką
 let sort = { k: '', d: 1 };         // sortowanie tabeli
 const SORTERS = {
@@ -208,6 +261,12 @@ const SORTERS = {
   }
 };
 
+/* zapamiętane wyszukiwanie i sortowanie (odtwarzane po odświeżeniu) */
+let ui = {};
+try { ui = JSON.parse(localStorage.getItem(UI_KEY)) || {} } catch(e){}
+if (ui.sort && SORTERS[ui.sort.k]) sort = { k: ui.sort.k, d: ui.sort.d === -1 ? -1 : 1 };
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $('q').value, sort })) } catch(e){} };
+
 /* ===== Toast i kopiowanie ===== */
 let toastT;
 function toast(msg, ms = 1800){
@@ -217,8 +276,8 @@ function toast(msg, ms = 1800){
   clearTimeout(toastT);
   toastT = setTimeout(() => el.classList.add('opacity-0','translate-y-2'), ms);
 }
-function copy(text){
-  const ok = () => toast('Skopiowano: ' + text);
+function copy(text, label){
+  const ok = () => toast('Skopiowano: ' + (label || text));
   const fb = () => {
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
@@ -235,15 +294,36 @@ const MINI = 'inline-flex items-center rounded-md border border-slate-200 bg-whi
 const ICON_BTN = 'rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800';
 const BADGE = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
 
-/* komenda tunelu SSH dla VNC (login i port z ustawień) */
+/* komendy: tunel SSH dla VNC i ping (login, port i parametry z ustawień) */
 const sshCmd = h => `ssh -L ${cfg.vncPort}:localhost:${cfg.vncPort} ${cfg.sshUser ? cfg.sshUser + '@' : ''}${h}`;
+const pingCmd = h => `ping ${cfg.pingArgs ? cfg.pingArgs + ' ' : ''}${h}`;
 
-/* przyciski: ping, tunel VNC i (dla IP) otwarcie http */
-const tools = (host, web = false) => `<span class="inline-flex shrink-0 items-center gap-1">
-  <button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ping -a -t ${esc(host)}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>
+/* podstawianie zmiennych {host} {name} {ip} {user} {port}; null = niedozwolone znaki w nazwie/IP */
+function fillCmd(tpl, host, m, kind){
+  const ip = kind === 'ip' ? host : ((m.ips || []).find(x => x.ip)?.ip || '');
+  const vars = { host, name: m.name, ip, user: cfg.sshUser, port: String(cfg.vncPort) };
+  let bad = false;
+  const out = tpl.replace(/\{(\w+)\}/g, (all, k) => {
+    if (!(k in vars)) return all;
+    if (['host','name','ip'].includes(k) && vars[k] && !SAFE.test(vars[k])) bad = true;
+    return vars[k];
+  });
+  return bad ? null : out;
+}
+
+/* przyciski: ping, tunel VNC, (dla IP) otwarcie http oraz własne komendy */
+const tools = (host, web, m, kind) => {
+  const custom = cfg.cmds.map((c, i) => ({ c, i })).filter(({ c }) => c.target === kind || c.target === 'both').map(({ c, i }) => {
+    const t = fillCmd(c.tpl, host, m, kind);
+    return `<button data-act="cmd" data-i="${i}" data-id="${m.id}" data-ip="${esc(host)}" data-kind="${kind}" title="Kopiuj: ${esc(t ?? 'niedozwolone znaki w nazwie/IP')}" class="${MINI}">${esc(c.label)}</button>`;
+  }).join('');
+  return `<span class="inline-flex shrink-0 flex-wrap items-center gap-1">
+  <button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>
   <button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="${MINI}">VNC</button>
   ${web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="${MINI}">${svg(I.globe,'h-3.5 w-3.5')}</a>` : ''}
+  ${custom}
 </span>`;
+};
 
 function ipChips(m){
   const all = (m.ips || []).filter(x => x.ip);
@@ -258,7 +338,7 @@ function ipChips(m){
       <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? 'Duplikat IP, także: ' + esc(others) : 'Kopiuj IP'}" class="inline-flex min-w-0 items-center gap-1 rounded-md border px-1.5 py-0.5 ${cls}">
         <span class="font-mono text-xs ${others ? 'text-amber-800' : 'text-blue-700'}">${esc(i.ip)}</span>
         ${i.label ? `<span class="truncate text-[10px] text-slate-500">${esc(i.label)}</span>` : ''}
-      </button>${tools(i.ip, true)}
+      </button>${tools(i.ip, true, m, 'ip')}
     </span>`;
   }).join('');
   const hiddenDup = !isOpen && all.slice(1).some(i => dups.has(i.ip));
@@ -278,7 +358,7 @@ function depChips(m, M, rev){
 
 const nameBlock = m => `<div class="flex items-center gap-1.5">
   <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="min-w-0 break-all text-left font-semibold text-slate-800 hover:text-blue-600">${esc(m.name)}</button>
-  ${tools(m.name)}
+  ${tools(m.name, false, m, 'name')}
 </div>`;
 
 /* notatka: domyślnie jedna linia, po kliknięciu rozwijana */
@@ -423,6 +503,24 @@ function ipRow(ip = '', label = ''){
   d.querySelector('button').onclick = () => d.remove();
   return d;
 }
+let curDeps = [], editId = '';       // wybrane zależności i edytowana maszyna
+function renderDeps(){
+  $('depChips').innerHTML = curDeps.map(id => {
+    const d = db.find(x => x.id === id);
+    return d ? `<span class="${BADGE} bg-slate-100 text-slate-700">${esc(d.name)}<button type="button" data-rmdep="${id}" title="Usuń zależność" class="ml-1.5 text-slate-400 hover:text-red-600">✕</button></span>` : '';
+  }).join('');
+  const toks = $('depQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const list = $('depList');
+  if (!toks.length) { list.classList.add('hidden'); list.innerHTML = ''; return; }
+  const found = db.filter(x => x.id !== editId && !curDeps.includes(x.id)) 
+    .filter(x => { const h = [x.name, x.location, ...(x.ips || []).map(i => i.ip)].filter(Boolean).join(' ').toLowerCase(); return toks.every(t => h.includes(t)); })
+    .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true })).slice(0, 8);
+  list.classList.remove('hidden');
+  list.innerHTML = found.length
+    ? found.map(x => `<button type="button" data-adddep="${x.id}" class="flex w-full items-center justify-between gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50"><span class="font-medium text-slate-800">${esc(x.name)}</span><span class="truncate text-xs text-slate-500">${esc(x.location || '')}</span></button>`).join('')
+    : '<div class="px-3 py-2 text-xs text-slate-500">Brak pasujących maszyn.</div>';
+}
+
 function openModal(m){
   $('mtitle').textContent = m ? 'Edytuj maszynę' : 'Nowa maszyna';
   $('fId').value   = m?.id || '';
@@ -433,11 +531,9 @@ function openModal(m){
   $('fNote').value = m?.note || '';
   $('ips').innerHTML = '';
   ((m?.ips?.length) ? m.ips : [{ ip: '', label: '' }]).forEach(x => $('ips').appendChild(ipRow(x.ip, x.label)));
-  $('fDeps').innerHTML = db.filter(x => x.id !== m?.id)
-    .sort((a,b) => a.name.localeCompare(b.name, 'pl'))
-    .map(x => `<option value="${x.id}">${esc(x.name)}${x.location ? ' — ' + esc(x.location) : ''}</option>`).join('');
-  const sel = m?.deps || [];
-  [...$('fDeps').options].forEach(o => o.selected = sel.includes(o.value));
+  editId = m?.id || '';
+  curDeps = [...(m?.deps || [])].filter(id => db.some(x => x.id === id));
+  $('depQ').value = ''; renderDeps();
   $('modal').classList.remove('hidden'); $('modal').classList.add('flex');
   $('fName').focus();
 }
@@ -449,14 +545,26 @@ $('icoExp').innerHTML = svg(I.down);
 $('icoImp').innerHTML = svg(I.up);
 
 let raf;
-$('q').oninput = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render) };
+$('q').oninput = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render) };
 $('loc').onchange = render;
 $('typ').onchange = render;
 $('add').onclick = () => openModal(null);
 $('cancel').onclick = closeModal;
 $('addIp').onclick = () => $('ips').appendChild(ipRow());
+$('depQ').oninput = renderDeps;
+$('depQ').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('depList').querySelector('[data-adddep]')?.click(); } };
+$('depList').onclick = e => {
+  const b = e.target.closest('[data-adddep]');
+  if (!b) return;
+  curDeps.push(b.dataset.adddep); $('depQ').value = ''; renderDeps(); $('depQ').focus();
+};
+$('depChips').onclick = e => {
+  const b = e.target.closest('[data-rmdep]');
+  if (!b) return;
+  curDeps = curDeps.filter(id => id !== b.dataset.rmdep); renderDeps();
+};
 $('modal').onclick = e => { if (e.target === $('modal')) closeModal() };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCfg() } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCfg(); closeBk(); closeCfm(false) } });
 
 $('form').onsubmit = e => {
   e.preventDefault();
@@ -469,7 +577,7 @@ $('form').onsubmit = e => {
     name: $('fName').value.trim(),
     type: $('fType').value,
     location: $('fLoc').value.trim(),
-    ips, deps: [...$('fDeps').selectedOptions].map(o => o.value),
+    ips, deps: [...curDeps],
     note: $('fNote').value.trim()
   };
   if (id) db[db.findIndex(m => m.id === id)] = obj; else db.push(obj);
@@ -490,17 +598,27 @@ function handleClick(e){
   if (act === 'ping' || act === 'vnc') {
     const h = b.dataset.ip;
     if (!SAFE.test(h)) { toast('Adres zawiera niedozwolone znaki'); return; }
-    copy(act === 'ping' ? `ping -a -t ${h}` : sshCmd(h));
+    copy(act === 'ping' ? pingCmd(h) : sshCmd(h));
+    return;
+  }
+  if (act === 'cmd') {
+    const c = cfg.cmds[+b.dataset.i];
+    if (!c || !m) return;
+    const t = fillCmd(c.tpl, b.dataset.ip, m, b.dataset.kind);
+    if (t === null) toast('Nazwa lub IP zawiera niedozwolone znaki'); else copy(t);
     return;
   }
   if (act === 'copy')   copy(m.name);
   if (act === 'copyip') copy(b.dataset.ip);
   if (act === 'edit')   openModal(m);
-  if (act === 'jump')   { $('q').value = m.name; render(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-  if (act === 'del' && confirm('Usunąć „' + m.name + '”?')) {
-    db = db.filter(x => x.id !== id);
-    db.forEach(x => x.deps = (x.deps || []).filter(d => d !== id));
-    save(); render(); toast('Usunięto');
+  if (act === 'jump')   { $('q').value = m.name; saveUi(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  if (act === 'del') {
+    askConfirm('Usunąć „' + m.name + '”?', 'Usuń').then(ok => {
+      if (!ok) return;
+      db = db.filter(x => x.id !== id);
+      db.forEach(x => x.deps = (x.deps || []).filter(d => d !== id));
+      save(); render(); toast('Usunięto');
+    });
   }
 }
 $('rows').addEventListener('click', handleClick);
@@ -522,56 +640,142 @@ $('tbl').querySelector('thead').onclick = e => {
   if (!th) return;
   const k = th.dataset.sort;
   sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
-  render();
+  saveUi(); render();
 };
 addEventListener('resize', render);
 
+/* ===== Własne okno potwierdzenia ===== */
+let cfmResolve = null;
+function askConfirm(msg, okLabel = 'OK'){
+  $('cfmMsg').textContent = msg; $('cfmOk').textContent = okLabel;
+  $('cfmModal').classList.remove('hidden'); $('cfmModal').classList.add('flex');
+  return new Promise(res => { cfmResolve = res; });
+}
+function closeCfm(v){
+  $('cfmModal').classList.add('hidden'); $('cfmModal').classList.remove('flex');
+  if (cfmResolve) { cfmResolve(v); cfmResolve = null; }
+}
+$('cfmOk').onclick = () => closeCfm(true);
+$('cfmNo').onclick = () => closeCfm(false);
+$('cfmModal').onclick = e => { if (e.target === $('cfmModal')) closeCfm(false) };
+
 /* ===== Ustawienia ===== */
 $('icoCfg').innerHTML = svg(I.gear);
+let draftCmds = [];                                  // edytowana lista własnych komend
+const PING_OK = /^[\w\s.\-:=\/]*$/;                   // dozwolone znaki w parametrach ping
+const TARGETS = { ip: 'IP', name: 'nazwa', both: 'IP i nazwa' };
 const cfgPreview = () => {
-  const u = $('cSsh').value.trim(), p = $('cPort').value || '…';
-  $('cPrev').textContent = `ssh -L ${p}:localhost:${p} ${u ? u + '@' : ''}host`;
+  const u = $('cSsh').value.trim(), p = $('cPort').value || '…', a = $('cPing').value.trim();
+  $('cPrev').textContent = `ping ${a ? a + ' ' : ''}host\nssh -L ${p}:localhost:${p} ${u ? u + '@' : ''}host`;
 };
+function renderCmds(){
+  $('cList').innerHTML = draftCmds.length ? draftCmds.map((c, i) => `<div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+    <span class="${BADGE} border border-slate-200 bg-white text-slate-700">${esc(c.label)}</span>
+    <span class="min-w-0 flex-1 truncate font-mono text-xs text-slate-600" title="${esc(c.tpl)}">${esc(c.tpl)}</span>
+    <span class="shrink-0 text-xs text-slate-500">${TARGETS[c.target] || ''}</span>
+    <button type="button" data-delcmd="${i}" title="Usuń komendę" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>
+  </div>`).join('') : '<div class="text-xs text-slate-400">Brak własnych komend.</div>';
+}
+function addDraftCmd(){
+  const label = $('cmdLabel').value.trim(), tpl = $('cmdTpl').value.trim();
+  if (!label || !tpl) return false;
+  draftCmds.push({ label, tpl, target: $('cmdTarget').value });
+  $('cmdLabel').value = ''; $('cmdTpl').value = ''; renderCmds();
+  return true;
+}
 function closeCfg(){ $('cfgModal').classList.add('hidden'); $('cfgModal').classList.remove('flex'); }
 $('cfgBtn').onclick = () => {
-  $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort; cfgPreview();
+  $('cPing').value = cfg.pingArgs; $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort;
+  draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
   $('cfgModal').classList.remove('hidden'); $('cfgModal').classList.add('flex');
-  $('cSsh').focus();
+  $('cPing').focus();
 };
-$('cSsh').oninput = cfgPreview;
-$('cPort').oninput = cfgPreview;
+['cPing','cSsh','cPort'].forEach(id => $(id).oninput = cfgPreview);
+$('cmdAdd').onclick = () => { if (!addDraftCmd()) toast('Podaj etykietę i komendę') };
+$('cList').onclick = e => {
+  const b = e.target.closest('[data-delcmd]');
+  if (!b) return;
+  draftCmds.splice(+b.dataset.delcmd, 1); renderCmds();
+};
 $('cCancel').onclick = closeCfg;
 $('cfgModal').onclick = e => { if (e.target === $('cfgModal')) closeCfg() };
 $('cfgForm').onsubmit = e => {
   e.preventDefault();
-  const u = $('cSsh').value.trim(), p = parseInt($('cPort').value, 10);
+  addDraftCmd();                                     // dopisz komendę wpisaną, a niedodaną
+  const u = $('cSsh').value.trim(), p = parseInt($('cPort').value, 10), a = $('cPing').value.trim();
   if (u && !/^[\w.\-]+$/.test(u)) { toast('Login zawiera niedozwolone znaki'); return; }
   if (!(p >= 1 && p <= 65535)) { toast('Port musi być z zakresu 1–65535'); return; }
-  cfg = { sshUser: u, vncPort: p };
+  if (!PING_OK.test(a)) { toast('Parametry ping zawierają niedozwolone znaki'); return; }
+  cfg = { sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds };
   try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
   closeCfg(); render(); toast('Zapisano ustawienia');
 };
 
-/* ===== Kopia zapasowa =====
-$('exp').onclick = () => {
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' }));
-  a.download = 'maszyny-' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
-};
-$('imp').onclick = () => $('file').click();
-$('file').onchange = async () => {
+/* ===== Kopia zapasowa (okno z podglądem JSON – działa też w ramkach) ===== */
+const bkJson = () => JSON.stringify(db, null, 1);
+function openBk(mode){
+  const exp = mode === 'exp';
+  $('bkTitle').textContent = exp ? 'Eksport danych' : 'Import danych';
+  $('bkHelp').textContent = exp
+    ? 'Pobierz plik JSON albo skopiuj zawartość poniżej i zapisz ją w bezpiecznym miejscu.'
+    : 'Wybierz plik JSON lub wklej jego zawartość poniżej, a potem kliknij „Wczytaj”.';
+  $('bkImpBox').classList.toggle('hidden', exp);
+  ['bkCopy', 'bkDl'].forEach(id => $(id).classList.toggle('hidden', !exp));
+  $('bkGo').classList.toggle('hidden', exp);
+  $('bkText').readOnly = exp;
+  $('bkText').value = exp ? bkJson() : '';
+  $('bkModal').classList.remove('hidden'); $('bkModal').classList.add('flex');
+}
+function closeBk(){ $('bkModal').classList.add('hidden'); $('bkModal').classList.remove('flex'); }
+$('exp').onclick = () => openBk('exp');
+$('imp').onclick = () => openBk('imp');
+$('bkClose').onclick = closeBk;
+$('bkModal').onclick = e => { if (e.target === $('bkModal')) closeBk() };
+$('bkText').onclick = e => { if (e.target.readOnly) e.target.select() };
+$('bkCopy').onclick = () => copy(bkJson(), 'dane (JSON)');
+$('bkDl').onclick = () => {
   try {
-    const d = JSON.parse(await $('file').files[0].text());
-    if (!Array.isArray(d)) alert('Nieprawidłowy plik');
-    else if (!db.length || confirm('Zastąpić obecne dane (' + db.length + ' maszyn) importowanymi?')) {
-      db = d; save(); render(); toast('Zaimportowano ' + d.length + ' maszyn');
-    }
-  } catch(e){ alert('Błąd odczytu JSON') }
+    const url = URL.createObjectURL(new Blob([bkJson()], { type: 'application/json' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'maszyny-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Pobieranie rozpoczęte. Jeśli nic się nie dzieje, użyj „Kopiuj”.', 3500);
+  } catch(e){ toast('Pobieranie niedostępne, użyj „Kopiuj”', 3500) }
+};
+$('bkPick').onclick = () => $('file').click();
+$('file').onchange = () => {
+  const f = $('file').files[0];
+  if (f) {
+    const r = new FileReader();
+    r.onload = () => { $('bkText').value = r.result; toast('Wczytano plik, kliknij „Wczytaj”') };
+    r.onerror = () => toast('Nie udało się odczytać pliku');
+    r.readAsText(f);
+  }
   $('file').value = '';
+};
+$('bkGo').onclick = () => {
+  let d;
+  try { d = JSON.parse($('bkText').value) } catch(e){ toast('To nie jest poprawny JSON'); return; }
+  if (!Array.isArray(d)) { toast('Oczekiwano listy maszyn (JSON w nawiasach [ ])'); return; }
+  // normalizacja importowanych danych
+  const items = d.filter(x => x && typeof x === 'object' && x.name).map(x => ({
+    id: x.id ? String(x.id) : uid(),
+    name: String(x.name),
+    type: TYPES[x.type] ? x.type : 'other',
+    location: String(x.location || ''),
+    ips: Array.isArray(x.ips) ? x.ips.filter(i => i && i.ip).map(i => ({ ip: String(i.ip), label: String(i.label || '') })) : [],
+    deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
+    note: String(x.note || '')
+  }));
+  if (!items.length) { toast('Brak poprawnych maszyn w danych'); return; }
+  if ($('bkMode').value === 'replace') db = items;
+  else { const M = new Map(db.map(m => [m.id, m])); items.forEach(m => M.set(m.id, m)); db = [...M.values()]; }
+  save(); closeBk(); render(); toast('Zaimportowano ' + items.length + ' maszyn');
 };
 
 /* ===== Start ===== */
+$('q').value = ui.q || '';
 try { localStorage.setItem('_t','1'); localStorage.removeItem('_t') }
 catch(e){ $('warn').classList.remove('hidden') }
 
@@ -582,6 +786,5 @@ try {
 
 render();
 </script>
-  <script src="https://kamilowebski.github.io/hub/apps.js"></script>
 </body>
 </html>
