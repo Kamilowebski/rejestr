@@ -445,9 +445,8 @@ function ipChips(m){
   const hasDeps = (m.deps || []).length > 0;
   const hasRev  = (REV[m.id] || []).length > 0;
   const qualifies = all.length > 1 || hasDeps || hasRev;
-  const SCAN = 'inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-700';
   const scanBtn = qualifies && cfg.show.scan
-    ? `<button data-act="scan" data-id="${m.id}" title="Generuj skrypt ping: ta maszyna (wszystkie IP) + zależności" class="${SCAN}">${svg(I.share,'h-3.5 w-3.5')}Ping grupy</button>`
+    ? `<button data-act="scan" data-id="${m.id}" title="Ping grupy: ta maszyna (wszystkie IP) + zależności" class="${MINI}">${svg(I.share,'h-3.5 w-3.5')}</button>`
     : '';
   if (!all.length) {
     return scanBtn ? `<div class="flex flex-wrap items-center gap-1.5">${scanBtn}</div>` : '';
