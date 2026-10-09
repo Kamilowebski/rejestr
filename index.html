@@ -7,12 +7,55 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#f4f7f9">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>
+  // tryb ciemny ustawiany od razu po wczytaniu strony (bez mignięcia)
+  try {
+    var t = (JSON.parse(localStorage.getItem('machines_settings')) || {}).theme;
+    if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
+  } catch(e){}
+</script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } }
 </script>
 <style>
   body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+
+  /* ===== Tryb ciemny (przełączany w Ustawieniach) ===== */
+  html.dark { color-scheme: dark; }
+  html.dark *, html.dark ::before, html.dark ::after { --tw-ring-offset-color: #0b1220; }
+  html.dark body, html.dark .bg-page { background-color: #0b1220; }
+  html.dark .bg-white { background-color: #1e293b; }
+  html.dark .bg-slate-50 { background-color: #172033; }
+  html.dark .bg-slate-100 { background-color: #26344a; }
+  html.dark .bg-slate-800 { background-color: #334155; }
+  html.dark .bg-blue-50 { background-color: rgba(37,99,235,.20); }
+  html.dark .bg-amber-50 { background-color: rgba(245,158,11,.14); }
+  html.dark .bg-sky-50 { background-color: rgba(14,165,233,.16); }
+  html.dark .text-slate-800 { color: #f1f5f9; }
+  html.dark .text-slate-700 { color: #cbd5e1; }
+  html.dark .text-slate-600 { color: #aab6c8; }
+  html.dark .text-slate-500 { color: #94a3b8; }
+  html.dark .text-slate-400 { color: #64748b; }
+  html.dark .text-blue-600 { color: #60a5fa; }
+  html.dark .text-blue-700 { color: #93c5fd; }
+  html.dark .text-amber-800 { color: #fcd34d; }
+  html.dark .text-sky-700 { color: #7dd3fc; }
+  html.dark .border-slate-100 { border-color: #263349; }
+  html.dark .border-slate-200 { border-color: #334155; }
+  html.dark .border-slate-300 { border-color: #475569; }
+  html.dark .border-amber-200, html.dark .border-amber-300 { border-color: rgba(245,158,11,.45); }
+  /* stany hover (muszą przebić powyższe reguły) */
+  html.dark .hover\:bg-slate-50:hover { background-color: #26344a; }
+  html.dark .hover\:bg-slate-100:hover { background-color: #2e3d56; }
+  html.dark .hover\:bg-slate-200:hover { background-color: #38475f; }
+  html.dark .hover\:bg-amber-100:hover { background-color: rgba(245,158,11,.26); }
+  html.dark .hover\:bg-blue-100:hover { background-color: rgba(37,99,235,.32); }
+  html.dark .hover\:text-slate-700:hover, html.dark .hover\:text-slate-800:hover { color: #ffffff; }
+  html.dark .hover\:text-blue-600:hover, html.dark .hover\:text-blue-700:hover { color: #93c5fd; }
+  html.dark .hover\:text-red-600:hover { color: #f87171; }
+  html.dark .hover\:\!bg-red-50:hover { background-color: rgba(239,68,68,.16) !important; }
+  html.dark .hover\:\!text-red-600:hover { color: #f87171 !important; }
 </style>
 </head>
 <body class="min-h-screen bg-page text-slate-800">
@@ -31,8 +74,8 @@
       <button id="exp" title="Eksport danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoExp"></span><span class="hidden sm:inline">Eksport</span></button>
       <button id="imp" title="Import danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
       <button id="cfgBtn" title="Ustawienia" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
-      <input type="file" id="file" accept=".json,application/json" class="hidden">
       <div id="hub-apps"></div>
+      <input type="file" id="file" accept=".json,application/json" class="hidden">
     </div>
   </header>
 
@@ -126,6 +169,23 @@
   <form id="cfgForm" class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
     <h2 class="text-lg font-semibold text-slate-800">Ustawienia</h2>
     <div>
+      <label class="mb-1 block text-sm font-medium text-slate-700" for="cTheme">Motyw</label>
+      <select id="cTheme" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <option value="light">Jasny</option>
+        <option value="dark">Ciemny</option>
+        <option value="auto">Zgodny z systemem</option>
+      </select>
+    </div>
+    <div>
+      <div class="mb-1 text-sm font-medium text-slate-700">Widoczne przyciski</div>
+      <div class="flex flex-wrap gap-x-5 gap-y-2">
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sPing" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Ping</label>
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sVnc" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">VNC</label>
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sWeb" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">WWW (http)</label>
+      </div>
+      <p class="mt-1 text-xs text-slate-500">Ukryte przyciski nie są usuwane, ich ustawienia zostają.</p>
+    </div>
+    <div>
       <label class="mb-1 block text-sm font-medium text-slate-700" for="cPing">Parametry ping</label>
       <input id="cPing" autocomplete="off" placeholder="np. -a -t" class="w-full font-mono rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
     </div>
@@ -198,7 +258,7 @@
 const KEY = 'machines_v1';          // klucz danych w localStorage
 const VIEW_KEY = 'view';            // klucz zapamiętanego widoku
 const CFG_KEY = 'machines_settings';  // klucz ustawień w localStorage
-const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [] };  // ustawienia domyślne
+const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [], theme: 'light', show: { ping: true, vnc: true, web: true } };  // ustawienia domyślne
 const UI_KEY = 'machines_ui';        // zapamiętane wyszukiwanie i sortowanie
 const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
 
@@ -250,6 +310,17 @@ const hasDup = m => (m.ips || []).some(i => dups.has(i.ip));
 let cfg = { ...CFG_DEFAULT };       // ustawienia (login SSH, port VNC)
 try { cfg = { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem(CFG_KEY)) } } catch(e){}
 if (!Array.isArray(cfg.cmds)) cfg.cmds = [];
+if (!['light','dark','auto'].includes(cfg.theme)) cfg.theme = 'light';
+cfg.show = { ...CFG_DEFAULT.show, ...(cfg.show || {}) };   // widoczność przycisków
+
+/* motyw: klasa .dark na <html> (style w <style>) */
+const mqDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : { matches: false };
+function applyTheme(t = cfg.theme){
+  const dark = t === 'dark' || (t === 'auto' && mqDark.matches);
+  document.documentElement.classList.toggle('dark', dark);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1220' : '#f4f7f9');
+}
+try { mqDark.addEventListener('change', () => { if (cfg.theme === 'auto') applyTheme() }) } catch(e){}
 const openNotes = new Set();        // maszyny z rozwiniętą notatką
 let sort = { k: '', d: 1 };         // sortowanie tabeli
 const SORTERS = {
@@ -318,12 +389,14 @@ const tools = (host, web, m, kind) => {
     const t = fillCmd(c.tpl, host, m, kind);
     return `<button data-act="cmd" data-i="${i}" data-id="${m.id}" data-ip="${esc(host)}" data-kind="${kind}" title="Kopiuj: ${esc(t ?? 'niedozwolone znaki w nazwie/IP')}" class="${MINI}">${esc(c.label)}</button>`;
   }).join('');
-  return `<span class="inline-flex shrink-0 flex-wrap items-center gap-1">
-  <button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>
-  <button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="${MINI}">VNC</button>
-  ${web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="${MINI}">${svg(I.globe,'h-3.5 w-3.5')}</a>` : ''}
-  ${custom}
-</span>`;
+  const sh = cfg.show;
+  const parts = [
+    sh.ping ? `<button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>` : '',
+    sh.vnc ? `<button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="${MINI}">VNC</button>` : '',
+    sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="${MINI}">${svg(I.globe,'h-3.5 w-3.5')}</a>` : '',
+    custom
+  ].join('');
+  return parts.trim() ? `<span class="inline-flex shrink-0 flex-wrap items-center gap-1">${parts}</span>` : '';
 };
 
 function ipChips(m){
@@ -684,14 +757,17 @@ function addDraftCmd(){
   $('cmdLabel').value = ''; $('cmdTpl').value = ''; renderCmds();
   return true;
 }
-function closeCfg(){ $('cfgModal').classList.add('hidden'); $('cfgModal').classList.remove('flex'); }
+function closeCfg(){ $('cfgModal').classList.add('hidden'); $('cfgModal').classList.remove('flex'); applyTheme(); }  // applyTheme cofa niezapisany podgląd
 $('cfgBtn').onclick = () => {
+  $('cTheme').value = cfg.theme;
+  $('sPing').checked = cfg.show.ping; $('sVnc').checked = cfg.show.vnc; $('sWeb').checked = cfg.show.web;
   $('cPing').value = cfg.pingArgs; $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort;
   draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
   $('cfgModal').classList.remove('hidden'); $('cfgModal').classList.add('flex');
   $('cPing').focus();
 };
 ['cPing','cSsh','cPort'].forEach(id => $(id).oninput = cfgPreview);
+$('cTheme').onchange = () => applyTheme($('cTheme').value);   // podgląd na żywo
 $('cmdAdd').onclick = () => { if (!addDraftCmd()) toast('Podaj etykietę i komendę') };
 $('cList').onclick = e => {
   const b = e.target.closest('[data-delcmd]');
@@ -707,7 +783,8 @@ $('cfgForm').onsubmit = e => {
   if (u && !/^[\w.\-]+$/.test(u)) { toast('Login zawiera niedozwolone znaki'); return; }
   if (!(p >= 1 && p <= 65535)) { toast('Port musi być z zakresu 1–65535'); return; }
   if (!PING_OK.test(a)) { toast('Parametry ping zawierają niedozwolone znaki'); return; }
-  cfg = { sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds };
+  cfg = { sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds, theme: $('cTheme').value,
+         show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked } };
   try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
   closeCfg(); render(); toast('Zapisano ustawienia');
 };
@@ -777,6 +854,7 @@ $('bkGo').onclick = () => {
 
 /* ===== Start ===== */
 $('q').value = ui.q || '';
+applyTheme();
 try { localStorage.setItem('_t','1'); localStorage.removeItem('_t') }
 catch(e){ $('warn').classList.remove('hidden') }
 
@@ -787,6 +865,6 @@ try {
 
 render();
 </script>
-  <script src="https://kamilowebski.github.io/hub/apps.js"></script>
+<script src="https://kamilowebski.github.io/hub/apps.js"></script>
 </body>
 </html>
