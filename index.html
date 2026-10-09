@@ -184,6 +184,7 @@
         <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sPing" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Ping</label>
         <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sVnc" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">VNC</label>
         <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sWeb" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">WWW (http)</label>
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sScan" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Ping grupy</label>
       </div>
       <p class="mt-1 text-xs text-slate-500">Ukryte przyciski nie są usuwane, ich ustawienia zostają.</p>
     </div>
@@ -251,10 +252,10 @@
   </div>
 </div>
 
-<!-- Modal: skrypt pingu kluczowych maszyn -->
+<!-- Modal: skrypt pingu kluczowych maszyn / grupy -->
 <div id="pgModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
   <div class="max-h-[92vh] w-full max-w-2xl space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
-    <h2 class="text-lg font-semibold text-slate-800">Ping kluczowych maszyn</h2>
+    <h2 id="pgTitle" class="text-lg font-semibold text-slate-800">Ping kluczowych maszyn</h2>
     <p id="pgHelp" class="text-sm text-slate-500"></p>
     <textarea id="pgText" rows="12" readonly spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
     <div class="flex flex-wrap justify-end gap-2">
@@ -283,7 +284,7 @@
 const KEY = 'machines_v1';          // klucz danych w localStorage
 const VIEW_KEY = 'view';            // klucz zapamiętanego widoku
 const CFG_KEY = 'machines_settings';  // klucz ustawień w localStorage
-const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [], theme: 'light', show: { ping: true, vnc: true, web: true }, cats: [] };  // ustawienia domyślne
+const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [], theme: 'light', show: { ping: true, vnc: true, web: true, scan: true }, cats: [] };  // ustawienia domyślne
 const UI_KEY = 'machines_ui';        // zapamiętane wyszukiwanie i sortowanie
 const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
 
@@ -307,7 +308,8 @@ const I = {
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
   star:  '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
   tag:   '<path d="M20 13l-7 7-9-9V4h7z"/><circle cx="8" cy="8" r="1.2"/>',
-  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>'
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.7l7.6-3.4M8.2 13.3l7.6 3.4"/>'
 };
 
 /* Typy maszyn: [etykieta, ikona] */
@@ -361,6 +363,7 @@ function applyTheme(t = cfg.theme){
 try { mqDark.addEventListener('change', () => { if (cfg.theme === 'auto') applyTheme() }) } catch(e){}
 const openNotes = new Set();        // maszyny z rozwiniętą notatką
 let sort = { k: '', d: 1 };         // sortowanie tabeli
+let REV = {};                       // reverse-deps z ostatniego renderu — używane w ipChips
 const SORTERS = {
   name:     m => m.name || '',
   type:     m => T(m)[0],
@@ -439,7 +442,16 @@ const tools = (host, web, m, kind) => {
 
 function ipChips(m){
   const all = (m.ips || []).filter(x => x.ip);
-  if (!all.length) return '';
+  const hasDeps = (m.deps || []).length > 0;
+  const hasRev  = (REV[m.id] || []).length > 0;
+  const qualifies = all.length > 1 || hasDeps || hasRev;
+  const SCAN = 'inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-medium text-slate-600 hover:bg-slate-50 hover:text-blue-700';
+  const scanBtn = qualifies && cfg.show.scan
+    ? `<button data-act="scan" data-id="${m.id}" title="Generuj skrypt ping: ta maszyna (wszystkie IP) + zależności" class="${SCAN}">${svg(I.share,'h-3.5 w-3.5')}Ping grupy</button>`
+    : '';
+  if (!all.length) {
+    return scanBtn ? `<div class="flex flex-wrap items-center gap-1.5">${scanBtn}</div>` : '';
+  }
   const isOpen = open.has(m.id);
   const chips = (isOpen ? all : all.slice(0,1)).map(i => {
     // duplikat: inne maszyny z tym samym IP
@@ -457,7 +469,7 @@ function ipChips(m){
   const more = all.length > 1
     ? `<button data-act="more" data-id="${m.id}" class="${BADGE} ${hiddenDup ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}">${isOpen ? 'zwiń' : '+' + (all.length - 1)}</button>` : '';
   // zwinięte: pierwszy IP + licznik w jednej linii; rozwinięte: adresy jeden pod drugim
-  return `<div class="flex ${isOpen ? 'flex-col items-start' : 'flex-wrap items-center'} gap-1.5">${chips}${more}</div>`;
+  return `<div class="flex ${isOpen ? 'flex-col items-start' : 'flex-wrap items-center'} gap-1.5">${chips}${more}${scanBtn}</div>`;
 }
 
 const depBtn = (d, arrow, cls) =>
@@ -529,6 +541,7 @@ function render(){
   const M = new Map(db.map(m => [m.id, m]));
   const rev = {};
   db.forEach(m => (m.deps || []).forEach(id => (rev[id] ||= []).push(m)));
+  REV = rev;
 
   // wykrywanie zduplikowanych IP
   const owners = {};
@@ -625,7 +638,7 @@ function renderDeps(){
   const toks = $('depQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = $('depList');
   if (!toks.length) { list.classList.add('hidden'); list.innerHTML = ''; return; }
-  const found = db.filter(x => x.id !== editId && !curDeps.includes(x.id)) 
+  const found = db.filter(x => x.id !== editId && !curDeps.includes(x.id))
     .filter(x => { const h = [x.name, x.location, ...(x.ips || []).map(i => i.ip)].filter(Boolean).join(' ').toLowerCase(); return toks.every(t => h.includes(t)); })
     .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true })).slice(0, 8);
   list.classList.remove('hidden');
@@ -710,6 +723,7 @@ function handleClick(e){
   const m = db.find(x => x.id === id);
   if (act === 'note') { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
   if (act === 'more') { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
+  if (act === 'scan') { openPgGroup(id); return; }
   if (act === 'ping' || act === 'vnc') {
     const h = b.dataset.ip;
     if (!SAFE.test(h)) { toast('Adres zawiera niedozwolone znaki'); return; }
@@ -816,7 +830,7 @@ function addDraftCmd(){
 function closeCfg(){ $('cfgModal').classList.add('hidden'); $('cfgModal').classList.remove('flex'); applyTheme(); }  // applyTheme cofa niezapisany podgląd
 $('cfgBtn').onclick = () => {
   $('cTheme').value = cfg.theme;
-  $('sPing').checked = cfg.show.ping; $('sVnc').checked = cfg.show.vnc; $('sWeb').checked = cfg.show.web;
+  $('sPing').checked = cfg.show.ping; $('sVnc').checked = cfg.show.vnc; $('sWeb').checked = cfg.show.web; $('sScan').checked = cfg.show.scan;
   $('cPing').value = cfg.pingArgs; $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort;
   draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
   draftCats = cfg.cats.map(c => ({ ...c })); renderCats();
@@ -856,7 +870,7 @@ $('cfgForm').onsubmit = e => {
   if (!PING_OK.test(a)) { toast('Parametry ping zawierają niedozwolone znaki'); return; }
   const oldCats = cfg.cats;
   cfg = { sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds, theme: $('cTheme').value,
-         show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked }, cats: draftCats };
+         show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked, scan: $('sScan').checked }, cats: draftCats };
   // maszyny z usuniętych kategorii trafiają do „Inne”
   const keep = new Set(draftCats.map(c => c.id));
   const gone = new Set(oldCats.filter(c => !keep.has(c.id)).map(c => c.id));
@@ -938,28 +952,57 @@ $('bkGo').onclick = () => {
   save(); closeBk(); render(); toast('Zaimportowano ' + items.length + ' maszyn');
 };
 
-/* ===== Ping kluczowych maszyn (skrypt PowerShell) ===== */
+/* ===== Ping kluczowych maszyn / grupy (skrypt PowerShell) ===== */
 $('icoPg').innerHTML = svg(I.pulse);
 const psq = s => "'" + String(s).replace(/[\r\n]+/g, ' ').replace(/'/g, "''") + "'";   // literał PowerShell
-function buildPingScript(pause){
-  const rows = db.filter(m => m.key).sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true }))
-    .map(m => ({ host: m.name, ip: (m.ips || []).find(x => x.ip)?.ip || '' }));
-  const wh = Math.max(4, ...rows.map(r => r.host.length));
+
+function buildPingScriptCore(rows, pause, title){
+  const hasGroups = rows.some(r => r.group);
+  const hasDesc   = rows.some(r => r.desc);
+  const wh = Math.max(4,  ...rows.map(r => r.host.length));
   const wi = Math.max(15, ...rows.map(r => r.ip.length));
-  return [
-    '# Ping kluczowych maszyn (wygenerowano w Rejestrze maszyn)',
+  const wd = hasDesc ? Math.max(4, ...rows.map(r => (r.desc || '').length)) : 0;
+
+  const fmtHead = hasDesc
+    ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f 'HOST', 'IP', 'DESC', 'DELAY'`
+    : `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`;
+  const fmtLine = hasDesc
+    ? `  $line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
+    : `  $line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
+
+  const lines = [
+    `# ${title} (wygenerowano w Rejestrze maszyn)`,
     '$hosts = @(',
-    rows.map(r => `  @{ Host = ${psq(r.host)}; Ip = ${psq(r.ip)} }`).join(',\n'),
+    rows.map(r => {
+      const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
+      if (r.desc) parts.push(`Desc = ${psq(r.desc)}`);
+      if (r.group) parts.push(`Group = ${psq(r.group)}`);
+      return `  @{ ${parts.join('; ')} }`;
+    }).join(',\n'),
     ')',
     '# wszystkie pingi startuja rownolegle, limit 1500 ms',
     '$jobs = foreach ($h in $hosts) {',
     '  $target = if ($h.Ip) { $h.Ip } else { $h.Host }   # IP, a gdy brak - nazwa hosta',
     '  $task = $null',
     '  try { $task = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($target, 1500) } catch {}',
-    '  [pscustomobject]@{ Host = $h.Host; Ip = $h.Ip; Task = $task }',
+    (() => {
+      const fields = ['Host = $h.Host', 'Ip = $h.Ip'];
+      if (hasDesc)   fields.push('Desc = $h.Desc');
+      if (hasGroups) fields.push('Group = $h.Group');
+      fields.push('Task = $task');
+      return `  [pscustomobject]@{ ${fields.join('; ')} }`;
+    })(),
     '}',
-    `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`,
+    fmtHead,
+    ...(hasGroups ? ['$lastGroup = $null'] : []),
     'foreach ($j in $jobs) {',
+    ...(hasGroups ? [
+      '  if ($j.Group -and $j.Group -ne $lastGroup) {',
+      "    if ($lastGroup -ne $null) { Write-Host '' }",
+      '    Write-Host "=== $($j.Group) ===" -ForegroundColor Cyan',
+      '    $lastGroup = $j.Group',
+      '  }'
+    ] : []),
     "  $delay = 'OFFLINE'; $ip = $j.Ip",
     '  try {',
     '    $r = $j.Task.Result',
@@ -969,31 +1012,98 @@ function buildPingScript(pause){
     '    }',
     '  } catch {}',
     "  if (-not $ip) { $ip = '-' }",
-    `  $line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`,
+    fmtLine,
     "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
     '}',
     ...(pause ? ["Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'"] : [])
-  ].join('\n');
+  ];
+  return lines.join('\n');
 }
+
+function buildPingScript(pause){
+  const rows = db.filter(m => m.key)
+    .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true }))
+    .map(m => {
+      const f = (m.ips || []).find(x => x.ip);
+      return { host: m.name, ip: f?.ip || '', desc: f?.label || '' };
+    });
+  return buildPingScriptCore(rows, pause, 'Ping kluczowych maszyn');
+}
+
+function buildGroupPingScript(id, pause){
+  const target = db.find(x => x.id === id);
+  if (!target) return '';
+  const M = new Map(db.map(m => [m.id, m]));
+  const rev = {};
+  db.forEach(m => (m.deps || []).forEach(d => (rev[d] ||= []).push(m)));
+
+  const rows = [], seen = new Set();
+  const add = (m, group) => {
+    if (!m) return;
+    const ips = (m.ips || []).filter(x => x.ip);
+    const entries = ips.length
+      ? ips.map(i => ({ host: m.name, ip: i.ip, desc: i.label || '', group }))
+      : [{ host: m.name, ip: '', desc: '', group }];
+    entries.forEach(e => {
+      const k = e.host + '|' + e.ip;
+      if (seen.has(k)) return;
+      seen.add(k); rows.push(e);
+    });
+  };
+
+  add(target, 'TA MASZYNA');
+  (target.deps || []).forEach(dId => add(M.get(dId), 'ZALEZY OD'));
+  (rev[id] || []).forEach(u => add(u, 'ZALEZY OD NIEJ'));
+
+  return buildPingScriptCore(rows, pause, `Ping grupy: ${target.name}`);
+}
+
+let pgMode = 'key', pgGroupId = null;
 function closePg(){ $('pgModal').classList.add('hidden'); $('pgModal').classList.remove('flex'); }
-$('pg').onclick = () => {
+function openPgKey(){
   const n = db.filter(m => m.key).length;
   if (!n) { toast('Brak kluczowych maszyn. Zaznacz je w edycji („Sprzęt kluczowy”).', 4000); return; }
+  pgMode = 'key'; pgGroupId = null;
+  $('pgTitle').textContent = 'Ping kluczowych maszyn';
   $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta. Plik .ps1 uruchom w PowerShell (może wymagać -ExecutionPolicy Bypass).`;
   $('pgText').value = buildPingScript(false);
   $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
-};
+}
+function openPgGroup(id){
+  const m = db.find(x => x.id === id);
+  if (!m) return;
+  pgMode = 'group'; pgGroupId = id;
+  const rev = {}; db.forEach(x => (x.deps || []).forEach(d => (rev[d] ||= []).push(x)));
+  const ipsN  = (m.ips  || []).filter(x => x.ip).length;
+  const depsN = (m.deps || []).filter(d => db.some(x => x.id === d)).length;
+  const revN  = (rev[id] || []).length;
+  const parts = [];
+  if (ipsN)  parts.push(`${ipsN} adr. IP`);
+  if (depsN) parts.push(`${depsN} zależności`);
+  if (revN)  parts.push(`${revN} zależnych`);
+  $('pgTitle').textContent = 'Ping grupy: ' + m.name;
+  $('pgHelp').textContent = `Maszyna: ${m.name}${parts.length ? ' (' + parts.join(', ') + ')' : ''}. Skrypt pinguje wszystkie adresy tej maszyny oraz maszyn, od których zależy, i tych, które zależą od niej.`;
+  $('pgText').value = buildGroupPingScript(id, false);
+  $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
+}
+$('pg').onclick = openPgKey;
 $('pgClose').onclick = closePg;
 $('pgModal').onclick = e => { if (e.target === $('pgModal')) closePg() };
 $('pgText').onclick = e => e.target.select();
-$('pgCopy').onclick = () => copy(buildPingScript(false), 'skrypt PowerShell');
+$('pgCopy').onclick = () => {
+  const s = pgMode === 'group' ? buildGroupPingScript(pgGroupId, false) : buildPingScript(false);
+  copy(s, 'skrypt PowerShell');
+};
 $('pgDl').onclick = () => {
   try {
-    // BOM + CRLF, żeby PowerShell poprawnie odczytał polskie znaki w nazwach
-    const body = '\ufeff' + buildPingScript(true).replace(/\n/g, '\r\n');
+    const s = pgMode === 'group' ? buildGroupPingScript(pgGroupId, true) : buildPingScript(true);
+    const body = '\ufeff' + s.replace(/\n/g, '\r\n');
+    const safe = pgMode === 'group'
+      ? 'ping-grupa-' + (db.find(x => x.id === pgGroupId)?.name || 'maszyna').replace(/[^\w.-]+/g, '_') + '.ps1'
+      : 'ping-kluczowe.ps1';
     const url = URL.createObjectURL(new Blob([body], { type: 'text/plain;charset=utf-8' }));
     const a = document.createElement('a');
-    a.href = url; a.download = 'ping-kluczowe.ps1';
+    a.href = url; a.download = safe;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
     toast('Pobieranie rozpoczęte. Jeśli nic się nie dzieje, użyj „Kopiuj skrypt”.', 3500);
@@ -1015,4 +1125,4 @@ render();
 </script>
 <script src="https://kamilowebski.github.io/hub/apps.js"></script>
 </body>
-</html>
+</html> 
