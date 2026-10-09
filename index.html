@@ -257,6 +257,22 @@
   <div class="max-h-[92vh] w-full max-w-2xl space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
     <h2 id="pgTitle" class="text-lg font-semibold text-slate-800">Ping kluczowych maszyn</h2>
     <p id="pgHelp" class="text-sm text-slate-500"></p>
+    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+      <label class="inline-flex items-center gap-2">
+        <input type="checkbox" id="pgLive" checked class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+        Odświeżaj na żywo
+      </label>
+      <label class="inline-flex items-center gap-2">
+        Co
+        <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        ms
+      </label>
+      <label class="inline-flex items-center gap-2">
+        Timeout ping
+        <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        ms
+      </label>
+    </div>
     <textarea id="pgText" rows="12" readonly spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
     <div class="flex flex-wrap justify-end gap-2">
       <button type="button" id="pgClose" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zamknij</button>
@@ -955,7 +971,8 @@ $('bkGo').onclick = () => {
 $('icoPg').innerHTML = svg(I.pulse);
 const psq = s => "'" + String(s).replace(/[\r\n]+/g, ' ').replace(/'/g, "''") + "'";   // literał PowerShell
 
-function buildPingScriptCore(rows, pause, title){
+function buildPingScriptCore(rows, opts = {}){
+  const { live = false, refreshMs = 1000, timeoutMs = 900, pause = false, title = 'Ping' } = opts;
   const hasGroups = rows.some(r => r.group);
   const hasDesc   = rows.some(r => r.desc);
   const wh = Math.max(4,  ...rows.map(r => r.host.length));
@@ -966,31 +983,31 @@ function buildPingScriptCore(rows, pause, title){
     ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f 'HOST', 'IP', 'DESC', 'DELAY'`
     : `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`;
   const fmtLine = hasDesc
-    ? `  $line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
-    : `  $line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
+    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
+    : `$line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
 
-  const lines = [
-    `# ${title} (wygenerowano w Rejestrze maszyn)`,
-    '$hosts = @(',
-    rows.map(r => {
-      const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
-      if (r.desc) parts.push(`Desc = ${psq(r.desc)}`);
-      if (r.group) parts.push(`Group = ${psq(r.group)}`);
-      return `  @{ ${parts.join('; ')} }`;
-    }).join(',\n'),
-    ')',
-    '# wszystkie pingi startuja rownolegle, limit 1500 ms',
+  const hostsBlock = rows.map(r => {
+    const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
+    if (r.desc)  parts.push(`Desc = ${psq(r.desc)}`);
+    if (r.group) parts.push(`Group = ${psq(r.group)}`);
+    return `  @{ ${parts.join('; ')} }`;
+  }).join(',\n');
+
+  const objFields = (() => {
+    const fields = ['Host = $h.Host', 'Ip = $h.Ip'];
+    if (hasDesc)   fields.push('Desc = $h.Desc');
+    if (hasGroups) fields.push('Group = $h.Group');
+    fields.push('Task = $task');
+    return `  [pscustomobject]@{ ${fields.join('; ')} }`;
+  })();
+
+  // wspólny blok: pingi równolegle + wypis wyników
+  const body = [
     '$jobs = foreach ($h in $hosts) {',
     '  $target = if ($h.Ip) { $h.Ip } else { $h.Host }   # IP, a gdy brak - nazwa hosta',
     '  $task = $null',
-    '  try { $task = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($target, 1500) } catch {}',
-    (() => {
-      const fields = ['Host = $h.Host', 'Ip = $h.Ip'];
-      if (hasDesc)   fields.push('Desc = $h.Desc');
-      if (hasGroups) fields.push('Group = $h.Group');
-      fields.push('Task = $task');
-      return `  [pscustomobject]@{ ${fields.join('; ')} }`;
-    })(),
+    '  try { $task = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($target, $pingMs) } catch {}',
+    objFields,
     '}',
     fmtHead,
     ...(hasGroups ? ['$lastGroup = $null'] : []),
@@ -1011,25 +1028,51 @@ function buildPingScriptCore(rows, pause, title){
     '    }',
     '  } catch {}',
     "  if (-not $ip) { $ip = '-' }",
-    fmtLine,
+    '  ' + fmtLine,
     "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
-    '}',
-    ...(pause ? ["Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'"] : [])
+    '}'
   ];
+
+  const lines = [`# ${title} (wygenerowano w Rejestrze maszyn)`];
+
+  if (live) {
+    lines.push('# Tryb na zywo - Ctrl+C aby zakonczyc', '');
+    lines.push('$hosts = @(', hostsBlock, ')', '');
+    lines.push(`$refreshMs = ${refreshMs}   # co ile ms odswiezac`,
+               `$pingMs    = ${timeoutMs}   # timeout pojedynczego pinga`, '');
+    lines.push('while ($true) {');
+    lines.push('  $sw = [System.Diagnostics.Stopwatch]::StartNew()');
+    lines.push('  Clear-Host');
+    lines.push(`  Write-Host ${psq(title)} -ForegroundColor White`);
+    lines.push("  Write-Host ('Odswiezanie co ' + $refreshMs + ' ms - Ctrl+C aby zakonczyc') -ForegroundColor DarkGray");
+    lines.push("  Write-Host ''");
+    lines.push('');
+    body.forEach(l => lines.push('  ' + l));
+    lines.push('');
+    lines.push('  $remain = $refreshMs - $sw.ElapsedMilliseconds');
+    lines.push('  if ($remain -gt 0) { Start-Sleep -Milliseconds $remain }');
+    lines.push('}');
+  } else {
+    lines.push('');
+    lines.push('$hosts = @(', hostsBlock, ')', '');
+    lines.push(`$pingMs = ${timeoutMs}   # timeout pojedynczego pinga`, '');
+    body.forEach(l => lines.push(l));
+    if (pause) lines.push('', "Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'");
+  }
   return lines.join('\n');
 }
 
-function buildPingScript(pause){
+function buildPingScript(opts = {}){
   const rows = db.filter(m => m.key)
     .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true }))
     .map(m => {
       const f = (m.ips || []).find(x => x.ip);
       return { host: m.name, ip: f?.ip || '', desc: f?.label || '' };
     });
-  return buildPingScriptCore(rows, pause, 'Ping kluczowych maszyn');
+  return buildPingScriptCore(rows, { ...opts, title: 'Ping kluczowych maszyn' });
 }
 
-function buildGroupPingScript(id, pause){
+function buildGroupPingScript(id, opts = {}){
   const target = db.find(x => x.id === id);
   if (!target) return '';
   const M = new Map(db.map(m => [m.id, m]));
@@ -1054,18 +1097,28 @@ function buildGroupPingScript(id, pause){
   (target.deps || []).forEach(dId => add(M.get(dId), 'ZALEZY OD'));
   (rev[id] || []).forEach(u => add(u, 'ZALEZY OD NIEJ'));
 
-  return buildPingScriptCore(rows, pause, `Ping grupy: ${target.name}`);
+  return buildPingScriptCore(rows, { ...opts, title: `Ping grupy: ${target.name}` });
 }
 
 let pgMode = 'key', pgGroupId = null;
+const pgOpts = () => ({
+  live:      $('pgLive').checked,
+  refreshMs: Math.min(60000, Math.max(300,  parseInt($('pgEvery').value,   10) || 1000)),
+  timeoutMs: Math.min(10000, Math.max(200,  parseInt($('pgTimeout').value, 10) || 900))
+});
+function pgBuild(pause = false){
+  const o = { ...pgOpts(), pause };
+  return pgMode === 'group' ? buildGroupPingScript(pgGroupId, o) : buildPingScript(o);
+}
+function renderPg(){ $('pgText').value = pgBuild(false); }
 function closePg(){ $('pgModal').classList.add('hidden'); $('pgModal').classList.remove('flex'); }
 function openPgKey(){
   const n = db.filter(m => m.key).length;
   if (!n) { toast('Brak kluczowych maszyn. Zaznacz je w edycji („Sprzęt kluczowy”).', 4000); return; }
   pgMode = 'key'; pgGroupId = null;
   $('pgTitle').textContent = 'Ping kluczowych maszyn';
-  $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta. Plik .ps1 uruchom w PowerShell (może wymagać -ExecutionPolicy Bypass).`;
-  $('pgText').value = buildPingScript(false);
+  $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta.`;
+  renderPg();
   $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
 }
 function openPgGroup(id){
@@ -1082,20 +1135,19 @@ function openPgGroup(id){
   if (revN)  parts.push(`${revN} zależnych`);
   $('pgTitle').textContent = 'Ping grupy: ' + m.name;
   $('pgHelp').textContent = `Maszyna: ${m.name}${parts.length ? ' (' + parts.join(', ') + ')' : ''}. Skrypt pinguje wszystkie adresy tej maszyny oraz maszyn, od których zależy, i tych, które zależą od niej.`;
-  $('pgText').value = buildGroupPingScript(id, false);
+  renderPg();
   $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
 }
 $('pg').onclick = openPgKey;
 $('pgClose').onclick = closePg;
 $('pgModal').onclick = e => { if (e.target === $('pgModal')) closePg() };
 $('pgText').onclick = e => e.target.select();
-$('pgCopy').onclick = () => {
-  const s = pgMode === 'group' ? buildGroupPingScript(pgGroupId, false) : buildPingScript(false);
-  copy(s, 'skrypt PowerShell');
-};
+['pgLive','pgEvery','pgTimeout'].forEach(id => $(id).oninput = renderPg);
+$('pgCopy').onclick = () => copy(pgBuild(false), 'skrypt PowerShell');
 $('pgDl').onclick = () => {
   try {
-    const s = pgMode === 'group' ? buildGroupPingScript(pgGroupId, true) : buildPingScript(true);
+    const o = pgOpts();
+    const s = pgBuild(!o.live);          // pauza „Naciśnij Enter” tylko w trybie one-shot
     const body = '\ufeff' + s.replace(/\n/g, '\r\n');
     const safe = pgMode === 'group'
       ? 'ping-grupa-' + (db.find(x => x.id === pgGroupId)?.name || 'maszyna').replace(/[^\w.-]+/g, '_') + '.ps1'
@@ -1124,4 +1176,4 @@ render();
 </script>
 <script src="https://kamilowebski.github.io/hub/apps.js"></script>
 </body>
-</html> 
+</html>
