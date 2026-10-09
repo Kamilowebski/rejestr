@@ -71,6 +71,7 @@
     <div class="flex flex-wrap gap-2">
       <button id="add" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoAdd"></span>Dodaj</button>
       <button id="view" class="hidden items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:inline-flex"></button>
+      <button id="pg" title="Pinguj kluczowe maszyny (skrypt PowerShell)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoPg"></span><span class="hidden sm:inline">Pinguj kluczowe</span></button>
       <button id="exp" title="Eksport danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoExp"></span><span class="hidden sm:inline">Eksport</span></button>
       <button id="imp" title="Import danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
       <button id="cfgBtn" title="Ustawienia" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
@@ -153,6 +154,7 @@
       <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
       <div id="depList" class="mt-1 hidden max-h-44 overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm"></div>
     </div>
+    <label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="fKey" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Sprzęt kluczowy <span class="text-xs text-slate-500">(uwzględniany w „Pinguj kluczowe”)</span></label>
     <div>
       <label class="mb-1 block text-sm font-medium text-slate-700" for="fNote">Notatka</label>
       <textarea id="fNote" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
@@ -201,6 +203,15 @@
     </div>
     <p id="cPrev" class="break-all whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"></p>
     <div class="space-y-2 border-t border-slate-100 pt-4">
+      <div class="text-sm font-medium text-slate-700">Własne kategorie</div>
+      <p class="text-xs text-slate-500">Pojawiają się na liście typów, w filtrach i licznikach. Usunięcie kategorii przenosi jej maszyny do „Inne”.</p>
+      <div id="catList" class="space-y-1.5"></div>
+      <div class="flex gap-2">
+        <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <button type="button" id="catAdd" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Dodaj</button>
+      </div>
+    </div>
+    <div class="space-y-2 border-t border-slate-100 pt-4">
       <div class="text-sm font-medium text-slate-700">Własne komendy</div>
       <p class="text-xs text-slate-500">Zmienne: <span class="rounded bg-slate-100 px-1 font-mono">{host}</span> (nazwa lub IP, zależnie od przycisku), <span class="rounded bg-slate-100 px-1 font-mono">{name}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{ip}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{user}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{port}</span></p>
       <div id="cList" class="space-y-1.5"></div>
@@ -240,6 +251,20 @@
   </div>
 </div>
 
+<!-- Modal: skrypt pingu kluczowych maszyn -->
+<div id="pgModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
+  <div class="max-h-[92vh] w-full max-w-2xl space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
+    <h2 class="text-lg font-semibold text-slate-800">Ping kluczowych maszyn</h2>
+    <p id="pgHelp" class="text-sm text-slate-500"></p>
+    <textarea id="pgText" rows="12" readonly spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
+    <div class="flex flex-wrap justify-end gap-2">
+      <button type="button" id="pgClose" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zamknij</button>
+      <button type="button" id="pgCopy" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Kopiuj skrypt</button>
+      <button type="button" id="pgDl" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Pobierz .ps1</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal potwierdzenia (zamiast confirm(), który bywa blokowany w ramkach) -->
 <div id="cfmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
   <div class="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
@@ -258,7 +283,7 @@
 const KEY = 'machines_v1';          // klucz danych w localStorage
 const VIEW_KEY = 'view';            // klucz zapamiętanego widoku
 const CFG_KEY = 'machines_settings';  // klucz ustawień w localStorage
-const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [], theme: 'light', show: { ping: true, vnc: true, web: true } };  // ustawienia domyślne
+const CFG_DEFAULT = { sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [], theme: 'light', show: { ping: true, vnc: true, web: true }, cats: [] };  // ustawienia domyślne
 const UI_KEY = 'machines_ui';        // zapamiętane wyszukiwanie i sortowanie
 const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
 
@@ -279,7 +304,10 @@ const I = {
   pin:   '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   term:  '<path d="M5 8l4 4-4 4M12 17h7"/>',
   gear:  '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>'
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  star:  '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  tag:   '<path d="M20 13l-7 7-9-9V4h7z"/><circle cx="8" cy="8" r="1.2"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>'
 };
 
 /* Typy maszyn: [etykieta, ikona] */
@@ -312,6 +340,16 @@ try { cfg = { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem(CFG_KEY)) } } c
 if (!Array.isArray(cfg.cmds)) cfg.cmds = [];
 if (!['light','dark','auto'].includes(cfg.theme)) cfg.theme = 'light';
 cfg.show = { ...CFG_DEFAULT.show, ...(cfg.show || {}) };   // widoczność przycisków
+cfg.cats = Array.isArray(cfg.cats) ? cfg.cats.filter(c => c && /^c_\w+$/.test(c.id) && c.name).map(c => ({ id: c.id, name: String(c.name) })) : [];
+
+/* własne kategorie dołączane do listy typów ("Inne" zawsze na końcu) */
+function syncTypes(){
+  const other = TYPES.other;
+  Object.keys(TYPES).filter(k => k.startsWith('c_') || k === 'other').forEach(k => delete TYPES[k]);
+  cfg.cats.forEach(c => TYPES[c.id] = [c.name, I.tag]);
+  TYPES.other = other;
+}
+syncTypes();
 
 /* motyw: klasa .dark na <html> (style w <style>) */
 const mqDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : { matches: false };
@@ -432,6 +470,7 @@ function depChips(m, M, rev){
 
 const nameBlock = m => `<div class="flex items-center gap-1.5">
   <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="min-w-0 break-all text-left font-semibold text-slate-800 hover:text-blue-600">${esc(m.name)}</button>
+  ${m.key ? `<span title="Sprzęt kluczowy" class="shrink-0 text-blue-600">${svg(I.star,'h-3.5 w-3.5')}</span>` : ''}
   ${tools(m.name, false, m, 'name')}
 </div>`;
 
@@ -458,7 +497,7 @@ function row(m, M, rev){
       <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-5 w-5')}</span>
       <div class="min-w-0 flex-1">${nameBlock(m)}${noteHtml(m, 'mt-0.5')}</div>
     </div></td>
-    <td class="px-4 py-3 text-slate-600">${T(m)[0]}</td>
+    <td class="px-4 py-3 text-slate-600">${esc(T(m)[0])}</td>
     <td class="px-4 py-3">${locBadge(m) || '<span class="text-slate-400">—</span>'}</td>
     <td class="px-4 py-3">${ips || '<span class="text-slate-400">—</span>'}</td>
     <td class="px-4 py-3"><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">—</span>'}</div></td>
@@ -474,7 +513,7 @@ function card(m, M, rev){
       <div class="min-w-0 flex-1">
         ${nameBlock(m)}
         <div class="mt-1.5 flex flex-wrap gap-1.5">
-          <span class="${BADGE} bg-slate-100 text-slate-700">${T(m)[0]}</span>${locBadge(m)}
+          <span class="${BADGE} bg-slate-100 text-slate-700">${esc(T(m)[0])}</span>${locBadge(m)}
         </div>
       </div>
       <div class="flex shrink-0">${actions(m)}</div>
@@ -502,7 +541,7 @@ function render(){
   $('loc').innerHTML = '<option value="">Wszystkie lokalizacje</option>' + locs.map(l => `<option>${esc(l)}</option>`).join('');
   $('loc').value = locs.includes(lv) ? lv : '';
   $('typ').innerHTML = '<option value="">Wszystkie typy</option>' +
-    Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+    Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${esc(v[0])}</option>`).join('');
   $('typ').value = TYPES[tv] ? tv : '';
   $('locList').innerHTML = locs.map(l => `<option value="${esc(l)}">`).join('');
 
@@ -520,7 +559,7 @@ function render(){
   $('stats').innerHTML =
     `<button data-type="" class="${chip(!tf)}">Wszystkie ${db.length}</button>` +
     Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k,v]) =>
-      `<button data-type="${k}" class="${chip(tf === k)}">${v[0]} ${cnt[k]}</button>`).join('') + dupChip;
+      `<button data-type="${k}" class="${chip(tf === k)}">${esc(v[0])} ${cnt[k]}</button>`).join('') + dupChip;
 
   // widok: kafelki / tabela (na telefonie zawsze kafelki)
   const tiles = view === 'tiles' || innerWidth < 768;
@@ -599,10 +638,11 @@ function openModal(m){
   $('mtitle').textContent = m ? 'Edytuj maszynę' : 'Nowa maszyna';
   $('fId').value   = m?.id || '';
   $('fName').value = m?.name || '';
-  $('fType').innerHTML = Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]}</option>`).join('');
+  $('fType').innerHTML = Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${esc(v[0])}</option>`).join('');
   $('fType').value = m?.type || 'pc';
   $('fLoc').value  = m?.location || '';
   $('fNote').value = m?.note || '';
+  $('fKey').checked = !!m?.key;
   $('ips').innerHTML = '';
   ((m?.ips?.length) ? m.ips : [{ ip: '', label: '' }]).forEach(x => $('ips').appendChild(ipRow(x.ip, x.label)));
   editId = m?.id || '';
@@ -638,7 +678,7 @@ $('depChips').onclick = e => {
   curDeps = curDeps.filter(id => id !== b.dataset.rmdep); renderDeps();
 };
 $('modal').onclick = e => { if (e.target === $('modal')) closeModal() };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCfg(); closeBk(); closeCfm(false) } });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCfg(); closeBk(); closePg(); closeCfm(false) } });
 
 $('form').onsubmit = e => {
   e.preventDefault();
@@ -652,7 +692,8 @@ $('form').onsubmit = e => {
     type: $('fType').value,
     location: $('fLoc').value.trim(),
     ips, deps: [...curDeps],
-    note: $('fNote').value.trim()
+    note: $('fNote').value.trim(),
+    key: $('fKey').checked
   };
   if (id) db[db.findIndex(m => m.id === id)] = obj; else db.push(obj);
   save(); closeModal(); render();
@@ -736,6 +777,21 @@ $('cfmModal').onclick = e => { if (e.target === $('cfmModal')) closeCfm(false) }
 /* ===== Ustawienia ===== */
 $('icoCfg').innerHTML = svg(I.gear);
 let draftCmds = [];                                  // edytowana lista własnych komend
+let draftCats = [];                                  // edytowana lista własnych kategorii
+function renderCats(){
+  $('catList').innerHTML = draftCats.length ? draftCats.map((c, i) => `<div class="flex items-center gap-2">
+    <span class="text-slate-400">${svg(I.tag)}</span>
+    <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="min-w-0 flex-1 ${FIELD}">
+    <button type="button" data-delcat="${i}" title="Usuń kategorię" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>
+  </div>`).join('') : '<div class="text-xs text-slate-400">Brak własnych kategorii.</div>';
+}
+function addDraftCat(){
+  const n = $('catNew').value.trim();
+  if (!n) return false;
+  draftCats.push({ id: 'c_' + uid().replace(/[^a-z0-9]/gi, '').slice(0, 8), name: n });
+  $('catNew').value = ''; renderCats();
+  return true;
+}
 const PING_OK = /^[\w\s.\-:=\/]*$/;                   // dozwolone znaki w parametrach ping
 const TARGETS = { ip: 'IP', name: 'nazwa', both: 'IP i nazwa' };
 const cfgPreview = () => {
@@ -763,11 +819,19 @@ $('cfgBtn').onclick = () => {
   $('sPing').checked = cfg.show.ping; $('sVnc').checked = cfg.show.vnc; $('sWeb').checked = cfg.show.web;
   $('cPing').value = cfg.pingArgs; $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort;
   draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
+  draftCats = cfg.cats.map(c => ({ ...c })); renderCats();
   $('cfgModal').classList.remove('hidden'); $('cfgModal').classList.add('flex');
   $('cPing').focus();
 };
 ['cPing','cSsh','cPort'].forEach(id => $(id).oninput = cfgPreview);
 $('cTheme').onchange = () => applyTheme($('cTheme').value);   // podgląd na żywo
+$('catAdd').onclick = () => { if (!addDraftCat()) toast('Wpisz nazwę kategorii') };
+$('catList').oninput = e => { const i = e.target.dataset.catname; if (i !== undefined) draftCats[+i].name = e.target.value };
+$('catList').onclick = e => {
+  const b = e.target.closest('[data-delcat]');
+  if (!b) return;
+  draftCats.splice(+b.dataset.delcat, 1); renderCats();
+};
 $('cmdAdd').onclick = () => { if (!addDraftCmd()) toast('Podaj etykietę i komendę') };
 $('cList').onclick = e => {
   const b = e.target.closest('[data-delcmd]');
@@ -779,18 +843,31 @@ $('cfgModal').onclick = e => { if (e.target === $('cfgModal')) closeCfg() };
 $('cfgForm').onsubmit = e => {
   e.preventDefault();
   addDraftCmd();                                     // dopisz komendę wpisaną, a niedodaną
+  addDraftCat();                                     // dopisz kategorię wpisaną, a niedodaną
+  draftCats = draftCats.map(c => ({ ...c, name: c.name.trim() })).filter(c => c.name);
+  const used = new Set(Object.entries(TYPES).filter(([k]) => !k.startsWith('c_')).map(([, v]) => v[0].toLowerCase()));
+  for (const c of draftCats) {
+    if (used.has(c.name.toLowerCase())) { toast('Kategoria „' + c.name + '” już istnieje'); return; }
+    used.add(c.name.toLowerCase());
+  }
   const u = $('cSsh').value.trim(), p = parseInt($('cPort').value, 10), a = $('cPing').value.trim();
   if (u && !/^[\w.\-]+$/.test(u)) { toast('Login zawiera niedozwolone znaki'); return; }
   if (!(p >= 1 && p <= 65535)) { toast('Port musi być z zakresu 1–65535'); return; }
   if (!PING_OK.test(a)) { toast('Parametry ping zawierają niedozwolone znaki'); return; }
+  const oldCats = cfg.cats;
   cfg = { sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds, theme: $('cTheme').value,
-         show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked } };
+         show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked }, cats: draftCats };
+  // maszyny z usuniętych kategorii trafiają do „Inne”
+  const keep = new Set(draftCats.map(c => c.id));
+  const gone = new Set(oldCats.filter(c => !keep.has(c.id)).map(c => c.id));
+  if (gone.size) { db.forEach(m => { if (gone.has(m.type)) m.type = 'other' }); save(); }
+  syncTypes();
   try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
   closeCfg(); render(); toast('Zapisano ustawienia');
 };
 
 /* ===== Kopia zapasowa (okno z podglądem JSON – działa też w ramkach) ===== */
-const bkJson = () => JSON.stringify(db, null, 1);
+const bkJson = () => JSON.stringify({ version: 2, machines: db, cats: cfg.cats }, null, 1);
 function openBk(mode){
   const exp = mode === 'exp';
   $('bkTitle').textContent = exp ? 'Eksport danych' : 'Import danych';
@@ -833,9 +910,17 @@ $('file').onchange = () => {
   $('file').value = '';
 };
 $('bkGo').onclick = () => {
-  let d;
-  try { d = JSON.parse($('bkText').value) } catch(e){ toast('To nie jest poprawny JSON'); return; }
-  if (!Array.isArray(d)) { toast('Oczekiwano listy maszyn (JSON w nawiasach [ ])'); return; }
+  let raw;
+  try { raw = JSON.parse($('bkText').value) } catch(e){ toast('To nie jest poprawny JSON'); return; }
+  const d = Array.isArray(raw) ? raw : raw?.machines;     // starszy format: sama lista maszyn
+  if (!Array.isArray(d)) { toast('Nie znaleziono listy maszyn w danych'); return; }
+  // własne kategorie z kopii (dopisz brakujące)
+  if (Array.isArray(raw?.cats)) {
+    raw.cats.filter(c => c && /^c_\w+$/.test(c.id) && c.name && !cfg.cats.some(x => x.id === c.id))
+      .forEach(c => cfg.cats.push({ id: c.id, name: String(c.name) }));
+    syncTypes();
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
+  }
   // normalizacja importowanych danych
   const items = d.filter(x => x && typeof x === 'object' && x.name).map(x => ({
     id: x.id ? String(x.id) : uid(),
@@ -844,12 +929,75 @@ $('bkGo').onclick = () => {
     location: String(x.location || ''),
     ips: Array.isArray(x.ips) ? x.ips.filter(i => i && i.ip).map(i => ({ ip: String(i.ip), label: String(i.label || '') })) : [],
     deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
-    note: String(x.note || '')
+    note: String(x.note || ''),
+    key: !!x.key
   }));
   if (!items.length) { toast('Brak poprawnych maszyn w danych'); return; }
   if ($('bkMode').value === 'replace') db = items;
   else { const M = new Map(db.map(m => [m.id, m])); items.forEach(m => M.set(m.id, m)); db = [...M.values()]; }
   save(); closeBk(); render(); toast('Zaimportowano ' + items.length + ' maszyn');
+};
+
+/* ===== Ping kluczowych maszyn (skrypt PowerShell) ===== */
+$('icoPg').innerHTML = svg(I.pulse);
+const psq = s => "'" + String(s).replace(/[\r\n]+/g, ' ').replace(/'/g, "''") + "'";   // literał PowerShell
+function buildPingScript(pause){
+  const rows = db.filter(m => m.key).sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true }))
+    .map(m => ({ host: m.name, ip: (m.ips || []).find(x => x.ip)?.ip || '' }));
+  const wh = Math.max(4, ...rows.map(r => r.host.length));
+  const wi = Math.max(15, ...rows.map(r => r.ip.length));
+  return [
+    '# Ping kluczowych maszyn (wygenerowano w Rejestrze maszyn)',
+    '$hosts = @(',
+    rows.map(r => `  @{ Host = ${psq(r.host)}; Ip = ${psq(r.ip)} }`).join(',\n'),
+    ')',
+    '# wszystkie pingi startuja rownolegle, limit 1500 ms',
+    '$jobs = foreach ($h in $hosts) {',
+    '  $target = if ($h.Ip) { $h.Ip } else { $h.Host }   # IP, a gdy brak - nazwa hosta',
+    '  $task = $null',
+    '  try { $task = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($target, 1500) } catch {}',
+    '  [pscustomobject]@{ Host = $h.Host; Ip = $h.Ip; Task = $task }',
+    '}',
+    `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`,
+    'foreach ($j in $jobs) {',
+    "  $delay = 'OFFLINE'; $ip = $j.Ip",
+    '  try {',
+    '    $r = $j.Task.Result',
+    "    if ($r.Status -eq 'Success') {",
+    '      $delay = "$($r.RoundtripTime) ms"',
+    '      if (-not $ip) { $ip = $r.Address.IPAddressToString }',
+    '    }',
+    '  } catch {}',
+    "  if (-not $ip) { $ip = '-' }",
+    `  $line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`,
+    "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
+    '}',
+    ...(pause ? ["Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'"] : [])
+  ].join('\n');
+}
+function closePg(){ $('pgModal').classList.add('hidden'); $('pgModal').classList.remove('flex'); }
+$('pg').onclick = () => {
+  const n = db.filter(m => m.key).length;
+  if (!n) { toast('Brak kluczowych maszyn. Zaznacz je w edycji („Sprzęt kluczowy”).', 4000); return; }
+  $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta. Plik .ps1 uruchom w PowerShell (może wymagać -ExecutionPolicy Bypass).`;
+  $('pgText').value = buildPingScript(false);
+  $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
+};
+$('pgClose').onclick = closePg;
+$('pgModal').onclick = e => { if (e.target === $('pgModal')) closePg() };
+$('pgText').onclick = e => e.target.select();
+$('pgCopy').onclick = () => copy(buildPingScript(false), 'skrypt PowerShell');
+$('pgDl').onclick = () => {
+  try {
+    // BOM + CRLF, żeby PowerShell poprawnie odczytał polskie znaki w nazwach
+    const body = '\ufeff' + buildPingScript(true).replace(/\n/g, '\r\n');
+    const url = URL.createObjectURL(new Blob([body], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ping-kluczowe.ps1';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Pobieranie rozpoczęte. Jeśli nic się nie dzieje, użyj „Kopiuj skrypt”.', 3500);
+  } catch(e){ toast('Pobieranie niedostępne, użyj „Kopiuj skrypt”', 3500) }
 };
 
 /* ===== Start ===== */
