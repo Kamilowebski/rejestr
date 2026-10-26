@@ -3,34 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Rejestr maszyn — kamilowebski.github.io</title>
+<title>Rejestr maszyn</title>
 
-<!-- SEO -->
-<meta name="description" content="Rejestr maszyn — lekki, lokalny spis komputerów, drukarek, kamer i innych urządzeń w sieci. Zależności, adresy IP, lokalizacje, własne komendy, tryb dzień/noc.">
-<meta name="keywords" content="rejestr maszyn, inwentarz, sieć, IP, zależności, monitoring, kamilowebski">
+<meta name="description" content="Rejestr maszyn — lokalny spis urządzeń sieciowych z adresami IP, zależnościami, lokalizacjami i szybkimi komendami.">
+<meta name="keywords" content="rejestr maszyn, inwentarz, sieć, IP, zależności, monitoring">
 <meta name="author" content="Kamil Owębski">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="color-scheme" content="light dark">
-<link rel="canonical" href="https://kamilowebski.github.io/">
+<meta name="theme-color" content="#f8fafc">
 
-<!-- Open Graph -->
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Rejestr maszyn">
 <meta property="og:title" content="Rejestr maszyn">
-<meta property="og:description" content="Lokalny rejestr urządzeń sieciowych z adresami IP, zależnościami i szybkimi komendami.">
-<meta property="og:url" content="https://kamilowebski.github.io/">
+<meta property="og:description" content="Lokalny rejestr urządzeń sieciowych z adresami IP i zależnościami.">
 <meta property="og:locale" content="pl_PL">
 
-<!-- Twitter -->
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Rejestr maszyn">
-<meta name="twitter:description" content="Lokalny rejestr urządzeń sieciowych z adresami IP, zależnościami i szybkimi komendami.">
-
-<meta name="theme-color" content="#f4f7f9">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Crect x='20' y='22' width='60' height='16' rx='3' fill='white'/%3E%3Crect x='20' y='42' width='60' height='16' rx='3' fill='white'/%3E%3Crect x='20' y='62' width='60' height='16' rx='3' fill='white'/%3E%3Ccircle cx='71' cy='30' r='3.2' fill='%232563eb'/%3E%3Ccircle cx='71' cy='50' r='3.2' fill='%232563eb'/%3E%3Ccircle cx='71' cy='70' r='3.2' fill='%232563eb'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='14' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='20' width='18' height='5' rx='1.5' fill='white'/%3E%3C/svg%3E">
 
 <script>
-/* Motyw ustawiany od razu — bez mignięcia */
 try {
   var s = JSON.parse(localStorage.getItem('machines_settings')) || {};
   var t = s.theme;
@@ -39,1543 +28,227 @@ try {
 } catch(e){}
 </script>
 
-<style>
-/* =========================================================
-   Zmienne motywu
-   ========================================================= */
-:root{
-  --bg:#f4f7f9; --panel:#ffffff; --bg-subtle:#eef2f7; --bg-muted:#e2e8f0;
-  --text:#1f2937; --text-emphasis:#111827; --text-muted:#6b7280; --text-faint:#9ca3af;
-  --border:#e5e7eb; --border-strong:#d1d5db;
-  --primary:#2563eb; --primary-hover:#1d4ed8; --primary-subtle:#dbeafe; --primary-text:#1e40af;
-  --danger:#dc2626; --danger-hover:#b91c1c; --danger-subtle:#fee2e2; --danger-text:#991b1b;
-  --warning:#d97706; --warning-hover:#b45309; --warning-subtle:#fef3c7; --warning-text:#92400e;
-  --info-subtle:#e0f2fe; --info-text:#075985;
-  --success:#16a34a;
-  --emphasis:#111827;
-  --shadow-sm:0 1px 2px rgba(15,23,42,.05);
-  --shadow:0 1px 3px rgba(15,23,42,.1),0 1px 2px rgba(15,23,42,.06);
-  --shadow-lg:0 10px 15px -3px rgba(15,23,42,.12),0 4px 6px -2px rgba(15,23,42,.06);
-  --radius:8px; --radius-lg:12px;
-}
-[data-theme="dark"]{
-  --bg:#0f172a; --panel:#1e293b; --bg-subtle:#1a2438; --bg-muted:#334155;
-  --text:#e2e8f0; --text-emphasis:#f1f5f9; --text-muted:#94a3b8; --text-faint:#64748b;
-  --border:#334155; --border-strong:#475569;
-  --primary:#3b82f6; --primary-hover:#60a5fa; --primary-subtle:#1e3a5f; --primary-text:#93c5fd;
-  --danger:#ef4444; --danger-hover:#f87171; --danger-subtle:#7f1d1d; --danger-text:#fca5a5;
-  --warning:#f59e0b; --warning-hover:#fbbf24; --warning-subtle:#78350f; --warning-text:#fcd34d;
-  --info-subtle:#0c4a6e; --info-text:#7dd3fc;
-  --emphasis:#f1f5f9;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.3);
-  --shadow:0 1px 3px rgba(0,0,0,.4),0 1px 2px rgba(0,0,0,.3);
-  --shadow-lg:0 10px 15px -3px rgba(0,0,0,.5),0 4px 6px -2px rgba(0,0,0,.3);
-}
-
-/* =========================================================
-   Reset / baza
-   ========================================================= */
-*,*::before,*::after{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0; min-height:100vh;
-  background:var(--bg); color:var(--text);
-  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  font-size:14px; line-height:1.5;
-  -webkit-font-smoothing:antialiased;
-  transition:background-color .2s, color .2s;
-}
-body.modal-open{overflow:hidden}
-:where(button:not(.btn)){background:none;border:0;padding:0;color:inherit;font:inherit;text-align:inherit;cursor:pointer}
-:where(h1,h2,p){margin:0}
-a{color:var(--primary);text-decoration:none}
-a.mini{text-decoration:none}
-
-/* =========================================================
-   Utility — display / flex
-   ========================================================= */
-.d-none{display:none!important}
-.d-block{display:block!important}
-.d-flex{display:flex!important}
-.d-inline-flex{display:inline-flex!important}
-.d-grid{display:grid!important}
-.flex-wrap{flex-wrap:wrap}
-.flex-nowrap{flex-wrap:nowrap}
-.flex-column{flex-direction:column}
-.flex-row{flex-direction:row}
-.flex-fill{flex:1 1 auto}
-.flex-shrink-0{flex-shrink:0}
-.flex-grow-1{flex-grow:1}
-.align-items-start{align-items:flex-start}
-.align-items-center{align-items:center}
-.align-items-end{align-items:flex-end}
-.align-items-baseline{align-items:baseline}
-.align-top{vertical-align:top}
-.justify-content-start{justify-content:flex-start}
-.justify-content-center{justify-content:center}
-.justify-content-end{justify-content:flex-end}
-.justify-content-between{justify-content:space-between}
-.vstack{display:flex;flex-direction:column;gap:.5rem}
-.hstack{display:flex;flex-direction:row;gap:.5rem;align-items:center}
-
-/* gap */
-.gap-0{gap:0}
-.gap-1{gap:.25rem}
-.gap-2{gap:.5rem}
-.gap-3{gap:1rem}
-.gap-4{gap:1.5rem}
-.gap-x-3{column-gap:1rem}
-.gap-y-2{row-gap:.5rem}
-
-/* spacing */
-.mt-0{margin-top:0}
-.mt-1{margin-top:.25rem}
-.mt-2{margin-top:.5rem}
-.mt-3{margin-top:1rem}
-.mb-1{margin-bottom:.25rem}
-.mb-2{margin-bottom:.5rem}
-.mb-3{margin-bottom:1rem}
-.ms-1{margin-left:.25rem}
-.me-1{margin-right:.25rem}
-.mr-1{margin-right:.25rem}
-.mx-auto{margin-left:auto;margin-right:auto}
-.p-0{padding:0}
-.p-1{padding:.25rem}
-.p-2{padding:.5rem}
-.p-3{padding:1rem}
-.p-5{padding:3rem}
-.px-1{padding-left:.25rem;padding-right:.25rem}
-.px-2{padding-left:.5rem;padding-right:.5rem}
-.px-3{padding-left:1rem;padding-right:1rem}
-.py-1{padding-top:.25rem;padding-bottom:.25rem}
-.py-2{padding-top:.5rem;padding-bottom:.5rem}
-.py-3{padding-top:1rem;padding-bottom:1rem}
-.py-4{padding-top:1.5rem;padding-bottom:1.5rem}
-.pt-1{padding-top:.25rem}
-.pt-2{padding-top:.5rem}
-.pt-3{padding-top:1rem}
-.pb-2{padding-bottom:.5rem}
-.w-100{width:100%}
-.w-25{width:25%}
-.w-50{width:50%}
-.mw-100{max-width:100%}
-.minw0{min-width:0}
-.minw220{min-width:220px}
-.minw980{min-width:980px}
-.mh44{max-height:11rem}
-.mw-100{max-width:100%}
-.mx-auto{margin-left:auto;margin-right:auto}
-.w20{width:5rem!important}
-.w32{width:8rem!important}
-
-/* =========================================================
-   Utility — typografia
-   ========================================================= */
-.text-start{text-align:left}
-.text-center{text-align:center}
-.text-end{text-align:right}
-.text-nowrap{white-space:nowrap}
-.text-truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.text-uppercase{text-transform:uppercase}
-.small{font-size:.875rem}
-.fs-4{font-size:1.25rem;line-height:1.3}
-.fs-5{font-size:1.05rem;line-height:1.35}
-.fw-medium{font-weight:500}
-.fw-semibold{font-weight:600}
-.fw-bold{font-weight:700}
-.font-monospace{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.user-select-none{user-select:none}
-.pre-wrap{white-space:pre-wrap}
-.brk{word-break:break-all}
-.ox{overflow-x:auto}
-.tfix{table-layout:fixed}
-.cp{cursor:pointer}
-.tx-xs{font-size:.75rem}
-.tx-11{font-size:11px}
-.tx-10{font-size:10px}
-.text-body{color:var(--text)}
-.text-body-secondary{color:var(--text-muted)}
-.text-body-tertiary{color:var(--text-faint)}
-.text-body-emphasis{color:var(--text-emphasis)}
-.text-primary{color:var(--primary)}
-.text-primary-emphasis{color:var(--primary-text)}
-.text-info-emphasis{color:var(--info-text)}
-.text-warning-emphasis{color:var(--warning-text)}
-.text-danger{color:var(--danger)}
-.text-success{color:var(--success)}
-
-/* =========================================================
-   Utility — tła, obramowania, cienie
-   ========================================================= */
-.bg-body{background:var(--bg)}
-.bg-body-secondary{background:var(--bg-muted)}
-.bg-body-tertiary{background:var(--bg-subtle)}
-.bg-body-emphasis{background:var(--text-emphasis)}
-.bg-primary-subtle{background:var(--primary-subtle)}
-.bg-warning-subtle{background:var(--warning-subtle)}
-.bg-info-subtle{background:var(--info-subtle)}
-.bg-danger-subtle{background:var(--danger-subtle)}
-.bg-secondary{background:var(--bg-muted)}
-.border{border:1px solid var(--border)}
-.border-top{border-top:1px solid var(--border)}
-.border-bottom{border-bottom:1px solid var(--border)}
-.border-warning{border-color:var(--warning)!important}
-.rounded{border-radius:var(--radius)}
-.rounded-1{border-radius:4px}
-.rounded-2{border-radius:6px}
-.rounded-3{border-radius:10px}
-.rounded-pill{border-radius:50rem!important}
-.shadow-sm{box-shadow:var(--shadow-sm)}
-.shadow{box-shadow:var(--shadow)}
-.shadow-lg{box-shadow:var(--shadow-lg)}
-.lastb0:last-child{border-bottom:0!important}
-
-/* rozmiary ikon */
-.h-3{height:.75rem}.w-3{width:.75rem}
-.h-3\.5{height:.875rem}.w-3\.5{width:.875rem}
-.h-4{height:1rem}.w-4{width:1rem}
-.h-5{height:1.25rem}.w-5{width:1.25rem}
-.h-6{height:1.5rem}.w-6{width:1.5rem}
-
-/* =========================================================
-   Siatka aplikacji
-   ========================================================= */
-.wrap{max-width:min(100rem,100%);margin-left:auto;margin-right:auto}
-
-/* =========================================================
-   Komponenty — karty
-   ========================================================= */
-.card{
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  color:var(--text);
-}
-
-/* =========================================================
-   Komponenty — przyciski
-   ========================================================= */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
-  padding:.5rem 1rem;font-size:.875rem;font-weight:500;line-height:1.4;
-  border:1px solid transparent;border-radius:var(--radius);
-  cursor:pointer;text-decoration:none;white-space:nowrap;
-  transition:background-color .15s,color .15s,border-color .15s,box-shadow .15s;
-  background:var(--panel);color:var(--text);
-}
-.btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-.btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-.btn-primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
-.btn-outline-secondary{background:var(--panel);color:var(--text);border-color:var(--border-strong)}
-.btn-outline-secondary:hover{background:var(--bg-muted)}
-.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
-.btn-danger:hover{background:var(--danger-hover);border-color:var(--danger-hover)}
-.btn-warning{background:var(--warning);color:#fff;border-color:var(--warning)}
-.btn-warning:hover{background:var(--warning-hover);border-color:var(--warning-hover)}
-[data-theme="dark"] .btn-warning{color:#0f172a}
-.btn-outline-warning{background:transparent;color:var(--warning);border-color:var(--warning)}
-.btn-outline-warning:hover{background:var(--warning-subtle)}
-.btn-sm{padding:.25rem .75rem;font-size:.75rem;gap:.375rem;border-radius:var(--radius)}
-
-/* ikona-przycisk w tabeli / chipach */
-.ibtn{
-  display:inline-flex;align-items:center;justify-content:center;
-  border-radius:var(--radius);padding:.375rem;color:var(--text-muted);
-  background:transparent;border:0;cursor:pointer;
-  transition:background-color .15s,color .15s;
-}
-.ibtn:hover{background:var(--bg-muted);color:var(--text-emphasis)}
-.ibtn.hvd:hover{background:var(--danger-subtle);color:var(--danger)}
-
-/* chip mini (IP, komendy, kopiowanie) */
-.mini{
-  display:inline-flex;align-items:center;gap:.25rem;
-  border:1px solid var(--border);border-radius:6px;
-  background:var(--panel);padding:.125rem .375rem;
-  font:11px var(--font-mono, ui-monospace,SFMono-Regular,Menlo,monospace);
-  color:var(--text-muted);cursor:pointer;
-  transition:background-color .15s,color .15s,border-color .15s;
-}
-.mini:hover{background:var(--bg-subtle);color:var(--primary)}
-
-/* hoverowe warianty tła */
-.hv1:hover{background:var(--bg-subtle)}
-.hv2:hover{background:var(--bg-muted)}
-.hv3:hover{background:var(--bg-muted)}
-.hvt:hover{color:var(--text-emphasis)}
-.hvp:hover{color:var(--primary)}
-
-/* =========================================================
-   Komponenty — badge
-   ========================================================= */
-.badge{
-  display:inline-flex;align-items:center;gap:.25rem;
-  padding:.25rem .5rem;font-size:.75rem;font-weight:500;line-height:1;
-  border-radius:var(--radius);
-}
-
-/* =========================================================
-   Komponenty — formularze
-   ========================================================= */
-.form-control,.form-select{
-  display:block;width:100%;
-  padding:.5rem .75rem;font-size:.875rem;line-height:1.4;
-  color:var(--text);background-color:var(--panel);
-  border:1px solid var(--border-strong);border-radius:var(--radius);
-  transition:border-color .15s,box-shadow .15s,background-color .15s;
-  font-family:inherit;
-}
-.form-control:focus,.form-select:focus{
-  outline:none;border-color:var(--primary);
-  box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
-}
-.form-control::placeholder{color:var(--text-faint)}
-.form-select{
-  appearance:none;-webkit-appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right .75rem center;
-  padding-right:2rem;
-}
-[data-theme="dark"] .form-select{
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 5l3 3 3-3' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-.form-control-sm{padding:.25rem .5rem;font-size:.75rem;border-radius:6px}
-.form-check-input{
-  appearance:none;-webkit-appearance:none;
-  width:1rem;height:1rem;margin:0;flex-shrink:0;
-  border:1px solid var(--border-strong);border-radius:4px;
-  background:var(--panel);cursor:pointer;position:relative;
-  transition:background-color .15s,border-color .15s;
-}
-.form-check-input:checked{background:var(--primary);border-color:var(--primary)}
-.form-check-input:checked::after{
-  content:"";position:absolute;left:50%;top:45%;
-  width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;
-  transform:translate(-50%,-50%) rotate(45deg);
-}
-.form-check-input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
-
-/* =========================================================
-   Komponenty — tabela
-   ========================================================= */
-table{width:100%;border-collapse:collapse}
-th,td{vertical-align:top}
-thead th{font-weight:500}
-
-/* =========================================================
-   Komponenty — alert
-   ========================================================= */
-.alert{
-  padding:.75rem 1rem;border-radius:var(--radius-lg);
-  border:1px solid var(--warning);background:var(--warning-subtle);
-  color:var(--warning-text);
-}
-.alert-warning{}
-
-/* =========================================================
-   Komponenty — modal (własny, minimalny)
-   ========================================================= */
-.modal{
-  position:fixed;inset:0;z-index:1050;
-  display:flex;align-items:center;justify-content:center;
-  padding:1rem;
-  background:rgba(15,23,42,.55);
-  visibility:hidden;opacity:0;
-  transition:opacity .18s ease,visibility .18s ease;
-  overflow-y:auto;
-}
-.modal.show{visibility:visible;opacity:1}
-.modal-dialog{
-  width:100%;max-width:520px;margin:auto;
-  transform:translateY(-12px) scale(.98);
-  transition:transform .18s ease;
-}
-.modal.show .modal-dialog{transform:translateY(0) scale(1)}
-.modal-dialog.modal-sm{max-width:400px}
-.modal-dialog.modal-lg{max-width:820px}
-.modal-content{
-  display:flex;flex-direction:column;
-  background:var(--panel);color:var(--text);
-  border:1px solid var(--border);
-  border-radius:var(--radius-lg);
-  box-shadow:var(--shadow-lg);
-}
-
-/* =========================================================
-   Komponenty — toast
-   ========================================================= */
-.tst{
-  position:fixed;bottom:1rem;left:50%;transform:translate(-50%,.5rem);
-  opacity:0;pointer-events:none;
-  transition:opacity .2s,transform .2s;
-  z-index:2000;
-  background:var(--emphasis);color:var(--bg);
-  padding:.5rem 1rem;border-radius:var(--radius);
-  font-size:.875rem;box-shadow:var(--shadow);
-  max-width:calc(100vw - 2rem);
-}
-.tst.show{opacity:1;transform:translate(-50%,0)}
-
-/* =========================================================
-   Filtry: wyszukiwarka + lokalizacja + typ w jednym wierszu
-   ========================================================= */
-#q{flex:1 1 220px;width:auto;min-width:220px}
-#loc,#typ{flex:0 1 auto;width:auto!important;max-width:100%}
-
-/* =========================================================
-   Siatka własnych komend w ustawieniach
-   ========================================================= */
-.cmd-grid{display:flex;flex-direction:column;gap:.5rem}
-@media(min-width:576px){
-  .cmd-grid{display:grid;gap:.5rem;grid-template-columns:6rem 1fr 7rem}
-}
-
-/* =========================================================
-   Responsywność
-   ========================================================= */
-@media(min-width:576px){
-  .w-sm-auto{width:auto!important}
-  .d-sm-inline{display:inline!important}
-}
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
+<body>
 
-<body class="min-vh-100">
-
-<div class="mx-auto wrap vstack gap-4 px-3 py-4">
-
-  <!-- Nagłówek -->
-  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+<main class="container">
+  <header class="app-header">
     <div>
-      <h1 class="fs-4 fw-semibold text-body-emphasis">Rejestr maszyn</h1>
-      <p id="count" class="mt-1 small text-body-secondary"></p>
+      <h1>Rejestr maszyn</h1>
+      <p id="count" class="subtitle"></p>
     </div>
-    <div class="d-flex flex-wrap gap-2">
+    <div class="toolbar">
       <button id="add" class="btn btn-primary"><span id="icoAdd"></span>Dodaj</button>
-      <button id="pg" title="Pinguj kluczowe maszyny (skrypt PowerShell)" class="btn btn-outline-secondary"><span id="icoPg"></span><span class="d-none d-sm-inline">Pinguj kluczowe</span></button>
-      <button id="exp" title="Eksport danych (JSON)" class="btn btn-outline-secondary"><span id="icoExp"></span><span class="d-none d-sm-inline">Eksport</span></button>
-      <button id="imp" title="Import danych (JSON)" class="btn btn-outline-secondary"><span id="icoImp"></span><span class="d-none d-sm-inline">Import</span></button>
-      <button id="cfgBtn" title="Ustawienia" class="btn btn-outline-secondary"><span id="icoCfg"></span><span class="d-none d-sm-inline">Ustawienia</span></button>
-      <button id="themeToggle" title="Przełącz tryb dzień/noc" class="btn btn-outline-secondary" aria-label="Przełącz tryb dzień/noc"><span id="icoTheme"></span></button>
-      <input type="file" id="file" accept=".json,application/json" class="d-none">
+      <button id="pg" class="btn" title="Skrypt PowerShell pingujący kluczowe maszyny"><span id="icoPg"></span><span class="hide-sm">Ping</span></button>
+      <button id="exp" class="btn" title="Eksport JSON"><span id="icoExp"></span><span class="hide-sm">Eksport</span></button>
+      <button id="imp" class="btn" title="Import JSON"><span id="icoImp"></span><span class="hide-sm">Import</span></button>
+      <button id="cfgBtn" class="btn" title="Ustawienia"><span id="icoCfg"></span><span class="hide-sm">Ustawienia</span></button>
+      <button id="themeToggle" class="btn btn-icon" title="Tryb dzień/noc" aria-label="Tryb dzień/noc"><span id="icoTheme"></span></button>
+      <input type="file" id="file" accept=".json,application/json" hidden>
     </div>
   </header>
 
-  <!-- Ostrzeżenie o braku localStorage -->
-  <div id="warn" class="alert d-none small">
-    Ta strona nie ma dostępu do pamięci przeglądarki (localStorage), więc nie wczyta ani nie zapisze danych. Otwórz ją bezpośrednio w karcie (nie w ramce) pod stałym adresem albo użyj Importu JSON.
+  <div id="warn" class="alert d-none">
+    Brak dostępu do localStorage — dane nie będą zapisywane. Otwórz stronę bezpośrednio (nie w ramce) lub użyj Importu JSON.
   </div>
 
-  <!-- Filtry i liczniki -->
-  <section class="card vstack gap-2 p-3 shadow-sm">
-    <div class="d-flex flex-wrap gap-2">
-      <input id="q" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…" class="form-control minw220 flex-fill">
-      <select id="loc" class="form-select"></select>
-      <select id="typ" class="form-select"></select>
+  <section class="card filters">
+    <div class="filter-row">
+      <input id="q" class="input" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…">
+      <select id="loc" class="input"></select>
+      <select id="typ" class="input"></select>
     </div>
-    <div id="stats" class="d-flex flex-wrap gap-2"></div>
+    <div id="stats" class="chips"></div>
   </section>
 
-  <!-- Widok tabeli -->
-  <div id="tbl" class="card d-none ox shadow-sm">
-    <table class="w-100 minw980 tfix text-start small">
-      <colgroup><col class="cw24"><col class="cw9"><col class="cw12"><col class="cw29"><col class="cw16"><col class="cw10"></colgroup>
-      <thead class="bg-body-tertiary tx-xs text-uppercase text-body-secondary">
-        <tr>
-          <th data-sort="name" data-label="Nazwa" class="cp user-select-none px-3 py-2 fw-medium hvt">Nazwa</th>
-          <th data-sort="type" data-label="Typ" class="cp user-select-none px-3 py-2 fw-medium hvt">Typ</th>
-          <th data-sort="location" data-label="Lokalizacja" class="cp user-select-none px-3 py-2 fw-medium hvt">Lokalizacja</th>
-          <th data-sort="ip" data-label="Adresy IP" class="cp user-select-none px-3 py-2 fw-medium hvt">Adresy IP</th>
-          <th class="px-3 py-2 fw-medium">Zależności</th>
-          <th class="px-3 py-2 text-end fw-medium">Akcje</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-  </div>
-
-  <!-- Stan pusty -->
-  <div id="empty" class="card d-none bg-body-tertiary p-5 text-center small text-body-secondary"></div>
-</div>
+  <section class="card table-card">
+    <div class="table-wrap">
+      <table>
+        <colgroup>
+          <col style="width:22%">
+          <col style="width:10%">
+          <col style="width:12%">
+          <col style="width:28%">
+          <col style="width:20%">
+          <col style="width:8%">
+        </colgroup>
+        <thead>
+          <tr>
+            <th data-sort="name">Nazwa</th>
+            <th data-sort="type">Typ</th>
+            <th data-sort="location">Lokalizacja</th>
+            <th data-sort="ip">Adresy IP</th>
+            <th>Zależności</th>
+            <th class="text-end">Akcje</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="empty" class="empty d-none"></div>
+  </section>
+</main>
 
 <!-- Modal: maszyna -->
-<div class="modal" id="modal" aria-hidden="true"><div class="modal-dialog">
-  <form id="form" class="modal-content p-3 gap-3">
-    <h2 id="mtitle" class="fs-5 fw-semibold text-body-emphasis"></h2>
-    <input type="hidden" id="fId">
-    <div>
-      <label class="mb-1 d-block small fw-medium text-body" for="fName">Nazwa hosta *</label>
-      <input id="fName" required class="form-control">
+<dialog id="modal" class="dialog"><form id="form" class="dialog-body">
+  <h2 id="mtitle" class="dialog-title"></h2>
+  <input type="hidden" id="fId">
+  <div class="field">
+    <label for="fName">Nazwa hosta *</label>
+    <input id="fName" required class="input">
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label for="fType">Typ</label>
+      <select id="fType" class="input"></select>
     </div>
-    <div class="d-flex flex-wrap gap-2">
-      <div class="flex-fill minw0">
-        <label class="mb-1 d-block small fw-medium text-body" for="fType">Typ</label>
-        <select id="fType" class="form-select"></select>
-      </div>
-      <div class="flex-fill minw0">
-        <label class="mb-1 d-block small fw-medium text-body" for="fLoc">Lokalizacja</label>
-        <input id="fLoc" list="locList" class="form-control">
-      </div>
+    <div class="field">
+      <label for="fLoc">Lokalizacja</label>
+      <input id="fLoc" list="locList" class="input">
     </div>
-    <datalist id="locList"></datalist>
-    <div>
-      <div class="mb-1 d-flex align-items-center justify-content-between">
-        <span class="small fw-medium text-body">Adresy IP</span>
-        <button type="button" id="addIp" class="small fw-medium text-primary hvp">+ Dodaj IP</button>
-      </div>
-      <div id="ips" class="vstack gap-2"></div>
+  </div>
+  <datalist id="locList"></datalist>
+  <div class="field">
+    <div class="flex justify-between items-center mb-1">
+      <label style="margin:0">Adresy IP</label>
+      <button type="button" id="addIp" class="btn btn-sm btn-ghost" style="color:var(--primary)">+ Dodaj IP</button>
     </div>
-    <div>
-      <label class="mb-1 d-block small fw-medium text-body" for="depQ">Zależy od</label>
-      <div id="depChips" class="mb-2 d-flex flex-wrap gap-1"></div>
-      <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="form-control">
-      <div id="depList" class="mt-1 d-none mh44 ox rounded-3 border bg-body shadow-sm"></div>
-    </div>
-    <label class="d-flex align-items-center gap-2 small text-body">
-      <input type="checkbox" id="fKey" class="form-check-input">
-      Sprzęt kluczowy <span class="tx-xs text-body-secondary">(uwzględniany w „Pinguj kluczowe”)</span>
-    </label>
-    <div>
-      <label class="mb-1 d-block small fw-medium text-body" for="fNote">Notatka</label>
-      <textarea id="fNote" rows="2" class="form-control"></textarea>
-    </div>
-    <div class="d-flex justify-content-end gap-2 pt-1">
-      <button type="button" id="cancel" class="btn btn-outline-secondary">Anuluj</button>
-      <button class="btn btn-primary">Zapisz</button>
-    </div>
-  </form>
-</div></div>
+    <div id="ips"></div>
+  </div>
+  <div class="field">
+    <label for="depQ">Zależy od</label>
+    <div id="depChips" class="chips mb-2"></div>
+    <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="input">
+    <div id="depList" class="dep-list d-none"></div>
+  </div>
+  <label class="flex items-center gap-2 text-sm" style="margin-bottom:1rem">
+    <input type="checkbox" id="fKey" class="checkbox"> Sprzęt kluczowy
+  </label>
+  <div class="field">
+    <label for="fNote">Notatka</label>
+    <textarea id="fNote" rows="2" class="input"></textarea>
+  </div>
+  <div class="dialog-actions">
+    <button type="button" id="cancel" class="btn">Anuluj</button>
+    <button class="btn btn-primary">Zapisz</button>
+  </div>
+</form></dialog>
 
 <!-- Modal: ustawienia -->
-<div class="modal" id="cfgModal" aria-hidden="true"><div class="modal-dialog">
-  <form id="cfgForm" class="modal-content p-3 gap-3">
-    <h2 class="fs-5 fw-semibold text-body-emphasis">Ustawienia</h2>
-    <div>
-      <label class="mb-1 d-block small fw-medium text-body" for="cTheme">Motyw</label>
-      <select id="cTheme" class="form-select">
-        <option value="light">Jasny</option>
-        <option value="dark">Ciemny</option>
-        <option value="auto">Zgodny z systemem</option>
+<dialog id="cfgModal" class="dialog"><form id="cfgForm" class="dialog-body">
+  <h2 class="dialog-title">Ustawienia</h2>
+  <div class="field">
+    <label for="cTheme">Motyw</label>
+    <select id="cTheme" class="input">
+      <option value="light">Jasny</option>
+      <option value="dark">Ciemny</option>
+      <option value="auto">Zgodny z systemem</option>
+    </select>
+  </div>
+  <div class="field">
+    <label>Widoczne przyciski</label>
+    <div class="flex flex-wrap gap-3 text-sm">
+      <label class="flex items-center gap-2"><input type="checkbox" id="sPing" class="checkbox"> Ping</label>
+      <label class="flex items-center gap-2"><input type="checkbox" id="sVnc" class="checkbox"> VNC</label>
+      <label class="flex items-center gap-2"><input type="checkbox" id="sWeb" class="checkbox"> WWW</label>
+      <label class="flex items-center gap-2"><input type="checkbox" id="sScan" class="checkbox"> Ping grupy</label>
+    </div>
+  </div>
+  <div class="field">
+    <label for="cPing">Parametry ping</label>
+    <input id="cPing" class="input text-mono" placeholder="np. -a -t">
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label for="cSsh">Login SSH</label>
+      <input id="cSsh" class="input">
+    </div>
+    <div class="field">
+      <label for="cPort">Port VNC</label>
+      <input id="cPort" type="number" min="1" max="65535" class="input">
+    </div>
+  </div>
+  <p id="cPrev" class="preview"></p>
+
+  <div class="section">
+    <div class="section-title">Własne kategorie</div>
+    <div id="catList"></div>
+    <div class="flex gap-2 mt-2">
+      <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="input">
+      <button type="button" id="catAdd" class="btn">Dodaj</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Własne komendy</div>
+    <p class="text-xs text-muted mb-2">Zmienne: <code>{host}</code> <code>{name}</code> <code>{ip}</code> <code>{user}</code> <code>{port}</code></p>
+    <div id="cList"></div>
+    <div class="cmd-grid mt-2">
+      <input id="cmdLabel" maxlength="12" placeholder="Etykieta" class="input input-sm">
+      <input id="cmdTpl" placeholder="np. mstsc /v:{host}" class="input input-sm text-mono">
+      <select id="cmdTarget" class="input input-sm">
+        <option value="ip">Do IP</option>
+        <option value="name">Do nazwy</option>
+        <option value="both">Do obu</option>
       </select>
     </div>
-    <div>
-      <div class="mb-1 small fw-medium text-body">Widoczne przyciski</div>
-      <div class="d-flex flex-wrap gap-x-3 gap-y-2">
-        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sPing" class="form-check-input">Ping</label>
-        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sVnc" class="form-check-input">VNC</label>
-        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sWeb" class="form-check-input">WWW (http)</label>
-        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sScan" class="form-check-input">Ping grupy</label>
-      </div>
-      <p class="mt-1 tx-xs text-body-secondary">Ukryte przyciski nie są usuwane, ich ustawienia zostają.</p>
-    </div>
-    <div>
-      <label class="mb-1 d-block small fw-medium text-body" for="cPing">Parametry ping</label>
-      <input id="cPing" autocomplete="off" placeholder="np. -a -t" class="form-control font-monospace">
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-      <div class="flex-fill minw0">
-        <label class="mb-1 d-block small fw-medium text-body" for="cSsh">Login SSH (tunel VNC)</label>
-        <input id="cSsh" autocomplete="off" class="form-control">
-      </div>
-      <div class="flex-fill minw0">
-        <label class="mb-1 d-block small fw-medium text-body" for="cPort">Port VNC</label>
-        <input id="cPort" type="number" min="1" max="65535" class="form-control">
-      </div>
-    </div>
-    <p id="cPrev" class="brk pre-wrap rounded-3 bg-body-tertiary px-2 py-2 font-monospace tx-xs text-body-secondary"></p>
-    <div class="vstack gap-2 border-top pt-3">
-      <div class="small fw-medium text-body">Własne kategorie</div>
-      <p class="tx-xs text-body-secondary">Pojawiają się na liście typów, w filtrach i licznikach. Usunięcie kategorii przenosi jej maszyny do „Inne”.</p>
-      <div id="catList" class="vstack gap-1"></div>
-      <div class="d-flex gap-2">
-        <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="form-control minw0 flex-fill">
-        <button type="button" id="catAdd" class="btn btn-outline-secondary">Dodaj</button>
-      </div>
-    </div>
-    <div class="vstack gap-2 border-top pt-3">
-      <div class="small fw-medium text-body">Własne komendy</div>
-      <p class="tx-xs text-body-secondary">
-        Zmienne:
-        <span class="rounded-1 bg-body-secondary px-1 font-monospace">{host}</span> (nazwa lub IP, zależnie od przycisku),
-        <span class="rounded-1 bg-body-secondary px-1 font-monospace">{name}</span>,
-        <span class="rounded-1 bg-body-secondary px-1 font-monospace">{ip}</span>,
-        <span class="rounded-1 bg-body-secondary px-1 font-monospace">{user}</span>,
-        <span class="rounded-1 bg-body-secondary px-1 font-monospace">{port}</span>
-      </p>
-      <div id="cList" class="vstack gap-1"></div>
-      <div class="cmd-grid">
-        <input id="cmdLabel" maxlength="12" placeholder="Etykieta" class="form-control minw0">
-        <input id="cmdTpl" placeholder="np. mstsc /v:{host}" class="form-control minw0 font-monospace">
-        <select id="cmdTarget" class="form-select">
-          <option value="ip">Do IP</option>
-          <option value="name">Do nazwy</option>
-          <option value="both">Do obu</option>
-        </select>
-      </div>
-      <button type="button" id="cmdAdd" class="small fw-medium text-primary hvp text-start">+ Dodaj komendę</button>
-    </div>
-    <div class="d-flex justify-content-end gap-2 pt-1">
-      <button type="button" id="cCancel" class="btn btn-outline-secondary">Anuluj</button>
-      <button class="btn btn-primary">Zapisz</button>
-    </div>
-  </form>
-</div></div>
+    <button type="button" id="cmdAdd" class="btn btn-sm btn-ghost mt-2" style="color:var(--primary)">+ Dodaj komendę</button>
+  </div>
+
+  <div class="dialog-actions">
+    <button type="button" id="cCancel" class="btn">Anuluj</button>
+    <button class="btn btn-primary">Zapisz</button>
+  </div>
+</form></dialog>
 
 <!-- Modal: kopia zapasowa -->
-<div class="modal" id="bkModal" aria-hidden="true"><div class="modal-dialog">
-  <div class="modal-content p-3 gap-3">
-    <h2 id="bkTitle" class="fs-5 fw-semibold text-body-emphasis"></h2>
-    <p id="bkHelp" class="small text-body-secondary"></p>
-    <div id="bkImpBox" class="d-flex flex-wrap align-items-center gap-2">
-      <button type="button" id="bkPick" class="btn btn-outline-secondary">Wybierz plik JSON</button>
-      <select id="bkMode" class="form-select" style="flex:1 1 220px;width:auto">
-        <option value="merge">Dołącz i zaktualizuj</option>
-        <option value="replace">Zastąp wszystkie dane</option>
-      </select>
-    </div>
-    <textarea id="bkText" rows="8" spellcheck="false" class="form-control font-monospace tx-xs"></textarea>
-    <div class="d-flex flex-wrap justify-content-end gap-2">
-      <button type="button" id="bkClose" class="btn btn-outline-secondary">Zamknij</button>
-      <button type="button" id="bkCopy" class="btn btn-outline-secondary">Kopiuj</button>
-      <button type="button" id="bkDl" class="btn btn-primary">Pobierz plik</button>
-      <button type="button" id="bkGo" class="btn btn-primary">Wczytaj</button>
-    </div>
+<dialog id="bkModal" class="dialog"><div class="dialog-body">
+  <h2 id="bkTitle" class="dialog-title"></h2>
+  <p id="bkHelp" class="text-sm text-muted mb-3"></p>
+  <div id="bkImpBox" class="flex flex-wrap gap-2 mb-3">
+    <button type="button" id="bkPick" class="btn">Wybierz plik JSON</button>
+    <select id="bkMode" class="input" style="flex:1 1 200px;width:auto">
+      <option value="merge">Dołącz i zaktualizuj</option>
+      <option value="replace">Zastąp wszystkie dane</option>
+    </select>
   </div>
-</div></div>
+  <textarea id="bkText" rows="10" spellcheck="false" class="input text-mono text-xs"></textarea>
+  <div class="dialog-actions">
+    <button type="button" id="bkClose" class="btn">Zamknij</button>
+    <button type="button" id="bkCopy" class="btn">Kopiuj</button>
+    <button type="button" id="bkDl" class="btn btn-primary">Pobierz</button>
+    <button type="button" id="bkGo" class="btn btn-primary">Wczytaj</button>
+  </div>
+</div></dialog>
 
-<!-- Modal: skrypt ping -->
-<div class="modal" id="pgModal" aria-hidden="true"><div class="modal-dialog modal-lg">
-  <div class="modal-content p-3 gap-3">
-    <h2 id="pgTitle" class="fs-5 fw-semibold text-body-emphasis">Ping kluczowych maszyn</h2>
-    <p id="pgHelp" class="small text-body-secondary"></p>
-    <div class="d-flex flex-wrap align-items-center gap-x-3 gap-y-2 rounded-3 bg-body-tertiary px-2 py-2 small text-body">
-      <label class="d-inline-flex align-items-center gap-2">
-        <input type="checkbox" id="pgLive" checked class="form-check-input"> Odświeżaj na żywo
-      </label>
-      <label class="d-inline-flex align-items-center gap-2">
-        Co
-        <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="form-control form-control-sm w20 font-monospace">
-        ms
-      </label>
-      <label class="d-inline-flex align-items-center gap-2">
-        Timeout ping
-        <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="form-control form-control-sm w20 font-monospace">
-        ms
-      </label>
-    </div>
-    <textarea id="pgText" rows="12" readonly spellcheck="false" class="form-control font-monospace tx-xs"></textarea>
-    <div class="d-flex flex-wrap justify-content-end gap-2">
-      <button type="button" id="pgClose" class="btn btn-outline-secondary">Zamknij</button>
-      <button type="button" id="pgCopy" class="btn btn-outline-secondary">Kopiuj skrypt</button>
-      <button type="button" id="pgDl" class="btn btn-primary">Pobierz .ps1</button>
-    </div>
+<!-- Modal: ping -->
+<dialog id="pgModal" class="dialog dialog-lg"><div class="dialog-body">
+  <h2 id="pgTitle" class="dialog-title">Ping</h2>
+  <p id="pgHelp" class="text-sm text-muted mb-3"></p>
+  <div class="ping-controls">
+    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="pgLive" checked class="checkbox"> Odświeżaj na żywo</label>
+    <label class="flex items-center gap-2 text-sm">Co <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="input input-sm" style="width:6rem"> ms</label>
+    <label class="flex items-center gap-2 text-sm">Timeout <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="input input-sm" style="width:6rem"> ms</label>
   </div>
-</div></div>
+  <textarea id="pgText" rows="14" readonly spellcheck="false" class="input text-mono text-xs"></textarea>
+  <div class="dialog-actions">
+    <button type="button" id="pgClose" class="btn">Zamknij</button>
+    <button type="button" id="pgCopy" class="btn">Kopiuj</button>
+    <button type="button" id="pgDl" class="btn btn-primary">Pobierz .ps1</button>
+  </div>
+</div></dialog>
 
 <!-- Modal: potwierdzenie -->
-<div class="modal" id="cfmModal" aria-hidden="true"><div class="modal-dialog modal-sm">
-  <div class="modal-content p-3 gap-3">
-    <p id="cfmMsg" class="small text-body"></p>
-    <div class="d-flex justify-content-end gap-2">
-      <button type="button" id="cfmNo" class="btn btn-outline-secondary">Anuluj</button>
-      <button type="button" id="cfmOk" class="btn btn-danger">Usuń</button>
-    </div>
+<dialog id="cfmModal" class="dialog dialog-sm"><div class="dialog-body">
+  <p id="cfmMsg" class="text-sm" style="margin-bottom:1.5rem"></p>
+  <div class="dialog-actions" style="margin-top:0">
+    <button type="button" id="cfmNo" class="btn">Anuluj</button>
+    <button type="button" id="cfmOk" class="btn btn-danger">Usuń</button>
   </div>
-</div></div>
+</div></dialog>
 
-<div id="toast" class="tst" role="status" aria-live="polite"></div>
-
-<script>
-/* =========================================================
-   Minimalna imitacja bootstrap.Modal (zachowuje API i zdarzenia)
-   ========================================================= */
-window.bootstrap = {
-  Modal: class {
-    static _instances = new Map();
-    static getOrCreateInstance(el) {
-      if (!this._instances.has(el)) this._instances.set(el, new this(el));
-      return this._instances.get(el);
-    }
-    constructor(el) {
-      this.el = el;
-      el.addEventListener('click', e => { if (e.target === el) this.hide(); });
-      document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && this.el.classList.contains('show')) this.hide();
-      });
-    }
-    show() {
-      this.el.classList.add('show');
-      document.body.classList.add('modal-open');
-      this.el.dispatchEvent(new Event('shown.bs.modal'));
-    }
-    hide() {
-      this.el.classList.remove('show');
-      const el = this.el;
-      setTimeout(() => {
-        if (el.classList.contains('show')) return; // otwarto ponownie
-        if (!document.querySelector('.modal.show')) document.body.classList.remove('modal-open');
-        el.dispatchEvent(new Event('hidden.bs.modal'));
-      }, 0);
-    }
-  }
-};
-
-/* =========================================================
-   Stałe
-   ========================================================= */
-const KEY = 'machines_v1';
-const CFG_KEY = 'machines_settings';
-const UI_KEY = 'machines_ui';
-const CFG_DEFAULT = {
-  sshUser: 'su-t', vncPort: 5900, pingArgs: '-a -t', cmds: [],
-  theme: 'light', show: { ping: true, vnc: true, web: true, scan: true }, cats: []
-};
-const SAFE = /^[\w.:\-]+$/;
-
-const $ = id => document.getElementById(id);
-const showM = id => bootstrap.Modal.getOrCreateInstance($(id)).show();
-const hideM = id => bootstrap.Modal.getOrCreateInstance($(id)).hide();
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
-/* ===== Ikony (SVG outline) ===== */
-const svg = (d, c = 'h-4 w-4') =>
-  `<svg class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
-const I = {
-  plus:  '<path d="M12 5v14M5 12h14"/>',
-  edit:  '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
-  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
-  down:  '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
-  up:    '<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',
-  pin:   '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
-  term:  '<path d="M5 8l4 4-4 4M12 17h7"/>',
-  gear:  '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
-  star:  '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
-  tag:   '<path d="M20 13l-7 7-9-9V4h7z"/><circle cx="8" cy="8" r="1.2"/>',
-  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
-  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.7l7.6-3.4M8.2 13.3l7.6 3.4"/>',
-  sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
-  moon:  '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
-};
-
-/* Typy maszyn */
-const TYPES = {
-  pc:      ['Komputer',        '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'],
-  printer: ['Drukarka',        '<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/>'],
-  scanner: ['Skaner',          '<path d="M3 12h18M5 7V5h2M17 5h2v2M5 17v2h2M17 19h2v-2"/>'],
-  camera:  ['Kamera',          '<path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>'],
-  rpi:     ['Raspberry Pi',    '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h2v2H8zM14 14h2M8 3v3M12 3v3M16 3v3"/>'],
-  bizerba: ['Bizerba',         '<path d="M5 20h14M12 20V8M6 8h12M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>'],
-  metal:   ['Detektor metalu', '<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'],
-  other:   ['Inne',            '<path d="M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8"/>']
-};
-const T = m => TYPES[m.type] || TYPES.other;
-
-/* ===== Stan ===== */
-let db = [];
-try { db = JSON.parse(localStorage.getItem(KEY)) || [] } catch(e){}
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch(e){ toast('Brak miejsca w pamięci przeglądarki!', 4000) } };
-const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
-
-const open = new Set();
-let dups = new Map();
-let dupOnly = false;
-const hasDup = m => (m.ips || []).some(i => dups.has(i.ip));
-
-let cfg = { ...CFG_DEFAULT };
-try { cfg = { ...CFG_DEFAULT, ...JSON.parse(localStorage.getItem(CFG_KEY)) } } catch(e){}
-if (!Array.isArray(cfg.cmds)) cfg.cmds = [];
-if (!['light','dark','auto'].includes(cfg.theme)) cfg.theme = 'light';
-cfg.show = { ...CFG_DEFAULT.show, ...(cfg.show || {}) };
-cfg.cats = Array.isArray(cfg.cats)
-  ? cfg.cats.filter(c => c && /^c_\w+$/.test(c.id) && c.name).map(c => ({ id: c.id, name: String(c.name) }))
-  : [];
-
-function syncTypes(){
-  const other = TYPES.other;
-  Object.keys(TYPES).filter(k => k.startsWith('c_') || k === 'other').forEach(k => delete TYPES[k]);
-  cfg.cats.forEach(c => TYPES[c.id] = [c.name, I.tag]);
-  TYPES.other = other;
-}
-syncTypes();
-
-const mqDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : { matches: false };
-function updateThemeIcon(){
-  const el = $('icoTheme');
-  if (!el) return;
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  el.innerHTML = svg(dark ? I.sun : I.moon);
-}
-function applyTheme(t = cfg.theme){
-  const dark = t === 'dark' || (t === 'auto' && mqDark.matches);
-  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0f172a' : '#f4f7f9');
-  updateThemeIcon();
-}
-try {
-  mqDark.addEventListener('change', () => { if (cfg.theme === 'auto') applyTheme(); });
-} catch(e){}
-
-$('themeToggle').onclick = () => {
-  const cur = document.documentElement.getAttribute('data-theme');
-  cfg.theme = cur === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
-  applyTheme();
-};
-
-const openNotes = new Set();
-let sort = { k: '', d: 1 };
-let REV = {};
-const SORTERS = {
-  name:     m => m.name || '',
-  type:     m => T(m)[0],
-  location: m => m.location || '',
-  ip:       m => {
-    const ip = (m.ips || []).find(x => x.ip)?.ip || '';
-    return ip.split('.').map(n => /^\d+$/.test(n) ? n.padStart(3,'0') : n).join('.');
-  }
-};
-
-let ui = {};
-try { ui = JSON.parse(localStorage.getItem(UI_KEY)) || {} } catch(e){}
-if (ui.sort && SORTERS[ui.sort.k]) sort = { k: ui.sort.k, d: ui.sort.d === -1 ? -1 : 1 };
-const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $('q').value, sort })) } catch(e){} };
-
-/* ===== Toast / kopiowanie ===== */
-let toastT;
-function toast(msg, ms = 1800){
-  const el = $('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => el.classList.remove('show'), ms);
-}
-function copy(text, label){
-  const ok = () => toast('Skopiowano: ' + (label || text));
-  const fb = () => {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); ok() } catch(e){ toast('Nie udało się skopiować') }
-    ta.remove();
-  };
-  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
-  else fb();
-}
-
-/* ===== Elementy pomocnicze ===== */
-const MINI = 'mini';
-const ICON_BTN = 'ibtn';
-const BADGE = 'badge rounded-pill fw-medium d-inline-flex align-items-center';
-
-const sshCmd = h => `ssh -L ${cfg.vncPort}:localhost:${cfg.vncPort} ${cfg.sshUser ? cfg.sshUser + '@' : ''}${h}`;
-const pingCmd = h => `ping ${cfg.pingArgs ? cfg.pingArgs + ' ' : ''}${h}`;
-
-function fillCmd(tpl, host, m, kind){
-  const ip = kind === 'ip' ? host : ((m.ips || []).find(x => x.ip)?.ip || '');
-  const vars = { host, name: m.name, ip, user: cfg.sshUser, port: String(cfg.vncPort) };
-  let bad = false;
-  const out = tpl.replace(/\{(\w+)\}/g, (all, k) => {
-    if (!(k in vars)) return all;
-    if (['host','name','ip'].includes(k) && vars[k] && !SAFE.test(vars[k])) bad = true;
-    return vars[k];
-  });
-  return bad ? null : out;
-}
-
-const tools = (host, web, m, kind) => {
-  const custom = cfg.cmds.map((c, i) => ({ c, i })).filter(({ c }) => c.target === kind || c.target === 'both').map(({ c, i }) => {
-    const t = fillCmd(c.tpl, host, m, kind);
-    return `<button data-act="cmd" data-i="${i}" data-id="${m.id}" data-ip="${esc(host)}" data-kind="${kind}" title="Kopiuj: ${esc(t ?? 'niedozwolone znaki w nazwie/IP')}" class="${MINI}">${esc(c.label)}</button>`;
-  }).join('');
-  const sh = cfg.show;
-  const parts = [
-    sh.ping ? `<button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="${MINI}">${svg(I.term,'h-3.5 w-3.5')}</button>` : '',
-    sh.vnc  ? `<button data-act="vnc"  data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="${MINI}">VNC</button>` : '',
-    sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="${MINI}">${svg(I.globe,'h-3.5 w-3.5')}</a>` : '',
-    custom
-  ].join('');
-  return parts.trim() ? `<span class="d-inline-flex flex-shrink-0 flex-wrap align-items-center gap-1">${parts}</span>` : '';
-};
-
-function ipChips(m){
-  const all = (m.ips || []).filter(x => x.ip);
-  const hasDeps = (m.deps || []).length > 0;
-  const hasRev  = (REV[m.id] || []).length > 0;
-  const qualifies = all.length > 1 || hasDeps || hasRev;
-  const scanBtn = qualifies && cfg.show.scan
-    ? `<button data-act="scan" data-id="${m.id}" title="Ping grupy: ta maszyna (wszystkie IP) + zależności" class="${MINI}">${svg(I.share,'h-3.5 w-3.5')}</button>`
-    : '';
-  if (!all.length) return scanBtn ? `<div class="d-flex flex-wrap align-items-center gap-1">${scanBtn}</div>` : '';
-
-  const isOpen = open.has(m.id);
-  const chips = (isOpen ? all : all.slice(0,1)).map(i => {
-    const others = dups.has(i.ip)
-      ? [...dups.get(i.ip)].filter(id => id !== m.id).map(id => db.find(x => x.id === id)?.name).filter(Boolean).join(', ')
-      : '';
-    const cls = others ? 'border border-warning bg-warning-subtle' : 'border bg-body-tertiary hv2';
-    return `<span class="d-flex mw-100 flex-wrap align-items-center gap-1">
-      <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? 'Duplikat IP, także: ' + esc(others) : 'Kopiuj IP'}" class="d-inline-flex minw0 align-items-center gap-1 rounded-2 border px-1 py-1 ${cls}">
-        <span class="font-monospace tx-xs ${others ? 'text-warning-emphasis' : 'text-primary'}">${esc(i.ip)}</span>
-        ${i.label ? `<span class="text-truncate tx-10 text-body-secondary">${esc(i.label)}</span>` : ''}
-      </button>${tools(i.ip, true, m, 'ip')}
-    </span>`;
-  }).join('');
-
-  const hiddenDup = !isOpen && all.slice(1).some(i => dups.has(i.ip));
-  const more = all.length > 1
-    ? `<button data-act="more" data-id="${m.id}" class="${BADGE} ${hiddenDup ? 'bg-warning-subtle text-warning-emphasis' : 'bg-primary-subtle text-primary-emphasis'}">${isOpen ? 'zwiń' : '+' + (all.length - 1)}</button>`
-    : '';
-  return `<div class="d-flex ${isOpen ? 'flex-column align-items-start' : 'flex-wrap align-items-center'} gap-1">${chips}${more}${scanBtn}</div>`;
-}
-
-const depBtn = (d, arrow, cls) =>
-  `<button data-act="jump" data-id="${d.id}" class="${BADGE} ${cls} hv3"><span class="me-1 text-body-tertiary">${arrow}</span>${esc(d.name)}</button>`;
-
-function depChips(m, M, rev){
-  const deps  = (m.deps || []).map(id => M.get(id)).filter(Boolean).map(d => depBtn(d, '←', 'bg-body-secondary text-body')).join('');
-  const users = (rev[m.id] || []).map(d => depBtn(d, '→', 'bg-body-tertiary text-body-secondary')).join('');
-  return deps + users;
-}
-
-const nameBlock = m => `<div class="d-flex align-items-center gap-1">
-  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="minw0 brk text-start fw-semibold text-body-emphasis hvp">${esc(m.name)}</button>
-  ${m.key ? `<span title="Sprzęt kluczowy" class="flex-shrink-0 text-primary">${svg(I.star,'h-3.5 w-3.5')}</span>` : ''}
-  ${tools(m.name, false, m, 'name')}
-</div>`;
-
-const noteHtml = (m, extra = '') => {
-  if (!m.note) return '';
-  const o = openNotes.has(m.id);
-  return `<button data-act="note" data-id="${m.id}" title="${o ? 'Zwiń' : 'Rozwiń'} notatkę" class="${extra} d-flex w-100 align-items-start gap-1 text-start tx-xs text-body-secondary hvt">
-    <span class="minw0 flex-fill ${o ? 'pre-wrap brk' : 'text-truncate'}">${esc(m.note)}</span>
-    <span class="flex-shrink-0 tx-10 text-body-tertiary">${o ? '▲' : '▼'}</span>
-  </button>`;
-};
-
-const actions = m => `<button data-act="edit" data-id="${m.id}" title="Edytuj" class="${ICON_BTN}">${svg(I.edit)}</button>
-  <button data-act="del" data-id="${m.id}" title="Usuń" class="${ICON_BTN} hvd">${svg(I.trash)}</button>`;
-
-const locBadge = m => m.location
-  ? `<span class="${BADGE} bg-info-subtle text-info-emphasis">${svg(I.pin,'mr-1 h-3 w-3')}${esc(m.location)}</span>` : '';
-
-function row(m, M, rev){
-  const deps = depChips(m, M, rev), ips = ipChips(m);
-  return `<tr class="border-bottom align-top hv1">
-    <td class="px-3 py-2"><div class="d-flex align-items-start gap-2">
-      <span class="mt-1 text-body-tertiary">${svg(T(m)[1],'h-5 w-5')}</span>
-      <div class="minw0 flex-fill">${nameBlock(m)}${noteHtml(m, 'mt-1')}</div>
-    </div></td>
-    <td class="px-3 py-2 text-body-secondary">${esc(T(m)[0])}</td>
-    <td class="px-3 py-2">${locBadge(m) || '<span class="text-body-tertiary">—</span>'}</td>
-    <td class="px-3 py-2">${ips || '<span class="text-body-tertiary">—</span>'}</td>
-    <td class="px-3 py-2"><div class="d-flex flex-wrap gap-1">${deps || '<span class="text-body-tertiary">—</span>'}</div></td>
-    <td class="text-nowrap px-3 py-2 text-end">${actions(m)}</td>
-  </tr>`;
-}
-
-/* ===== Render ===== */
-function render(){
-  const M = new Map(db.map(m => [m.id, m]));
-  const rev = {};
-  db.forEach(m => (m.deps || []).forEach(id => (rev[id] ||= []).push(m)));
-  REV = rev;
-
-  const owners = {};
-  db.forEach(m => [...new Set((m.ips || []).map(i => i.ip).filter(Boolean))].forEach(ip => (owners[ip] ||= new Set()).add(m.id)));
-  dups = new Map(Object.entries(owners).filter(([, set]) => set.size > 1));
-
-  const locs = [...new Set(db.map(m => m.location).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pl'));
-  const lv = $('loc').value, tv = $('typ').value;
-  $('loc').innerHTML = '<option value="">Wszystkie lokalizacje</option>' + locs.map(l => `<option>${esc(l)}</option>`).join('');
-  $('loc').value = locs.includes(lv) ? lv : '';
-  $('typ').innerHTML = '<option value="">Wszystkie typy</option>' +
-    Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${esc(v[0])}</option>`).join('');
-  $('typ').value = TYPES[tv] ? tv : '';
-  $('locList').innerHTML = locs.map(l => `<option value="${esc(l)}">`).join('');
-
-  const qs = $('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const lf = $('loc').value, tf = $('typ').value;
-
-  const cnt = {};
-  db.forEach(m => cnt[m.type] = (cnt[m.type] || 0) + 1);
-  const chip = on => 'btn btn-sm rounded-pill ' + (on ? 'btn-primary' : 'btn-outline-secondary');
-  if (!dups.size) dupOnly = false;
-  const dupChip = dups.size
-    ? `<button data-dup="1" class="btn btn-sm rounded-pill ${dupOnly ? 'btn-warning' : 'btn-outline-warning'}">Duplikaty IP ${dups.size}</button>`
-    : '';
-  $('stats').innerHTML =
-    `<button data-type="" class="${chip(!tf)}">Wszystkie ${db.length}</button>` +
-    Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k,v]) =>
-      `<button data-type="${k}" class="${chip(tf === k)}">${esc(v[0])} ${cnt[k]}</button>`).join('') + dupChip;
-
-  document.querySelectorAll('#tbl th[data-sort]').forEach(th => {
-    th.textContent = th.dataset.label + (sort.k === th.dataset.sort ? (sort.d > 0 ? ' ▲' : ' ▼') : '');
-  });
-
-  const H = new Map(db.map(m => [m.id, [
-    m.name, m.location, m.note, T(m)[0], m.type,
-    ...(m.ips || []).flatMap(i => [i.ip, i.label]),
-    ...(m.deps || []).map(id => M.get(id)?.name),
-    ...(rev[m.id] || []).map(x => x.name)
-  ].filter(Boolean).join(' ').toLowerCase()]));
-
-  const list = db
-    .filter(m => (!lf || m.location === lf) && (!tf || m.type === tf) && (!dupOnly || hasDup(m)) && qs.every(t => H.get(m.id).includes(t)))
-    .sort((a,b) => {
-      if (sort.k) {
-        const f = SORTERS[sort.k], x = f(a), y = f(b);
-        if (x !== y) {
-          if (!x) return 1;
-          if (!y) return -1;
-          const c = x.localeCompare(y, 'pl', { numeric: true });
-          if (c) return c * sort.d;
-        }
-      }
-      return (a.location || '').localeCompare(b.location || '', 'pl') || a.name.localeCompare(b.name, 'pl', { numeric: true });
-    });
-
-  if (!list.length){
-    $('rows').innerHTML = '';
-    $('tbl').classList.add('d-none');
-    $('empty').classList.remove('d-none');
-    $('empty').textContent = db.length ? 'Brak wyników dla wybranych filtrów.' : 'Brak maszyn. Kliknij „Dodaj”, aby dodać pierwszą.';
-  } else {
-    $('empty').classList.add('d-none');
-    $('tbl').classList.remove('d-none');
-    $('rows').innerHTML = list.map(m => row(m, M, rev)).join('');
-  }
-  $('count').textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` • lokalizacja: ${lf}` : '');
-}
-
-/* ===== Modal maszyny ===== */
-const FIELD = 'form-control';
-function ipRow(ip = '', label = ''){
-  const d = document.createElement('div');
-  d.className = 'd-flex gap-2 align-items-center';
-  d.innerHTML = `<input class="ipv minw0 flex-fill font-monospace ${FIELD}" placeholder="10.0.0.1" value="${esc(ip)}">
-    <input class="ipl w32 ${FIELD}" placeholder="opis" value="${esc(label)}">
-    <button type="button" title="Usuń adres" class="${ICON_BTN} hvd">${svg(I.trash)}</button>`;
-  d.querySelector('button').onclick = () => d.remove();
-  return d;
-}
-let curDeps = [], editId = '';
-function renderDeps(){
-  $('depChips').innerHTML = curDeps.map(id => {
-    const d = db.find(x => x.id === id);
-    return d ? `<span class="${BADGE} bg-body-secondary text-body">${esc(d.name)}<button type="button" data-rmdep="${id}" title="Usuń zależność" class="ms-1 text-body-tertiary hvd">✕</button></span>` : '';
-  }).join('');
-  const toks = $('depQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  const list = $('depList');
-  if (!toks.length) { list.classList.add('d-none'); list.innerHTML = ''; return; }
-  const found = db.filter(x => x.id !== editId && !curDeps.includes(x.id))
-    .filter(x => {
-      const h = [x.name, x.location, ...(x.ips || []).map(i => i.ip)].filter(Boolean).join(' ').toLowerCase();
-      return toks.every(t => h.includes(t));
-    })
-    .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true })).slice(0, 8);
-  list.classList.remove('d-none');
-  list.innerHTML = found.length
-    ? found.map(x => `<button type="button" data-adddep="${x.id}" class="d-flex w-100 align-items-center justify-content-between gap-2 border-bottom px-2 py-2 text-start small lastb0 hv1"><span class="fw-medium text-body-emphasis">${esc(x.name)}</span><span class="text-truncate tx-xs text-body-secondary">${esc(x.location || '')}</span></button>`).join('')
-    : '<div class="px-2 py-2 tx-xs text-body-secondary">Brak pasujących maszyn.</div>';
-}
-
-function openModal(m){
-  $('mtitle').textContent = m ? 'Edytuj maszynę' : 'Nowa maszyna';
-  $('fId').value   = m?.id || '';
-  $('fName').value = m?.name || '';
-  $('fType').innerHTML = Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${esc(v[0])}</option>`).join('');
-  $('fType').value = m?.type || 'pc';
-  $('fLoc').value  = m?.location || '';
-  $('fNote').value = m?.note || '';
-  $('fKey').checked = !!m?.key;
-  $('ips').innerHTML = '';
-  ((m?.ips?.length) ? m.ips : [{ ip: '', label: '' }]).forEach(x => $('ips').appendChild(ipRow(x.ip, x.label)));
-  editId = m?.id || '';
-  curDeps = [...(m?.deps || [])].filter(id => db.some(x => x.id === id));
-  $('depQ').value = ''; renderDeps();
-  showM('modal');
-  setTimeout(() => $('fName').focus(), 50);
-}
-function closeModal(){ hideM('modal'); }
-
-/* ===== Zdarzenia główne ===== */
-$('icoAdd').innerHTML = svg(I.plus);
-$('icoExp').innerHTML = svg(I.down);
-$('icoImp').innerHTML = svg(I.up);
-
-let raf;
-$('q').oninput = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render) };
-$('loc').onchange = render;
-$('typ').onchange = render;
-$('add').onclick = () => openModal(null);
-$('cancel').onclick = closeModal;
-$('addIp').onclick = () => $('ips').appendChild(ipRow());
-$('depQ').oninput = renderDeps;
-$('depQ').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); $('depList').querySelector('[data-adddep]')?.click(); } };
-$('depList').onclick = e => {
-  const b = e.target.closest('[data-adddep]');
-  if (!b) return;
-  curDeps.push(b.dataset.adddep); $('depQ').value = ''; renderDeps(); $('depQ').focus();
-};
-$('depChips').onclick = e => {
-  const b = e.target.closest('[data-rmdep]');
-  if (!b) return;
-  curDeps = curDeps.filter(id => id !== b.dataset.rmdep); renderDeps();
-};
-
-$('form').onsubmit = e => {
-  e.preventDefault();
-  const id = $('fId').value;
-  const ips = [...$('ips').children]
-    .map(r => ({ ip: r.querySelector('.ipv').value.trim(), label: r.querySelector('.ipl').value.trim() }))
-    .filter(x => x.ip);
-  const obj = {
-    id: id || uid(),
-    name: $('fName').value.trim(),
-    type: $('fType').value,
-    location: $('fLoc').value.trim(),
-    ips, deps: [...curDeps],
-    note: $('fNote').value.trim(),
-    key: $('fKey').checked
-  };
-  if (id) db[db.findIndex(m => m.id === id)] = obj; else db.push(obj);
-  save(); closeModal(); render();
-  const clash = [...new Set(ips.map(x => x.ip).filter(ip => db.some(m => m.id !== obj.id && (m.ips || []).some(i => i.ip === ip))))];
-  if (clash.length) toast('Zapisano. Uwaga, duplikat IP: ' + clash.join(', '), 4500);
-  else toast(id ? 'Zapisano zmiany' : 'Dodano maszynę');
-};
-
-function handleClick(e){
-  const b = e.target.closest('[data-act]');
-  if (!b) return;
-  const id = b.dataset.id, act = b.dataset.act;
-  const m = db.find(x => x.id === id);
-  if (act === 'note') { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
-  if (act === 'more') { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
-  if (act === 'scan') { openPgGroup(id); return; }
-  if (act === 'ping' || act === 'vnc') {
-    const h = b.dataset.ip;
-    if (!SAFE.test(h)) { toast('Adres zawiera niedozwolone znaki'); return; }
-    copy(act === 'ping' ? pingCmd(h) : sshCmd(h));
-    return;
-  }
-  if (act === 'cmd') {
-    const c = cfg.cmds[+b.dataset.i];
-    if (!c || !m) return;
-    const t = fillCmd(c.tpl, b.dataset.ip, m, b.dataset.kind);
-    if (t === null) toast('Nazwa lub IP zawiera niedozwolone znaki'); else copy(t);
-    return;
-  }
-  if (act === 'copy')   copy(m.name);
-  if (act === 'copyip') copy(b.dataset.ip);
-  if (act === 'edit')   openModal(m);
-  if (act === 'jump')   { $('q').value = m.name; saveUi(); render(); window.scrollTo({ top: 0, behavior: 'smooth' }) }
-  if (act === 'del') {
-    askConfirm('Usunąć „' + m.name + '”?', 'Usuń').then(ok => {
-      if (!ok) return;
-      db = db.filter(x => x.id !== id);
-      db.forEach(x => x.deps = (x.deps || []).filter(d => d !== id));
-      save(); render(); toast('Usunięto');
-    });
-  }
-}
-$('rows').addEventListener('click', handleClick);
-
-$('stats').onclick = e => {
-  if (e.target.closest('[data-dup]')) { dupOnly = !dupOnly; render(); return; }
-  const b = e.target.closest('[data-type]');
-  if (!b) return;
-  $('typ').value = b.dataset.type; render();
-};
-$('tbl').querySelector('thead').onclick = e => {
-  const th = e.target.closest('[data-sort]');
-  if (!th) return;
-  const k = th.dataset.sort;
-  sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
-  saveUi(); render();
-};
-addEventListener('resize', render);
-
-/* ===== Potwierdzenie ===== */
-let cfmResolve = null;
-function askConfirm(msg, okLabel = 'OK'){
-  $('cfmMsg').textContent = msg; $('cfmOk').textContent = okLabel;
-  showM('cfmModal');
-  return new Promise(res => { cfmResolve = res; });
-}
-function closeCfm(v){
-  hideM('cfmModal');
-  if (cfmResolve) { cfmResolve(v); cfmResolve = null; }
-}
-$('cfmOk').onclick = () => closeCfm(true);
-$('cfmNo').onclick = () => closeCfm(false);
-
-/* ===== Ustawienia ===== */
-$('icoCfg').innerHTML = svg(I.gear);
-let draftCmds = [];
-let draftCats = [];
-function renderCats(){
-  $('catList').innerHTML = draftCats.length ? draftCats.map((c, i) => `<div class="d-flex align-items-center gap-2">
-    <span class="text-body-tertiary">${svg(I.tag)}</span>
-    <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="minw0 flex-fill ${FIELD}">
-    <button type="button" data-delcat="${i}" title="Usuń kategorię" class="${ICON_BTN} hvd">${svg(I.trash)}</button>
-  </div>`).join('') : '<div class="tx-xs text-body-tertiary">Brak własnych kategorii.</div>';
-}
-function addDraftCat(){
-  const n = $('catNew').value.trim();
-  if (!n) return false;
-  draftCats.push({ id: 'c_' + uid().replace(/[^a-z0-9]/gi, '').slice(0, 8), name: n });
-  $('catNew').value = ''; renderCats();
-  return true;
-}
-const PING_OK = /^[\w\s.\-:=\/]*$/;
-const TARGETS = { ip: 'IP', name: 'nazwa', both: 'IP i nazwa' };
-const cfgPreview = () => {
-  const u = $('cSsh').value.trim(), p = $('cPort').value || '…', a = $('cPing').value.trim();
-  $('cPrev').textContent = `ping ${a ? a + ' ' : ''}host\nssh -L ${p}:localhost:${p} ${u ? u + '@' : ''}host`;
-};
-function renderCmds(){
-  $('cList').innerHTML = draftCmds.length ? draftCmds.map((c, i) => `<div class="d-flex align-items-center gap-2 rounded-3 border bg-body-tertiary px-2 py-2">
-    <span class="${BADGE} border bg-body text-body">${esc(c.label)}</span>
-    <span class="minw0 flex-fill text-truncate font-monospace tx-xs text-body-secondary" title="${esc(c.tpl)}">${esc(c.tpl)}</span>
-    <span class="flex-shrink-0 tx-xs text-body-secondary">${TARGETS[c.target] || ''}</span>
-    <button type="button" data-delcmd="${i}" title="Usuń komendę" class="${ICON_BTN} hvd">${svg(I.trash)}</button>
-  </div>`).join('') : '<div class="tx-xs text-body-tertiary">Brak własnych komend.</div>';
-}
-function addDraftCmd(){
-  const label = $('cmdLabel').value.trim(), tpl = $('cmdTpl').value.trim();
-  if (!label || !tpl) return false;
-  draftCmds.push({ label, tpl, target: $('cmdTarget').value });
-  $('cmdLabel').value = ''; $('cmdTpl').value = ''; renderCmds();
-  return true;
-}
-function closeCfg(){ hideM('cfgModal'); }
-$('cfgBtn').onclick = () => {
-  $('cTheme').value = cfg.theme;
-  $('sPing').checked = cfg.show.ping;
-  $('sVnc').checked = cfg.show.vnc;
-  $('sWeb').checked = cfg.show.web;
-  $('sScan').checked = cfg.show.scan;
-  $('cPing').value = cfg.pingArgs;
-  $('cSsh').value = cfg.sshUser;
-  $('cPort').value = cfg.vncPort;
-  draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
-  draftCats = cfg.cats.map(c => ({ ...c })); renderCats();
-  showM('cfgModal');
-};
-['cPing','cSsh','cPort'].forEach(id => $(id).oninput = cfgPreview);
-$('cTheme').onchange = () => applyTheme($('cTheme').value);
-$('catAdd').onclick = () => { if (!addDraftCat()) toast('Wpisz nazwę kategorii') };
-$('catList').oninput = e => { const i = e.target.dataset.catname; if (i !== undefined) draftCats[+i].name = e.target.value };
-$('catList').onclick = e => {
-  const b = e.target.closest('[data-delcat]');
-  if (!b) return;
-  draftCats.splice(+b.dataset.delcat, 1); renderCats();
-};
-$('cmdAdd').onclick = () => { if (!addDraftCmd()) toast('Podaj etykietę i komendę') };
-$('cList').onclick = e => {
-  const b = e.target.closest('[data-delcmd]');
-  if (!b) return;
-  draftCmds.splice(+b.dataset.delcmd, 1); renderCmds();
-};
-$('cCancel').onclick = closeCfg;
-$('cfgForm').onsubmit = e => {
-  e.preventDefault();
-  addDraftCmd();
-  addDraftCat();
-  draftCats = draftCats.map(c => ({ ...c, name: c.name.trim() })).filter(c => c.name);
-  const used = new Set(Object.entries(TYPES).filter(([k]) => !k.startsWith('c_')).map(([, v]) => v[0].toLowerCase()));
-  for (const c of draftCats) {
-    if (used.has(c.name.toLowerCase())) { toast('Kategoria „' + c.name + '” już istnieje'); return; }
-    used.add(c.name.toLowerCase());
-  }
-  const u = $('cSsh').value.trim(), p = parseInt($('cPort').value, 10), a = $('cPing').value.trim();
-  if (u && !/^[\w.\-]+$/.test(u)) { toast('Login zawiera niedozwolone znaki'); return; }
-  if (!(p >= 1 && p <= 65535)) { toast('Port musi być z zakresu 1–65535'); return; }
-  if (!PING_OK.test(a)) { toast('Parametry ping zawierają niedozwolone znaki'); return; }
-  const oldCats = cfg.cats;
-  cfg = {
-    sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds, theme: $('cTheme').value,
-    show: { ping: $('sPing').checked, vnc: $('sVnc').checked, web: $('sWeb').checked, scan: $('sScan').checked },
-    cats: draftCats
-  };
-  const keep = new Set(draftCats.map(c => c.id));
-  const gone = new Set(oldCats.filter(c => !keep.has(c.id)).map(c => c.id));
-  if (gone.size) { db.forEach(m => { if (gone.has(m.type)) m.type = 'other' }); save(); }
-  syncTypes();
-  try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
-  closeCfg(); render(); toast('Zapisano ustawienia');
-};
-$('cfgModal').addEventListener('hidden.bs.modal', () => applyTheme());
-
-/* ===== Kopia zapasowa ===== */
-const bkJson = () => JSON.stringify({ version: 2, machines: db, cats: cfg.cats }, null, 1);
-function openBk(mode){
-  const exp = mode === 'exp';
-  $('bkTitle').textContent = exp ? 'Eksport danych' : 'Import danych';
-  $('bkHelp').textContent = exp
-    ? 'Pobierz plik JSON albo skopiuj zawartość poniżej i zapisz ją w bezpiecznym miejscu.'
-    : 'Wybierz plik JSON lub wklej jego zawartość poniżej, a potem kliknij „Wczytaj”.';
-  $('bkImpBox').classList.toggle('d-none', exp);
-  ['bkCopy','bkDl'].forEach(id => $(id).classList.toggle('d-none', !exp));
-  $('bkGo').classList.toggle('d-none', exp);
-  $('bkText').readOnly = exp;
-  $('bkText').value = exp ? bkJson() : '';
-  showM('bkModal');
-}
-function closeBk(){ hideM('bkModal'); }
-$('exp').onclick = () => openBk('exp');
-$('imp').onclick = () => openBk('imp');
-$('bkClose').onclick = closeBk;
-$('bkText').onclick = e => { if (e.target.readOnly) e.target.select() };
-$('bkCopy').onclick = () => copy(bkJson(), 'dane (JSON)');
-$('bkDl').onclick = () => {
-  try {
-    const url = URL.createObjectURL(new Blob([bkJson()], { type: 'application/json' }));
-    const a = document.createElement('a');
-    a.href = url; a.download = 'maszyny-' + new Date().toISOString().slice(0,10) + '.json';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('Pobieranie rozpoczęte. Jeśli nic się nie dzieje, użyj „Kopiuj”.', 3500);
-  } catch(e){ toast('Pobieranie niedostępne, użyj „Kopiuj”', 3500) }
-};
-$('bkPick').onclick = () => $('file').click();
-$('file').onchange = () => {
-  const f = $('file').files[0];
-  if (f) {
-    const r = new FileReader();
-    r.onload = () => { $('bkText').value = r.result; toast('Wczytano plik, kliknij „Wczytaj”') };
-    r.onerror = () => toast('Nie udało się odczytać pliku');
-    r.readAsText(f);
-  }
-  $('file').value = '';
-};
-$('bkGo').onclick = () => {
-  let raw;
-  try { raw = JSON.parse($('bkText').value) } catch(e){ toast('To nie jest poprawny JSON'); return; }
-  const d = Array.isArray(raw) ? raw : raw?.machines;
-  if (!Array.isArray(d)) { toast('Nie znaleziono listy maszyn w danych'); return; }
-  if (Array.isArray(raw?.cats)) {
-    raw.cats.filter(c => c && /^c_\w+$/.test(c.id) && c.name && !cfg.cats.some(x => x.id === c.id))
-      .forEach(c => cfg.cats.push({ id: c.id, name: String(c.name) }));
-    syncTypes();
-    try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)) } catch(e){}
-  }
-  const items = d.filter(x => x && typeof x === 'object' && x.name).map(x => ({
-    id: String(x.id || '').replace(/[^\w-]/g, '') || uid(),
-    name: String(x.name),
-    type: TYPES[x.type] ? x.type : 'other',
-    location: String(x.location || ''),
-    ips: Array.isArray(x.ips) ? x.ips.filter(i => i && i.ip).map(i => ({ ip: String(i.ip), label: String(i.label || '') })) : [],
-    deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
-    note: String(x.note || ''),
-    key: !!x.key
-  }));
-  if (!items.length) { toast('Brak poprawnych maszyn w danych'); return; }
-  if ($('bkMode').value === 'replace') db = items;
-  else { const M = new Map(db.map(m => [m.id, m])); items.forEach(m => M.set(m.id, m)); db = [...M.values()]; }
-  save(); closeBk(); render(); toast('Zaimportowano ' + items.length + ' maszyn');
-};
-
-/* ===== Skrypt ping (PowerShell) ===== */
-$('icoPg').innerHTML = svg(I.pulse);
-const psq = s => "'" + String(s).replace(/[\r\n]+/g, ' ').replace(/'/g, "''") + "'";
-
-function buildPingScriptCore(rows, opts = {}){
-  const { live = false, refreshMs = 1000, timeoutMs = 900, pause = false, title = 'Ping' } = opts;
-  const hasGroups = rows.some(r => r.group);
-  const hasDesc   = rows.some(r => r.desc);
-  const wh = Math.max(4, ...rows.map(r => r.host.length));
-  const wi = Math.max(15, ...rows.map(r => r.ip.length));
-  const wd = hasDesc ? Math.max(4, ...rows.map(r => (r.desc || '').length)) : 0;
-
-  const fmtHead = hasDesc
-    ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f 'HOST', 'IP', 'DESC', 'DELAY'`
-    : `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`;
-  const fmtLine = hasDesc
-    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
-    : `$line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
-
-  const hostsBlock = rows.map(r => {
-    const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
-    if (r.desc)  parts.push(`Desc = ${psq(r.desc)}`);
-    if (r.group) parts.push(`Group = ${psq(r.group)}`);
-    return `  @{ ${parts.join('; ')} }`;
-  }).join(',\n');
-
-  const objFields = (() => {
-    const fields = ['Host = $h.Host', 'Ip = $h.Ip'];
-    if (hasDesc)   fields.push('Desc = $h.Desc');
-    if (hasGroups) fields.push('Group = $h.Group');
-    fields.push('Task = $task');
-    return `  [pscustomobject]@{ ${fields.join('; ')} }`;
-  })();
-
-  const body = [
-    '$jobs = foreach ($h in $hosts) {',
-    '  $target = if ($h.Ip) { $h.Ip } else { $h.Host }',
-    '  $task = $null',
-    '  try { $task = (New-Object System.Net.NetworkInformation.Ping).SendPingAsync($target, $pingMs) } catch {}',
-    objFields,
-    '}',
-    fmtHead,
-    ...(hasGroups ? ['$lastGroup = $null'] : []),
-    'foreach ($j in $jobs) {',
-    ...(hasGroups ? [
-      '  if ($j.Group -and $j.Group -ne $lastGroup) {',
-      "    if ($lastGroup -ne $null) { Write-Host '' }",
-      '    Write-Host "=== $($j.Group) ===" -ForegroundColor Cyan',
-      '    $lastGroup = $j.Group',
-      '  }'
-    ] : []),
-    "  $delay = 'OFFLINE'; $ip = $j.Ip",
-    '  try {',
-    '    $r = $j.Task.Result',
-    "    if ($r.Status -eq 'Success') {",
-    '      $delay = "$($r.RoundtripTime) ms"',
-    '      if (-not $ip) { $ip = $r.Address.IPAddressToString }',
-    '    }',
-    '  } catch {}',
-    "  if (-not $ip) { $ip = '-' }",
-    '  ' + fmtLine,
-    "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
-    '}'
-  ];
-
-  const lines = [`# ${title} (wygenerowano w Rejestrze maszyn)`];
-  if (live) {
-    lines.push('# Tryb na zywo - Ctrl+C aby zakonczyc', '');
-    lines.push('$hosts = @(', hostsBlock, ')', '');
-    lines.push(`$refreshMs = ${refreshMs}   # co ile ms odswiezac`,
-               `$pingMs    = ${timeoutMs}   # timeout pojedynczego pinga`, '');
-    lines.push('while ($true) {');
-    lines.push('  $sw = [System.Diagnostics.Stopwatch]::StartNew()');
-    lines.push('  Clear-Host');
-    lines.push(`  Write-Host ${psq(title)} -ForegroundColor White`);
-    lines.push("  Write-Host ('Odswiezanie co ' + $refreshMs + ' ms - Ctrl+C aby zakonczyc') -ForegroundColor DarkGray");
-    lines.push("  Write-Host ''");
-    lines.push('');
-    body.forEach(l => lines.push('  ' + l));
-    lines.push('');
-    lines.push('  $remain = $refreshMs - $sw.ElapsedMilliseconds');
-    lines.push('  if ($remain -gt 0) { Start-Sleep -Milliseconds $remain }');
-    lines.push('}');
-  } else {
-    lines.push('');
-    lines.push('$hosts = @(', hostsBlock, ')', '');
-    lines.push(`$pingMs = ${timeoutMs}   # timeout pojedynczego pinga`, '');
-    body.forEach(l => lines.push(l));
-    if (pause) lines.push('', "Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'");
-  }
-  return lines.join('\n');
-}
-
-function buildPingScript(opts = {}){
-  const rows = db.filter(m => m.key)
-    .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true }))
-    .map(m => {
-      const f = (m.ips || []).find(x => x.ip);
-      return { host: m.name, ip: f?.ip || '', desc: f?.label || '' };
-    });
-  return buildPingScriptCore(rows, { ...opts, title: 'Ping kluczowych maszyn' });
-}
-
-function buildGroupPingScript(id, opts = {}){
-  const target = db.find(x => x.id === id);
-  if (!target) return '';
-  const M = new Map(db.map(m => [m.id, m]));
-  const rev = {};
-  db.forEach(m => (m.deps || []).forEach(d => (rev[d] ||= []).push(m)));
-
-  const rows = [], seen = new Set();
-  const add = (m, group) => {
-    if (!m) return;
-    const ips = (m.ips || []).filter(x => x.ip);
-    const entries = ips.length
-      ? ips.map(i => ({ host: m.name, ip: i.ip, desc: i.label || '', group }))
-      : [{ host: m.name, ip: '', desc: '', group }];
-    entries.forEach(e => {
-      const k = e.host + '|' + e.ip;
-      if (seen.has(k)) return;
-      seen.add(k); rows.push(e);
-    });
-  };
-  add(target, 'TA MASZYNA');
-  (target.deps || []).forEach(dId => add(M.get(dId), 'ZALEZY OD'));
-  (rev[id] || []).forEach(u => add(u, 'ZALEZY OD NIEJ'));
-  return buildPingScriptCore(rows, { ...opts, title: `Ping grupy: ${target.name}` });
-}
-
-let pgMode = 'key', pgGroupId = null;
-const pgOpts = () => ({
-  live:      $('pgLive').checked,
-  refreshMs: Math.min(60000, Math.max(300,  parseInt($('pgEvery').value,   10) || 1000)),
-  timeoutMs: Math.min(10000, Math.max(200,  parseInt($('pgTimeout').value, 10) || 900))
-});
-function pgBuild(pause = false){
-  const o = { ...pgOpts(), pause };
-  return pgMode === 'group' ? buildGroupPingScript(pgGroupId, o) : buildPingScript(o);
-}
-function renderPg(){ $('pgText').value = pgBuild(false); }
-function closePg(){ hideM('pgModal'); }
-function openPgKey(){
-  const n = db.filter(m => m.key).length;
-  if (!n) { toast('Brak kluczowych maszyn. Zaznacz je w edycji („Sprzęt kluczowy”).', 4000); return; }
-  pgMode = 'key'; pgGroupId = null;
-  $('pgTitle').textContent = 'Ping kluczowych maszyn';
-  $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta.`;
-  renderPg();
-  showM('pgModal');
-}
-function openPgGroup(id){
-  const m = db.find(x => x.id === id);
-  if (!m) return;
-  pgMode = 'group'; pgGroupId = id;
-  const rev = {}; db.forEach(x => (x.deps || []).forEach(d => (rev[d] ||= []).push(x)));
-  const ipsN  = (m.ips  || []).filter(x => x.ip).length;
-  const depsN = (m.deps || []).filter(d => db.some(x => x.id === d)).length;
-  const revN  = (rev[id] || []).length;
-  const parts = [];
-  if (ipsN)  parts.push(`${ipsN} adr. IP`);
-  if (depsN) parts.push(`${depsN} zależności`);
-  if (revN)  parts.push(`${revN} zależnych`);
-  $('pgTitle').textContent = 'Ping grupy: ' + m.name;
-  $('pgHelp').textContent = `Maszyna: ${m.name}${parts.length ? ' (' + parts.join(', ') + ')' : ''}. Skrypt pinguje wszystkie adresy tej maszyny oraz maszyn, od których zależy, i tych, które zależą od niej.`;
-  renderPg();
-  showM('pgModal');
-}
-$('pg').onclick = openPgKey;
-$('pgClose').onclick = closePg;
-$('pgText').onclick = e => e.target.select();
-['pgLive','pgEvery','pgTimeout'].forEach(id => $(id).oninput = renderPg);
-$('pgCopy').onclick = () => copy(pgBuild(false), 'skrypt PowerShell');
-$('pgDl').onclick = () => {
-  try {
-    const o = pgOpts();
-    const s = pgBuild(!o.live);
-    const body = '\ufeff' + s.replace(/\n/g, '\r\n');
-    const safe = pgMode === 'group'
-      ? 'ping-grupa-' + (db.find(x => x.id === pgGroupId)?.name || 'maszyna').replace(/[^\w.-]+/g, '_') + '.ps1'
-      : 'ping-kluczowe.ps1';
-    const url = URL.createObjectURL(new Blob([body], { type: 'text/plain;charset=utf-8' }));
-    const a = document.createElement('a');
-    a.href = url; a.download = safe;
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast('Pobieranie rozpoczęte. Jeśli nic się nie dzieje, użyj „Kopiuj skrypt”.', 3500);
-  } catch(e){ toast('Pobieranie niedostępne, użyj „Kopiuj skrypt”', 3500) }
-};
-
-/* ===== Start ===== */
-$('cfmModal').addEventListener('hidden.bs.modal', () => { if (cfmResolve) { cfmResolve(false); cfmResolve = null; } });
-
-$('q').value = ui.q || '';
-applyTheme();
-try { localStorage.setItem('_t','1'); localStorage.removeItem('_t') }
-catch(e){ $('warn').classList.remove('d-none') }
-
-render();
-</script>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
 </body>
 </html>
