@@ -37,7 +37,8 @@ const ICONS = {
   share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.7l7.6-3.4M8.2 13.3l7.6 3.4"/>',
   sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon:  '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
-  copy:  '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>'
+  copy:  '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  tree:  '<path d="M12 3v4m0 0l-4 4m4-4l4 4M5 13v7h14v-7M5 13h14"/>'
 };
 
 const svg = (d, cls = "icon") =>
@@ -202,6 +203,10 @@ const nameBlock = (m) => `<div class="flex items-center gap-1">
   ${tools(m.name, false, m, "name")}
 </div>`;
 
+const tagChipsHtml = (m) => (m.tags || []).length
+  ? `<div class="flex flex-wrap gap-1 mt-1">${(m.tags || []).map(t => `<span class="badge badge-tag">#${esc(t)}</span>`).join("")}</div>`
+  : "";
+
 const noteHtml = (m, extra = "") => {
   if (!m.note) return "";
   const o = openNotes.has(m.id);
@@ -211,7 +216,8 @@ const noteHtml = (m, extra = "") => {
   </button>`;
 };
 
-const actions = (m) => `<button data-act="edit" data-id="${m.id}" title="Edytuj" class="ibtn">${svg(ICONS.edit)}</button>
+const actions = (m) => `<button data-act="tree" data-id="${m.id}" title="Drzewo zależności" class="ibtn">${svg(ICONS.tree)}</button>
+  <button data-act="edit" data-id="${m.id}" title="Edytuj" class="ibtn">${svg(ICONS.edit)}</button>
   <button data-act="del" data-id="${m.id}" title="Usuń" class="ibtn danger">${svg(ICONS.trash)}</button>`;
 
 const locBadge = (m) => m.location
@@ -224,7 +230,7 @@ function row(m, M, rev) {
   return `<tr>
     <td><div class="flex items-start gap-2">
       <span class="text-faint" style="margin-top:.125rem">${svg(T(m)[1], "icon")}</span>
-      <div class="min-w-0 flex-1">${nameBlock(m)}${noteHtml(m, "mt-1")}</div>
+      <div class="min-w-0 flex-1">${nameBlock(m)}${tagChipsHtml(m)}${noteHtml(m, "mt-1")}</div>
     </div></td>
     <td class="text-muted">${esc(T(m)[0])}</td>
     <td>${locBadge(m) || '<span class="text-faint">—</span>'}</td>
@@ -278,6 +284,7 @@ function render() {
 
   const H = new Map(db.map((m) => [m.id, [
     m.name, m.location, m.note, T(m)[0], m.type,
+    ...(m.tags || []),
     ...(m.ips || []).flatMap((i) => [i.ip, i.label]),
     ...(m.deps || []).map((id) => M.get(id)?.name),
     ...(rev[m.id] || []).map((x) => x.name)
@@ -361,15 +368,77 @@ function openModal(m) {
   $("fType").value = m?.type || "pc";
   $("fLoc").value = m?.location || "";
   $("fNote").value = m?.note || "";
+  $("fTags").value = (m?.tags || []).join(", ");
   $("fKey").checked = !!m?.key;
   $("ips").innerHTML = "";
   ((m?.ips?.length) ? m.ips : [{ ip: "", label: "" }]).forEach((x) => $("ips").appendChild(ipRow(x.ip, x.label)));
+ 
+  if (m && m.createdAt) {
+    const created = new Date(m.createdAt).toLocaleString("pl-PL");
+    const updated = m.updatedAt ? new Date(m.updatedAt).toLocaleString("pl-PL") : created;
+    $("auditInfo").textContent = `Utworzono: ${created} | Ostatnia zmiana: ${updated}`;
+  } else {
+    $("auditInfo").textContent = "";
+  }
+
   editId = m?.id || "";
   curDeps = [...(m?.deps || [])].filter((id) => db.some((x) => x.id === id));
   $("depQ").value = ""; renderDeps();
   $("modal").showModal();
   setTimeout(() => $("fName").focus(), 50);
 }
+
+/* ===== Drzewo zależności (Visual Tree) ===== */
+function openTreeModal(id) {
+  const m = db.find(x => x.id === id);
+  if (!m) return;
+  const M = new Map(db.map(x => [x.id, x]));
+  const rev = {};
+  db.forEach(x => (x.deps || []).forEach(d => (rev[d] ||= []).push(x)));
+
+  $("treeTitle").textContent = "Drzewo zależności: " + m.name;
+
+  const renderNodeItem = (item, isCurrent = false) => {
+    if (!item) return "";
+    const typeName = TYPES[item.type]?.[0] || "Inne";
+    const loc = item.location ? ` (${item.location})` : "";
+    return `<div class="tree-node ${isCurrent ? "current" : ""}">
+      <span class="badge badge-primary">${esc(typeName)}</span>
+      <span class="name font-medium">${esc(item.name)}${esc(loc)}</span>
+    </div>`;
+  };
+
+  const deps = (m.deps || []).map(dId => M.get(dId)).filter(Boolean);
+  const dependents = (rev[m.id] || []).filter(Boolean);
+
+  let html = `<div class="tree-section">
+    <div class="tree-section-title">Urządzenia, od których zależy ta maszyna (W górę)</div>`;
+  if (deps.length) {
+    html += `<div class="tree-list">` + deps.map(d => renderNodeItem(d)).join("") + `</div>`;
+  } else {
+    html += `<div class="text-xs text-faint">Brak zależności nadrzędnych.</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="tree-section mt-3">
+    <div class="tree-section-title">Bieżąca maszyna</div>
+    <div class="tree-list">` + renderNodeItem(m, true) + `</div>
+  </div>`;
+
+  html += `<div class="tree-section mt-3">
+    <div class="tree-section-title">Urządzenia zależące od tej maszyny (W dół)</div>`;
+  if (dependents.length) {
+    html += `<div class="tree-list">` + dependents.map(d => renderNodeItem(d)).join("") + `</div>`;
+  } else {
+    html += `<div class="text-xs text-faint">Brak maszyn zależnych.</div>`;
+  }
+  html += `</div>`;
+
+  $("treeContent").innerHTML = html;
+  $("treeModal").showModal();
+}
+
+$("treeClose").onclick = () => $("treeModal").close();
 
 /* ===== Bind events ===== */
 $("icoAdd").innerHTML = svg(ICONS.plus);
@@ -424,15 +493,23 @@ $("form").onsubmit = (e) => {
   const ips = [...$("ips").children]
     .map((r) => ({ ip: r.querySelector(".ipv").value.trim(), label: r.querySelector(".ipl").value.trim() }))
     .filter((x) => x.ip);
+  const tags = $("fTags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const now = new Date().toISOString();
+  const existing = db.find((m) => m.id === id);
+
   const obj = {
     id: id || uid(),
     name: $("fName").value.trim(),
     type: $("fType").value,
     location: $("fLoc").value.trim(),
     ips, deps: [...curDeps],
+    tags,
     note: $("fNote").value.trim(),
-    key: $("fKey").checked
+    key: $("fKey").checked,
+    createdAt: existing?.createdAt || now,
+    updatedAt: now
   };
+
   if (id) db[db.findIndex((m) => m.id === id)] = obj;
   else db.push(obj);
   save();
@@ -448,6 +525,7 @@ function handleClick(e) {
   if (!b) return;
   const id = b.dataset.id, act = b.dataset.act;
   const m = db.find((x) => x.id === id);
+  if (act === "tree") { openTreeModal(id); return; }
   if (act === "note") { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
   if (act === "more") { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
   if (act === "scan") { openPgGroup(id); return; }
@@ -682,6 +760,7 @@ $("bkGo").onclick = () => {
       .map((c) => ({ id: c.id, name: String(c.name) }))
     : [];
   const validTypes = new Set([...Object.keys(TYPES), ...importedCats.map((c) => c.id)]);
+  const now = new Date().toISOString();
   const items = d.filter((x) => x && typeof x === "object" && x.name).map((x) => ({
     id: String(x.id || "").replace(/[^\w-]/g, "") || uid(),
     name: String(x.name),
@@ -689,8 +768,11 @@ $("bkGo").onclick = () => {
     location: String(x.location || ""),
     ips: Array.isArray(x.ips) ? x.ips.filter((i) => i && i.ip).map((i) => ({ ip: String(i.ip), label: String(i.label || "") })) : [],
     deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
+    tags: Array.isArray(x.tags) ? x.tags.map(String) : [],
     note: String(x.note || ""),
-    key: !!x.key
+    key: !!x.key,
+    createdAt: x.createdAt || now,
+    updatedAt: x.updatedAt || now
   }));
   if (!items.length) { toast("Brak poprawnych maszyn"); return; }
   const applyImportedCats = () => {
