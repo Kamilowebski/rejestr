@@ -57,7 +57,7 @@ try {
     <div class="filter-row">
       <div class="filter-control search-control">
         <label for="q">Szukaj</label>
-        <input id="q" class="input" type="search" autocomplete="off" placeholder="Nazwa, IP, lokalizacja, typ, zależności…" aria-describedby="filterHelp">
+        <input id="q" class="input" type="search" autocomplete="off" placeholder="Nazwa, IP, lokalizacja, typ, tagi, zależności…" aria-describedby="filterHelp">
       </div>
       <div class="filter-control location-control">
         <label for="loc">Lokalizacja</label>
@@ -135,6 +135,10 @@ try {
     <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="input">
     <div id="depList" class="dep-list d-none"></div>
   </div>
+  <div class="field">
+    <label for="fTags">Tagi (oddzielone przecinkami)</label>
+    <input id="fTags" class="input" placeholder="np. vlan10, parter, krytyczny">
+  </div>
   <label class="flex items-center gap-2 text-sm" style="margin-bottom:1rem">
     <input type="checkbox" id="fKey" class="checkbox"> Sprzęt kluczowy
   </label>
@@ -142,6 +146,7 @@ try {
     <label for="fNote">Notatka</label>
     <textarea id="fNote" rows="2" class="input"></textarea>
   </div>
+  <div id="auditInfo" class="text-xs text-faint mb-2"></div>
   <div class="dialog-actions">
     <button type="button" id="cancel" class="btn">Anuluj</button>
     <button class="btn btn-primary">Zapisz</button>
@@ -249,6 +254,15 @@ try {
     <button type="button" id="pgClose" class="btn">Zamknij</button>
     <button type="button" id="pgCopy" class="btn">Kopiuj</button>
     <button type="button" id="pgDl" class="btn btn-primary">Pobierz .ps1</button>
+  </div>
+</div></dialog>
+
+<!-- Modal: wizualne drzewo zależności -->
+<dialog id="treeModal" class="dialog dialog-lg"><div class="dialog-body">
+  <h2 id="treeTitle" class="dialog-title">Drzewo zależności</h2>
+  <div id="treeContent" class="tree-container mb-3"></div>
+  <div class="dialog-actions">
+    <button type="button" id="treeClose" class="btn">Zamknij</button>
   </div>
 </div></dialog>
 
