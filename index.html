@@ -53,18 +53,31 @@ try {
     Brak dostępu do localStorage — dane nie będą zapisywane. Otwórz stronę bezpośrednio (nie w ramce) lub użyj Importu JSON.
   </div>
 
-  <section class="card filters">
+  <section class="card filters" aria-label="Wyszukiwanie i filtrowanie urządzeń">
     <div class="filter-row">
-      <input id="q" class="input" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…">
-      <select id="loc" class="input"></select>
-      <select id="typ" class="input"></select>
+      <div class="filter-control search-control">
+        <label for="q">Szukaj</label>
+        <input id="q" class="input" type="search" autocomplete="off" placeholder="Nazwa, IP, lokalizacja, typ, zależności…" aria-describedby="filterHelp">
+      </div>
+      <div class="filter-control location-control">
+        <label for="loc">Lokalizacja</label>
+        <select id="loc" class="input" aria-label="Filtruj według lokalizacji"></select>
+      </div>
+      <div class="filter-control type-control">
+        <label for="typ">Typ urządzenia</label>
+        <select id="typ" class="input" aria-label="Filtruj według typu urządzenia"></select>
+      </div>
+      <div class="filter-actions">
+        <button id="clearFilters" type="button" class="btn btn-sm" title="Wyczyść wyszukiwanie i filtry">Wyczyść</button>
+      </div>
     </div>
-    <div id="stats" class="chips"></div>
+    <p id="filterHelp" class="filter-help">Możesz wpisać kilka słów — wynik musi pasować do każdego z nich.</p>
+    <div id="stats" class="chips" aria-label="Szybkie filtry według typu"></div>
   </section>
 
   <section class="card table-card">
     <div class="table-wrap">
-      <table>
+      <table aria-label="Rejestr urządzeń">
         <colgroup>
           <col style="width:20%">
           <col style="width:10%">
@@ -75,12 +88,12 @@ try {
         </colgroup>
         <thead>
           <tr>
-            <th data-sort="name">Nazwa</th>
-            <th data-sort="type">Typ</th>
-            <th data-sort="location">Lokalizacja</th>
-            <th data-sort="ip">Adresy IP</th>
-            <th>Zależności</th>
-            <th class="text-end">Akcje</th>
+            <th data-sort="name" tabindex="0" scope="col" aria-label="Sortuj według nazwy">Nazwa</th>
+            <th data-sort="type" tabindex="0" scope="col" aria-label="Sortuj według typu">Typ</th>
+            <th data-sort="location" tabindex="0" scope="col" aria-label="Sortuj według lokalizacji">Lokalizacja</th>
+            <th data-sort="ip" tabindex="0" scope="col" aria-label="Sortuj według adresu IP">Adresy IP</th>
+            <th scope="col">Zależności</th>
+            <th scope="col" class="text-end">Akcje</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>

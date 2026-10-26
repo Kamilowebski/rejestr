@@ -271,8 +271,9 @@ function render() {
 
   document.querySelectorAll("thead th[data-sort]").forEach((th) => {
     const k = th.dataset.sort;
-    th.textContent = { name: "Nazwa", type: "Typ", location: "Lokalizacja", ip: "Adresy IP" }[k] +
-      (sort.k === k ? (sort.d > 0 ? " ▲" : " ▼") : "");
+    const label = { name: "Nazwa", type: "Typ", location: "Lokalizacja", ip: "Adresy IP" }[k];
+    th.textContent = label + (sort.k === k ? (sort.d > 0 ? " ▲" : " ▼") : "");
+    th.setAttribute("aria-sort", sort.k === k ? (sort.d > 0 ? "ascending" : "descending") : "none");
   });
 
   const H = new Map(db.map((m) => [m.id, [
@@ -378,9 +379,25 @@ $("icoCfg").innerHTML = svg(ICONS.gear);
 $("icoPg").innerHTML = svg(ICONS.pulse);
 
 let raf;
-$("q").oninput = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
-$("loc").onchange = render;
-$("typ").onchange = render;
+const scheduleRender = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
+$("q").oninput = scheduleRender;
+$("loc").onchange = scheduleRender;
+$("typ").onchange = scheduleRender;
+$("clearFilters").onclick = () => {
+  $("q").value = "";
+  $("loc").value = "";
+  $("typ").value = "";
+  dupOnly = false;
+  saveUi();
+  render();
+  $("q").focus();
+};
+$("q").addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("q").value) {
+    $("q").value = "";
+    scheduleRender();
+  }
+});
 $("add").onclick = () => openModal(null);
 $("cancel").onclick = () => $("modal").close();
 $("addIp").onclick = () => $("ips").appendChild(ipRow());
@@ -472,14 +489,24 @@ $("stats").onclick = (e) => {
   $("typ").value = b.dataset.type;
   render();
 };
-document.querySelector("thead").onclick = (e) => {
-  const th = e.target.closest("[data-sort]");
-  if (!th) return;
+function sortFromHeader(th) {
   const k = th.dataset.sort;
+  if (!k) return;
   sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
   saveUi();
   render();
-};
+}
+document.querySelector("thead").addEventListener("click", (e) => {
+  const th = e.target.closest("[data-sort]");
+  if (th) sortFromHeader(th);
+});
+document.querySelector("thead").addEventListener("keydown", (e) => {
+  const th = e.target.closest("[data-sort]");
+  if (th && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    sortFromHeader(th);
+  }
+});
 
 /* ===== Potwierdzenie (native <dialog>) ===== */
 function askConfirm(msg, okLabel = "OK") {
@@ -650,15 +677,15 @@ $("bkGo").onclick = () => {
   try { raw = JSON.parse($("bkText").value); } catch (e) { toast("Niepoprawny JSON"); return; }
   const d = Array.isArray(raw) ? raw : raw?.machines;
   if (!Array.isArray(d)) { toast("Brak listy maszyn"); return; }
-  if (Array.isArray(raw?.cats)) {
-    raw.cats.filter((c) => c && /^c_\w+$/.test(c.id) && c.name && !cfg.cats.some((x) => x.id === c.id))
-      .forEach((c) => cfg.cats.push({ id: c.id, name: String(c.name) }));
-    syncTypes(); saveCfg();
-  }
+  const importedCats = Array.isArray(raw?.cats)
+    ? raw.cats.filter((c) => c && /^c_\w+$/.test(c.id) && c.name)
+      .map((c) => ({ id: c.id, name: String(c.name) }))
+    : [];
+  const validTypes = new Set([...Object.keys(TYPES), ...importedCats.map((c) => c.id)]);
   const items = d.filter((x) => x && typeof x === "object" && x.name).map((x) => ({
     id: String(x.id || "").replace(/[^\w-]/g, "") || uid(),
     name: String(x.name),
-    type: TYPES[x.type] ? x.type : "other",
+    type: validTypes.has(x.type) ? x.type : "other",
     location: String(x.location || ""),
     ips: Array.isArray(x.ips) ? x.ips.filter((i) => i && i.ip).map((i) => ({ ip: String(i.ip), label: String(i.label || "") })) : [],
     deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
@@ -666,8 +693,25 @@ $("bkGo").onclick = () => {
     key: !!x.key
   }));
   if (!items.length) { toast("Brak poprawnych maszyn"); return; }
-  if ($("bkMode").value === "replace") db = items;
-  else {
+  const applyImportedCats = () => {
+    importedCats.filter((c) => !cfg.cats.some((x) => x.id === c.id))
+      .forEach((c) => cfg.cats.push(c));
+    syncTypes();
+    saveCfg();
+  };
+  if ($("bkMode").value === "replace") {
+    askConfirm(`Zastąpić wszystkie obecne dane ${db.length} maszynami z pliku? Tej operacji nie można cofnąć.`, "Zastąp dane").then((ok) => {
+      if (!ok) return;
+      applyImportedCats();
+      db = items;
+      save();
+      $("bkModal").close();
+      render();
+      toast("Zastąpiono dane. Zaimportowano " + items.length + " maszyn");
+    });
+    return;
+  } else {
+    applyImportedCats();
     const M = new Map(db.map((m) => [m.id, m]));
     items.forEach((m) => M.set(m.id, m));
     db = [...M.values()];
