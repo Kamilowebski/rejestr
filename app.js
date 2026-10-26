@@ -3,9 +3,9 @@
 /* =========================================================
    Rejestr maszyn — Konfiguracja Supabase
    ========================================================= */
-const SUPABASE_URL = "https://jccbausmoykoqohfuyqw.supabase.co";
+const SUPABASE_URL = "https://jccbausmoykoqohfuyqw.supabaseClient.co";
 const SUPABASE_KEY = "sb_publishable_xv8yXGbIiF44_6KjWo8uFg_4Mg4PS8P";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabaseClient = window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 let db = [];
@@ -445,7 +445,7 @@ $("treeClose").onclick = () => $("treeModal").close();
 
 /* ===== Operacje Supabase ===== */
 async function loadDataFromSupabase() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) {
     $("loginModal").showModal();
     return;
@@ -453,7 +453,7 @@ async function loadDataFromSupabase() {
   currentUser = session.user;
   $("logoutBtn").classList.remove("d-none");
 
-  const { data, error } = await supabase.from('machines').select('*');
+  const { data, error } = await supabaseClient.from('machines').select('*');
   if (error) {
     toast("Błąd pobierania danych z chmury");
     return;
@@ -465,7 +465,7 @@ async function loadDataFromSupabase() {
 async function saveMachineToSupabase(obj) {
   if (!currentUser) return;
   obj.user_id = currentUser.id;
-  const { error } = await supabase.from('machines').upsert(obj);
+  const { error } = await supabaseClient.from('machines').upsert(obj);
   if (error) {
     toast("Błąd zapisu w chmurze!");
     console.error(error);
@@ -473,7 +473,7 @@ async function saveMachineToSupabase(obj) {
 }
 
 async function deleteMachineFromSupabase(id) {
-  const { error } = await supabase.from('machines').delete().eq('id', id);
+  const { error } = await supabaseClient.from('machines').delete().eq('id', id);
   if (error) {
     toast("Błąd usuwania z chmury!");
     console.error(error);
@@ -534,7 +534,7 @@ $("loginForm").onsubmit = async (e) => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
  
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) {
     toast("Błąd logowania: " + error.message, 4000);
     return;
@@ -547,7 +547,7 @@ $("loginForm").onsubmit = async (e) => {
 
 /* Wylogowanie */
 $("logoutBtn").onclick = async () => {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   currentUser = null;
   db = [];
   $("logoutBtn").classList.add("d-none");
