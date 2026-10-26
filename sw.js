@@ -1,5 +1,5 @@
-/* Service worker: działanie offline (cache plików strony i skryptu Tailwind) */
-const CACHE = 'rejestr-v1';
+/* Service worker: działanie offline (cache plików strony i Bootstrap z CDN) */
+const CACHE = 'rejestr-v2';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

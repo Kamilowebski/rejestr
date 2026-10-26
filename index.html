@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-bs-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -8,106 +8,127 @@
 <meta name="theme-color" content="#f4f7f9">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script>
-  // tryb ciemny ustawiany od razu po wczytaniu strony (bez mignięcia)
-  try {
-    var t = (JSON.parse(localStorage.getItem('machines_settings')) || {}).theme;
-    if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
-  } catch(e){}
+// motyw ustawiany od razu po wczytaniu strony (bez mignięcia)
+try {
+  var t = (JSON.parse(localStorage.getItem('machines_settings')) || {}).theme;
+  if (t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.setAttribute('data-bs-theme', 'dark');
+} catch(e){}
 </script>
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } }
-</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <style>
-  body { font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+/* ===== Motyw (Bootstrap 5.3: data-bs-theme na <html>) ===== */
+[data-bs-theme=light]{--bs-body-bg:#f4f7f9;--bs-body-bg-rgb:244,247,249;--panel:#fff}
+[data-bs-theme=dark]{--panel:var(--bs-tertiary-bg)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+:where(button:not(.btn)){background:none;border:0;padding:0;color:inherit;font:inherit;text-align:inherit;cursor:pointer}
+:where(h1,h2,p){margin:0}
+a.mini{text-decoration:none}
 
-  /* ===== Tryb ciemny (przełączany w Ustawieniach) ===== */
-  html.dark { color-scheme: dark; }
-  html.dark *, html.dark ::before, html.dark ::after { --tw-ring-offset-color: #0b1220; }
-  html.dark body, html.dark .bg-page { background-color: #0b1220; }
-  html.dark .bg-white { background-color: #1e293b; }
-  html.dark .bg-slate-50 { background-color: #172033; }
-  html.dark .bg-slate-100 { background-color: #26344a; }
-  html.dark .bg-slate-800 { background-color: #334155; }
-  html.dark .bg-blue-50 { background-color: rgba(37,99,235,.20); }
-  html.dark .bg-amber-50 { background-color: rgba(245,158,11,.14); }
-  html.dark .bg-sky-50 { background-color: rgba(14,165,233,.16); }
-  html.dark .text-slate-800 { color: #f1f5f9; }
-  html.dark .text-slate-700 { color: #cbd5e1; }
-  html.dark .text-slate-600 { color: #aab6c8; }
-  html.dark .text-slate-500 { color: #94a3b8; }
-  html.dark .text-slate-400 { color: #64748b; }
-  html.dark .text-blue-600 { color: #60a5fa; }
-  html.dark .text-blue-700 { color: #93c5fd; }
-  html.dark .text-amber-800 { color: #fcd34d; }
-  html.dark .text-sky-700 { color: #7dd3fc; }
-  html.dark .border-slate-100 { border-color: #263349; }
-  html.dark .border-slate-200 { border-color: #334155; }
-  html.dark .border-slate-300 { border-color: #475569; }
-  html.dark .border-amber-200, html.dark .border-amber-300 { border-color: rgba(245,158,11,.45); }
-  /* stany hover (muszą przebić powyższe reguły) */
-  html.dark .hover\:bg-slate-50:hover { background-color: #26344a; }
-  html.dark .hover\:bg-slate-100:hover { background-color: #2e3d56; }
-  html.dark .hover\:bg-slate-200:hover { background-color: #38475f; }
-  html.dark .hover\:bg-amber-100:hover { background-color: rgba(245,158,11,.26); }
-  html.dark .hover\:bg-blue-100:hover { background-color: rgba(37,99,235,.32); }
-  html.dark .hover\:text-slate-700:hover, html.dark .hover\:text-slate-800:hover { color: #ffffff; }
-  html.dark .hover\:text-blue-600:hover, html.dark .hover\:text-blue-700:hover { color: #93c5fd; }
-  html.dark .hover\:text-red-600:hover { color: #f87171; }
-  html.dark .hover\:\!bg-red-50:hover { background-color: rgba(239,68,68,.16) !important; }
-  html.dark .hover\:\!text-red-600:hover { color: #f87171 !important; }
+/* ===== Komponenty Bootstrapa w proporcjach poprzedniego wyglądu ===== */
+.btn:not(.btn-sm){--bs-btn-padding-x:1rem;--bs-btn-padding-y:.5rem;--bs-btn-font-size:.875rem;--bs-btn-border-radius:.5rem;--bs-btn-font-weight:500}
+.btn-sm{--bs-btn-padding-x:.75rem;--bs-btn-padding-y:.25rem;--bs-btn-font-size:.75rem;--bs-btn-font-weight:500}
+.btn-outline-secondary{--bs-btn-bg:var(--panel);--bs-btn-color:var(--bs-body-color);--bs-btn-border-color:var(--bs-border-color);--bs-btn-hover-color:var(--bs-body-color);--bs-btn-hover-bg:var(--bs-tertiary-bg);--bs-btn-hover-border-color:var(--bs-border-color);--bs-btn-active-color:var(--bs-body-color);--bs-btn-active-bg:var(--bs-secondary-bg);--bs-btn-active-border-color:var(--bs-border-color)}
+.form-control,.form-select{font-size:.875rem;border-radius:.5rem}
+.form-control-sm{padding:.25rem .5rem}
+.card{--bs-card-bg:var(--panel);--bs-card-border-radius:.75rem;--bs-card-inner-border-radius:calc(.75rem - 1px)}
+.modal{--bs-modal-bg:var(--panel);--bs-modal-border-radius:.75rem}
+.table{--bs-table-bg:transparent;--bs-table-color:inherit;font-size:.875rem}
+.badge{--bs-badge-font-size:.75rem}
+
+/* ===== Klasy pomocnicze ===== */
+.wrap{max-width:72rem}
+.tfix{table-layout:fixed}.minw0{min-width:0}.minw220{min-width:220px}.minw980{min-width:980px}.mh44{max-height:11rem}
+.ox{overflow-x:auto}.pre-wrap{white-space:pre-wrap}.brk{word-break:break-all}.cp{cursor:pointer}
+.tx-xs{font-size:.75rem}.tx-11{font-size:11px}.tx-10{font-size:10px}
+.w20{width:5rem!important}.w32{width:8rem!important}
+.cw9{width:9%}.cw10{width:10%}.cw12{width:12%}.cw16{width:16%}.cw24{width:24%}.cw29{width:29%}
+.lastb0:last-child{border-bottom:0!important}
+.cards-grid{display:grid;gap:1rem;grid-template-columns:1fr}
+@media(min-width:576px){.cards-grid{grid-template-columns:repeat(2,1fr)}.w-sm-auto{width:auto!important}.cmd-grid{display:grid;gap:.5rem;grid-template-columns:6rem 1fr 7rem}}
+@media(min-width:992px){.cards-grid{grid-template-columns:repeat(3,1fr)}}
+.h-3{height:.75rem}.w-3{width:.75rem}.h-3\.5{height:.875rem}.w-3\.5{width:.875rem}.h-4{height:1rem}.w-4{width:1rem}.h-5{height:1.25rem}.w-5{width:1.25rem}.h-6{height:1.5rem}.w-6{width:1.5rem}.mr-1{margin-right:.25rem}
+.mini{display:inline-flex;align-items:center;border:1px solid var(--bs-border-color);border-radius:.375rem;background:var(--panel);padding:.125rem .375rem;font:11px var(--bs-font-monospace);color:var(--bs-secondary-color)}
+.mini:hover{background:var(--bs-tertiary-bg);color:var(--bs-primary)}
+.ibtn{border-radius:.5rem;padding:.375rem;color:var(--bs-secondary-color)}
+.ibtn:hover,.hv2:hover{background:var(--bs-secondary-bg);color:var(--bs-emphasis-color)}
+.hv1:hover{background:var(--bs-tertiary-bg)}
+.hv3:hover{background:var(--bs-secondary-bg)}
+.hvt:hover{color:var(--bs-emphasis-color)}
+.hvp:hover{color:var(--bs-primary)}
+.ibtn.hvd:hover{background:var(--bs-danger-bg-subtle);color:var(--bs-danger)}
+
+/* ===== Komunikat (toast) ===== */
+.tst{position:fixed;bottom:1rem;left:50%;transform:translate(-50%,.5rem);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:2000;background:var(--bs-emphasis-color);color:var(--bs-body-bg);padding:.5rem 1rem;border-radius:.5rem;font-size:.875rem;box-shadow:var(--bs-box-shadow)}
+.tst.show{opacity:1;transform:translate(-50%,0)}
+
+/* ===== Przycisk „kwadraciki” z wspólnego apps.js (klasy Tailwinda, więc minimalny shim) ===== */
+#hub-apps{position:relative;display:inline-block}
+#hub-apps .hidden{display:none!important}
+#hub-apps .inline-flex{display:inline-flex}#hub-apps .flex{display:flex}#hub-apps .flex-col{flex-direction:column}
+#hub-apps .items-center{align-items:center}#hub-apps .justify-center{justify-content:center}
+#hub-apps .grid{display:grid}#hub-apps .grid-cols-3{grid-template-columns:repeat(3,1fr)}#hub-apps .gap-1{gap:.25rem}
+#hub-apps .absolute{position:absolute}#hub-apps .right-0{right:0}#hub-apps .mt-2{margin-top:.5rem}#hub-apps .z-50{z-index:1050}
+#hub-apps .h-10{height:2.5rem}#hub-apps .w-10{width:2.5rem}#hub-apps .h-6{height:1.5rem}#hub-apps .w-6{width:1.5rem}#hub-apps .h-7{height:1.75rem}#hub-apps .w-7{width:1.75rem}#hub-apps .w-72{width:18rem}
+#hub-apps .max-w-\[calc\(100vw-1\.5rem\)\]{max-width:calc(100vw - 1.5rem)}
+#hub-apps .p-3{padding:.75rem}#hub-apps .rounded-lg{border-radius:.5rem}#hub-apps .rounded-xl{border-radius:.75rem}
+#hub-apps .bg-white{background:var(--panel)}#hub-apps .shadow-lg{box-shadow:var(--bs-box-shadow-lg)}
+#hub-apps .text-xs{font-size:.75rem}#hub-apps .text-center{text-align:center}
+#hub-apps .text-slate-600,#hub-apps .text-slate-700{color:var(--bs-body-color)}
+#hub-apps .bg-blue-50{background:var(--bs-primary-bg-subtle)}#hub-apps .text-blue-700{color:var(--bs-primary-text-emphasis)}
+#hub-apps a{text-decoration:none}
+#hub-apps .hover\:bg-slate-100:hover{background:var(--bs-secondary-bg)}
 </style>
 </head>
-<body class="min-h-screen bg-page text-slate-800">
+<body class="min-vh-100">
 
-<div class="mx-auto max-w-6xl space-y-6 px-4 py-8">
+<div class="mx-auto wrap vstack gap-4 px-3 py-4">
 
   <!-- Nagłówek -->
-  <header class="flex flex-wrap items-start justify-between gap-4">
+  <header class="d-flex flex-wrap align-items-start justify-content-between gap-3">
     <div>
-      <h1 class="text-2xl font-semibold text-slate-800">Rejestr maszyn</h1>
-      <p id="count" class="mt-1 text-sm text-slate-500"></p>
+      <h1 class="fs-4 fw-semibold text-body-emphasis">Rejestr maszyn</h1>
+      <p id="count" class="mt-1 small text-body-secondary"></p>
     </div>
-    <div class="flex flex-wrap gap-2">
-      <button id="add" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoAdd"></span>Dodaj</button>
-      <button id="view" class="hidden items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 md:inline-flex"></button>
-      <button id="pg" title="Pinguj kluczowe maszyny (skrypt PowerShell)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoPg"></span><span class="hidden sm:inline">Pinguj kluczowe</span></button>
-      <button id="exp" title="Eksport danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoExp"></span><span class="hidden sm:inline">Eksport</span></button>
-      <button id="imp" title="Import danych (JSON)" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
-      <button id="cfgBtn" title="Ustawienia" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
+    <div class="d-flex flex-wrap gap-2">
+      <button id="add" class="btn btn-primary d-inline-flex align-items-center gap-2"><span id="icoAdd"></span>Dodaj</button>
+      <button id="view" class="btn btn-outline-secondary d-none align-items-center gap-2 d-md-inline-flex"></button>
+      <button id="pg" title="Pinguj kluczowe maszyny (skrypt PowerShell)" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><span id="icoPg"></span><span class="d-none d-sm-inline">Pinguj kluczowe</span></button>
+      <button id="exp" title="Eksport danych (JSON)" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><span id="icoExp"></span><span class="d-none d-sm-inline">Eksport</span></button>
+      <button id="imp" title="Import danych (JSON)" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><span id="icoImp"></span><span class="d-none d-sm-inline">Import</span></button>
+      <button id="cfgBtn" title="Ustawienia" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"><span id="icoCfg"></span><span class="d-none d-sm-inline">Ustawienia</span></button>
       <div id="hub-apps"></div>
-      <input type="file" id="file" accept=".json,application/json" class="hidden">
+      <input type="file" id="file" accept=".json,application/json" class="d-none">
     </div>
   </header>
 
   <!-- Ostrzeżenie: brak dostępu do localStorage -->
-  <div id="warn" class="hidden rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+  <div id="warn" class="alert alert-warning d-none small text-warning-emphasis">
     Ta strona nie ma dostępu do pamięci przeglądarki (localStorage), więc nie wczyta ani nie zapisze danych. Otwórz ją bezpośrednio w karcie (nie w ramce) pod stałym adresem albo użyj Importu JSON.
   </div>
 
   <!-- Filtry i liczniki -->
-  <section class="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <div class="flex flex-wrap gap-2">
+  <section class="card vstack gap-2 p-3 shadow-sm">
+    <div class="d-flex flex-wrap gap-2">
       <input id="q" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…"
-        class="w-full min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-      <select id="loc" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-auto"></select>
-      <select id="typ" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 sm:w-auto"></select>
+        class="form-control w-100 minw220 flex-fill">
+      <select id="loc" class="form-select w-100 w-sm-auto"></select>
+      <select id="typ" class="form-select w-100 w-sm-auto"></select>
     </div>
-    <div id="stats" class="flex flex-wrap gap-2"></div>
+    <div id="stats" class="d-flex flex-wrap gap-2"></div>
   </section>
 
   <!-- Widok tabeli -->
-  <div id="tbl" class="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-    <table class="w-full min-w-[980px] table-fixed text-left text-sm">
-      <colgroup><col class="w-[24%]"><col class="w-[9%]"><col class="w-[12%]"><col class="w-[29%]"><col class="w-[16%]"><col class="w-[10%]"></colgroup>
-      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+  <div id="tbl" class="card d-none ox shadow-sm">
+    <table class="w-100 minw980 tfix text-start small">
+      <colgroup><col class="cw24"><col class="cw9"><col class="cw12"><col class="cw29"><col class="cw16"><col class="cw10"></colgroup>
+      <thead class="bg-body-tertiary tx-xs text-uppercase text-body-secondary">
         <tr>
-          <th data-sort="name" data-label="Nazwa" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Nazwa</th>
-          <th data-sort="type" data-label="Typ" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Typ</th>
-          <th data-sort="location" data-label="Lokalizacja" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Lokalizacja</th>
-          <th data-sort="ip" data-label="Adresy IP" class="cursor-pointer select-none px-4 py-3 font-medium hover:text-slate-800">Adresy IP</th>
-          <th class="px-4 py-3 font-medium">Zależności</th>
-          <th class="px-4 py-3 text-right font-medium">Akcje</th>
+          <th data-sort="name" data-label="Nazwa" class="cp user-select-none px-3 py-2 fw-medium hvt">Nazwa</th>
+          <th data-sort="type" data-label="Typ" class="cp user-select-none px-3 py-2 fw-medium hvt">Typ</th>
+          <th data-sort="location" data-label="Lokalizacja" class="cp user-select-none px-3 py-2 fw-medium hvt">Lokalizacja</th>
+          <th data-sort="ip" data-label="Adresy IP" class="cp user-select-none px-3 py-2 fw-medium hvt">Adresy IP</th>
+          <th class="px-3 py-2 fw-medium">Zależności</th>
+          <th class="px-3 py-2 text-end fw-medium">Akcje</th>
         </tr>
       </thead>
       <tbody id="rows"></tbody>
@@ -115,186 +136,182 @@
   </div>
 
   <!-- Widok kafelków (domyślny) -->
-  <div id="cards" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+  <div id="cards" class="cards-grid"></div>
 
   <!-- Stan pusty -->
-  <div id="empty" class="hidden rounded-xl border border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500"></div>
+  <div id="empty" class="card d-none bg-body-tertiary p-5 text-center small text-body-secondary"></div>
 </div>
 
 <!-- Modal -->
-<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <form id="form" class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
-    <h2 id="mtitle" class="text-lg font-semibold text-slate-800"></h2>
+<div class="modal fade" id="modal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form id="form" class="modal-content p-3 gap-3">
+    <h2 id="mtitle" class="fs-5 fw-semibold text-body-emphasis"></h2>
     <input type="hidden" id="fId">
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="fName">Nazwa hosta *</label>
-      <input id="fName" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <label class="mb-1 d-block small fw-medium text-body" for="fName">Nazwa hosta *</label>
+      <input id="fName" required class="form-control w-100">
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="row row-cols-2 g-2">
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700" for="fType">Typ</label>
-        <select id="fType" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></select>
+        <label class="mb-1 d-block small fw-medium text-body" for="fType">Typ</label>
+        <select id="fType" class="form-select w-100"></select>
       </div>
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700" for="fLoc">Lokalizacja</label>
-        <input id="fLoc" list="locList" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <label class="mb-1 d-block small fw-medium text-body" for="fLoc">Lokalizacja</label>
+        <input id="fLoc" list="locList" class="form-control w-100">
       </div>
     </div>
     <datalist id="locList"></datalist>
     <div>
-      <div class="mb-1 flex items-center justify-between">
-        <span class="text-sm font-medium text-slate-700">Adresy IP</span>
-        <button type="button" id="addIp" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Dodaj IP</button>
+      <div class="mb-1 d-flex align-items-center justify-content-between">
+        <span class="small fw-medium text-body">Adresy IP</span>
+        <button type="button" id="addIp" class="small fw-medium text-primary hvp">+ Dodaj IP</button>
       </div>
-      <div id="ips" class="space-y-2"></div>
+      <div id="ips" class="vstack gap-2"></div>
     </div>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="depQ">Zależy od</label>
-      <div id="depChips" class="mb-2 flex flex-wrap gap-1.5"></div>
-      <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-      <div id="depList" class="mt-1 hidden max-h-44 overflow-auto rounded-lg border border-slate-200 bg-white shadow-sm"></div>
+      <label class="mb-1 d-block small fw-medium text-body" for="depQ">Zależy od</label>
+      <div id="depChips" class="mb-2 d-flex flex-wrap gap-1"></div>
+      <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="form-control w-100">
+      <div id="depList" class="mt-1 d-none mh44 overflow-auto rounded-3 border bg-body shadow-sm"></div>
     </div>
-    <label class="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="fKey" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Sprzęt kluczowy <span class="text-xs text-slate-500">(uwzględniany w „Pinguj kluczowe”)</span></label>
+    <label class="d-flex align-items-center gap-2 small text-body"><input type="checkbox" id="fKey" class="form-check-input mt-0">Sprzęt kluczowy <span class="tx-xs text-body-secondary">(uwzględniany w „Pinguj kluczowe”)</span></label>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="fNote">Notatka</label>
-      <textarea id="fNote" rows="2" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
+      <label class="mb-1 d-block small fw-medium text-body" for="fNote">Notatka</label>
+      <textarea id="fNote" rows="2" class="form-control w-100"></textarea>
     </div>
-    <div class="flex justify-end gap-2 pt-1">
-      <button type="button" id="cancel" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
-      <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zapisz</button>
+    <div class="d-flex justify-content-end gap-2 pt-1">
+      <button type="button" id="cancel" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Anuluj</button>
+      <button class="btn btn-primary d-inline-flex align-items-center gap-2">Zapisz</button>
     </div>
   </form>
-</div>
+</div></div>
 
 <!-- Modal ustawień -->
-<div id="cfgModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <form id="cfgForm" class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
-    <h2 class="text-lg font-semibold text-slate-800">Ustawienia</h2>
+<div class="modal fade" id="cfgModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><form id="cfgForm" class="modal-content p-3 gap-3">
+    <h2 class="fs-5 fw-semibold text-body-emphasis">Ustawienia</h2>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="cTheme">Motyw</label>
-      <select id="cTheme" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <label class="mb-1 d-block small fw-medium text-body" for="cTheme">Motyw</label>
+      <select id="cTheme" class="form-select w-100">
         <option value="light">Jasny</option>
         <option value="dark">Ciemny</option>
         <option value="auto">Zgodny z systemem</option>
       </select>
     </div>
     <div>
-      <div class="mb-1 text-sm font-medium text-slate-700">Widoczne przyciski</div>
-      <div class="flex flex-wrap gap-x-5 gap-y-2">
-        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sPing" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Ping</label>
-        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sVnc" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">VNC</label>
-        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sWeb" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">WWW (http)</label>
-        <label class="inline-flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" id="sScan" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">Ping grupy</label>
+      <div class="mb-1 small fw-medium text-body">Widoczne przyciski</div>
+      <div class="d-flex flex-wrap gap-x-3 gap-y-2">
+        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sPing" class="form-check-input mt-0">Ping</label>
+        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sVnc" class="form-check-input mt-0">VNC</label>
+        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sWeb" class="form-check-input mt-0">WWW (http)</label>
+        <label class="d-inline-flex align-items-center gap-2 small text-body"><input type="checkbox" id="sScan" class="form-check-input mt-0">Ping grupy</label>
       </div>
-      <p class="mt-1 text-xs text-slate-500">Ukryte przyciski nie są usuwane, ich ustawienia zostają.</p>
+      <p class="mt-1 tx-xs text-body-secondary">Ukryte przyciski nie są usuwane, ich ustawienia zostają.</p>
     </div>
     <div>
-      <label class="mb-1 block text-sm font-medium text-slate-700" for="cPing">Parametry ping</label>
-      <input id="cPing" autocomplete="off" placeholder="np. -a -t" class="w-full font-mono rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+      <label class="mb-1 d-block small fw-medium text-body" for="cPing">Parametry ping</label>
+      <input id="cPing" autocomplete="off" placeholder="np. -a -t" class="form-control w-100 font-monospace">
     </div>
-    <div class="grid grid-cols-2 gap-3">
+    <div class="row row-cols-2 g-2">
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700" for="cSsh">Login SSH (tunel VNC)</label>
-        <input id="cSsh" autocomplete="off" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <label class="mb-1 d-block small fw-medium text-body" for="cSsh">Login SSH (tunel VNC)</label>
+        <input id="cSsh" autocomplete="off" class="form-control w-100">
       </div>
       <div>
-        <label class="mb-1 block text-sm font-medium text-slate-700" for="cPort">Port VNC</label>
-        <input id="cPort" type="number" min="1" max="65535" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <label class="mb-1 d-block small fw-medium text-body" for="cPort">Port VNC</label>
+        <input id="cPort" type="number" min="1" max="65535" class="form-control w-100">
       </div>
     </div>
-    <p id="cPrev" class="break-all whitespace-pre-wrap rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"></p>
-    <div class="space-y-2 border-t border-slate-100 pt-4">
-      <div class="text-sm font-medium text-slate-700">Własne kategorie</div>
-      <p class="text-xs text-slate-500">Pojawiają się na liście typów, w filtrach i licznikach. Usunięcie kategorii przenosi jej maszyny do „Inne”.</p>
-      <div id="catList" class="space-y-1.5"></div>
-      <div class="flex gap-2">
-        <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-        <button type="button" id="catAdd" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Dodaj</button>
+    <p id="cPrev" class="brk pre-wrap rounded-3 bg-body-tertiary px-2 py-2 font-monospace tx-xs text-body-secondary"></p>
+    <div class="vstack gap-2 border-top pt-3">
+      <div class="small fw-medium text-body">Własne kategorie</div>
+      <p class="tx-xs text-body-secondary">Pojawiają się na liście typów, w filtrach i licznikach. Usunięcie kategorii przenosi jej maszyny do „Inne”.</p>
+      <div id="catList" class="vstack gap-1"></div>
+      <div class="d-flex gap-2">
+        <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="form-control minw0 flex-fill">
+        <button type="button" id="catAdd" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Dodaj</button>
       </div>
     </div>
-    <div class="space-y-2 border-t border-slate-100 pt-4">
-      <div class="text-sm font-medium text-slate-700">Własne komendy</div>
-      <p class="text-xs text-slate-500">Zmienne: <span class="rounded bg-slate-100 px-1 font-mono">{host}</span> (nazwa lub IP, zależnie od przycisku), <span class="rounded bg-slate-100 px-1 font-mono">{name}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{ip}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{user}</span>, <span class="rounded bg-slate-100 px-1 font-mono">{port}</span></p>
-      <div id="cList" class="space-y-1.5"></div>
-      <div class="grid gap-2 sm:grid-cols-[6rem_1fr_7rem]">
-        <input id="cmdLabel" maxlength="12" placeholder="Etykieta" class="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-        <input id="cmdTpl" placeholder="np. mstsc /v:{host}" class="min-w-0 font-mono rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
-        <select id="cmdTarget" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"><option value="ip">Do IP</option><option value="name">Do nazwy</option><option value="both">Do obu</option></select>
+    <div class="vstack gap-2 border-top pt-3">
+      <div class="small fw-medium text-body">Własne komendy</div>
+      <p class="tx-xs text-body-secondary">Zmienne: <span class="rounded-1 bg-body-secondary px-1 font-monospace">{host}</span> (nazwa lub IP, zależnie od przycisku), <span class="rounded-1 bg-body-secondary px-1 font-monospace">{name}</span>, <span class="rounded-1 bg-body-secondary px-1 font-monospace">{ip}</span>, <span class="rounded-1 bg-body-secondary px-1 font-monospace">{user}</span>, <span class="rounded-1 bg-body-secondary px-1 font-monospace">{port}</span></p>
+      <div id="cList" class="vstack gap-1"></div>
+      <div class="cmd-grid">
+        <input id="cmdLabel" maxlength="12" placeholder="Etykieta" class="form-control minw0">
+        <input id="cmdTpl" placeholder="np. mstsc /v:{host}" class="form-control minw0 font-monospace">
+        <select id="cmdTarget" class="form-select"><option value="ip">Do IP</option><option value="name">Do nazwy</option><option value="both">Do obu</option></select>
       </div>
-      <button type="button" id="cmdAdd" class="text-sm font-medium text-blue-600 hover:text-blue-700">+ Dodaj komendę</button>
+      <button type="button" id="cmdAdd" class="small fw-medium text-primary hvp">+ Dodaj komendę</button>
     </div>
-    <div class="flex justify-end gap-2 pt-1">
-      <button type="button" id="cCancel" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
-      <button class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zapisz</button>
+    <div class="d-flex justify-content-end gap-2 pt-1">
+      <button type="button" id="cCancel" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Anuluj</button>
+      <button class="btn btn-primary d-inline-flex align-items-center gap-2">Zapisz</button>
     </div>
   </form>
-</div>
+</div></div>
 
 <!-- Modal kopii zapasowej (podgląd JSON, działa też w ramkach) -->
-<div id="bkModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <div class="max-h-[92vh] w-full max-w-lg space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
-    <h2 id="bkTitle" class="text-lg font-semibold text-slate-800"></h2>
-    <p id="bkHelp" class="text-sm text-slate-500"></p>
-    <div id="bkImpBox" class="flex flex-wrap items-center gap-2">
-      <button type="button" id="bkPick" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Wybierz plik JSON</button>
-      <select id="bkMode" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+<div class="modal fade" id="bkModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content p-3 gap-3">
+    <h2 id="bkTitle" class="fs-5 fw-semibold text-body-emphasis"></h2>
+    <p id="bkHelp" class="small text-body-secondary"></p>
+    <div id="bkImpBox" class="d-flex flex-wrap align-items-center gap-2">
+      <button type="button" id="bkPick" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Wybierz plik JSON</button>
+      <select id="bkMode" class="form-select">
         <option value="merge">Dołącz i zaktualizuj</option>
         <option value="replace">Zastąp wszystkie dane</option>
       </select>
     </div>
-    <textarea id="bkText" rows="8" spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
-    <div class="flex flex-wrap justify-end gap-2">
-      <button type="button" id="bkClose" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zamknij</button>
-      <button type="button" id="bkCopy" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Kopiuj</button>
-      <button type="button" id="bkDl" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Pobierz plik</button>
-      <button type="button" id="bkGo" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Wczytaj</button>
+    <textarea id="bkText" rows="8" spellcheck="false" class="form-control w-100 font-monospace tx-xs"></textarea>
+    <div class="d-flex flex-wrap justify-content-end gap-2">
+      <button type="button" id="bkClose" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Zamknij</button>
+      <button type="button" id="bkCopy" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Kopiuj</button>
+      <button type="button" id="bkDl" class="btn btn-primary d-inline-flex align-items-center gap-2">Pobierz plik</button>
+      <button type="button" id="bkGo" class="btn btn-primary d-inline-flex align-items-center gap-2">Wczytaj</button>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- Modal: skrypt pingu kluczowych maszyn / grupy -->
-<div id="pgModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <div class="max-h-[92vh] w-full max-w-2xl space-y-4 overflow-auto rounded-xl bg-white p-6 shadow-xl">
-    <h2 id="pgTitle" class="text-lg font-semibold text-slate-800">Ping kluczowych maszyn</h2>
-    <p id="pgHelp" class="text-sm text-slate-500"></p>
-    <div class="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
-      <label class="inline-flex items-center gap-2">
-        <input type="checkbox" id="pgLive" checked class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+<div class="modal fade" id="pgModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content p-3 gap-3">
+    <h2 id="pgTitle" class="fs-5 fw-semibold text-body-emphasis">Ping kluczowych maszyn</h2>
+    <p id="pgHelp" class="small text-body-secondary"></p>
+    <div class="d-flex flex-wrap align-items-center gap-x-3 gap-y-2 rounded-3 bg-body-tertiary px-2 py-2 small text-body">
+      <label class="d-inline-flex align-items-center gap-2">
+        <input type="checkbox" id="pgLive" checked class="form-check-input mt-0">
         Odświeżaj na żywo
       </label>
-      <label class="inline-flex items-center gap-2">
+      <label class="d-inline-flex align-items-center gap-2">
         Co
-        <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="form-control form-control-sm w20 font-monospace">
         ms
       </label>
-      <label class="inline-flex items-center gap-2">
+      <label class="d-inline-flex align-items-center gap-2">
         Timeout ping
-        <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="w-20 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm font-mono outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20">
+        <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="form-control form-control-sm w20 font-monospace">
         ms
       </label>
     </div>
-    <textarea id="pgText" rows="12" readonly spellcheck="false" class="w-full font-mono text-xs rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"></textarea>
-    <div class="flex flex-wrap justify-end gap-2">
-      <button type="button" id="pgClose" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Zamknij</button>
-      <button type="button" id="pgCopy" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Kopiuj skrypt</button>
-      <button type="button" id="pgDl" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Pobierz .ps1</button>
+    <textarea id="pgText" rows="12" readonly spellcheck="false" class="form-control w-100 font-monospace tx-xs"></textarea>
+    <div class="d-flex flex-wrap justify-content-end gap-2">
+      <button type="button" id="pgClose" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Zamknij</button>
+      <button type="button" id="pgCopy" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Kopiuj skrypt</button>
+      <button type="button" id="pgDl" class="btn btn-primary d-inline-flex align-items-center gap-2">Pobierz .ps1</button>
     </div>
-  </div>
+  </div></div>
 </div>
 
 <!-- Modal potwierdzenia (zamiast confirm(), który bywa blokowany w ramkach) -->
-<div id="cfmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4">
-  <div class="w-full max-w-sm space-y-4 rounded-xl bg-white p-6 shadow-xl">
-    <p id="cfmMsg" class="text-sm text-slate-700"></p>
-    <div class="flex justify-end gap-2">
-      <button type="button" id="cfmNo" class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Anuluj</button>
-      <button type="button" id="cfmOk" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">Usuń</button>
+<div class="modal fade" id="cfmModal" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content p-3 gap-3">
+    <p id="cfmMsg" class="small text-body"></p>
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" id="cfmNo" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">Anuluj</button>
+      <button type="button" id="cfmOk" class="btn btn-danger d-inline-flex align-items-center gap-2">Usuń</button>
     </div>
-  </div>
+  </div></div>
 </div>
 
-<div id="toast" class="pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2 translate-y-2 rounded-lg bg-slate-800 px-4 py-2 text-sm text-white opacity-0 shadow-lg transition-all"></div>
+<div id="toast" class="tst" role="status" aria-live="polite"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script>
 /* ===== Stałe ===== */
 const KEY = 'machines_v1';          // klucz danych w localStorage
@@ -305,6 +322,8 @@ const UI_KEY = 'machines_ui';        // zapamiętane wyszukiwanie i sortowanie
 const SAFE = /^[\w.:\-]+$/;         // dozwolone znaki w nazwie/IP kopiowanym do komend
 
 const $ = id => document.getElementById(id);
+const showM = id => bootstrap.Modal.getOrCreateInstance($(id)).show();   // modale Bootstrap
+const hideM = id => bootstrap.Modal.getOrCreateInstance($(id)).hide();
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ===== Ikony (inline SVG, outline) ===== */
@@ -373,8 +392,8 @@ syncTypes();
 const mqDark = window.matchMedia ? matchMedia('(prefers-color-scheme: dark)') : { matches: false };
 function applyTheme(t = cfg.theme){
   const dark = t === 'dark' || (t === 'auto' && mqDark.matches);
-  document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0b1220' : '#f4f7f9');
+  document.documentElement.setAttribute('data-bs-theme', dark ? 'dark' : 'light');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#212529' : '#f4f7f9');
 }
 try { mqDark.addEventListener('change', () => { if (cfg.theme === 'auto') applyTheme() }) } catch(e){}
 const openNotes = new Set();        // maszyny z rozwiniętą notatką
@@ -401,9 +420,9 @@ let toastT;
 function toast(msg, ms = 1800){
   const el = $('toast');
   el.textContent = msg;
-  el.classList.remove('opacity-0','translate-y-2');
+  el.classList.add('show');
   clearTimeout(toastT);
-  toastT = setTimeout(() => el.classList.add('opacity-0','translate-y-2'), ms);
+  toastT = setTimeout(() => el.classList.remove('show'), ms);
 }
 function copy(text, label){
   const ok = () => toast('Skopiowano: ' + (label || text));
@@ -419,9 +438,9 @@ function copy(text, label){
 }
 
 /* ===== Elementy widoku ===== */
-const MINI = 'inline-flex items-center rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-500 hover:bg-slate-50 hover:text-blue-700';
-const ICON_BTN = 'rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800';
-const BADGE = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
+const MINI = 'mini';
+const ICON_BTN = 'ibtn';
+const BADGE = 'badge rounded-pill fw-medium d-inline-flex align-items-center';
 
 /* komendy: tunel SSH dla VNC i ping (login, port i parametry z ustawień) */
 const sshCmd = h => `ssh -L ${cfg.vncPort}:localhost:${cfg.vncPort} ${cfg.sshUser ? cfg.sshUser + '@' : ''}${h}`;
@@ -453,7 +472,7 @@ const tools = (host, web, m, kind) => {
     sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="${MINI}">${svg(I.globe,'h-3.5 w-3.5')}</a>` : '',
     custom
   ].join('');
-  return parts.trim() ? `<span class="inline-flex shrink-0 flex-wrap items-center gap-1">${parts}</span>` : '';
+  return parts.trim() ? `<span class="d-inline-flex flex-shrink-0 flex-wrap align-items-center gap-1">${parts}</span>` : '';
 };
 
 function ipChips(m){
@@ -465,39 +484,39 @@ function ipChips(m){
     ? `<button data-act="scan" data-id="${m.id}" title="Ping grupy: ta maszyna (wszystkie IP) + zależności" class="${MINI}">${svg(I.share,'h-3.5 w-3.5')}</button>`
     : '';
   if (!all.length) {
-    return scanBtn ? `<div class="flex flex-wrap items-center gap-1.5">${scanBtn}</div>` : '';
+    return scanBtn ? `<div class="d-flex flex-wrap align-items-center gap-1">${scanBtn}</div>` : '';
   }
   const isOpen = open.has(m.id);
   const chips = (isOpen ? all : all.slice(0,1)).map(i => {
     // duplikat: inne maszyny z tym samym IP
     const others = dups.has(i.ip)
       ? [...dups.get(i.ip)].filter(id => id !== m.id).map(id => db.find(x => x.id === id)?.name).filter(Boolean).join(', ') : '';
-    const cls = others ? 'border-amber-300 bg-amber-50 hover:bg-amber-100' : 'border-slate-200 bg-slate-50 hover:bg-slate-100';
-    return `<span class="flex max-w-full flex-wrap items-center gap-1">
-      <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? 'Duplikat IP, także: ' + esc(others) : 'Kopiuj IP'}" class="inline-flex min-w-0 items-center gap-1 rounded-md border px-1.5 py-0.5 ${cls}">
-        <span class="font-mono text-xs ${others ? 'text-amber-800' : 'text-blue-700'}">${esc(i.ip)}</span>
-        ${i.label ? `<span class="truncate text-[10px] text-slate-500">${esc(i.label)}</span>` : ''}
+    const cls = others ? 'border border-warning bg-warning-subtle' : 'border bg-body-tertiary hv2';
+    return `<span class="d-flex mw-100 flex-wrap align-items-center gap-1">
+      <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? 'Duplikat IP, także: ' + esc(others) : 'Kopiuj IP'}" class="d-inline-flex minw0 align-items-center gap-1 rounded-2 border px-1 py-1 ${cls}">
+        <span class="font-monospace tx-xs ${others ? 'text-warning-emphasis' : 'text-primary'}">${esc(i.ip)}</span>
+        ${i.label ? `<span class="text-truncate tx-10 text-body-secondary">${esc(i.label)}</span>` : ''}
       </button>${tools(i.ip, true, m, 'ip')}
     </span>`;
   }).join('');
   const hiddenDup = !isOpen && all.slice(1).some(i => dups.has(i.ip));
   const more = all.length > 1
-    ? `<button data-act="more" data-id="${m.id}" class="${BADGE} ${hiddenDup ? 'bg-amber-50 text-amber-800 hover:bg-amber-100' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'}">${isOpen ? 'zwiń' : '+' + (all.length - 1)}</button>` : '';
+    ? `<button data-act="more" data-id="${m.id}" class="${BADGE} ${hiddenDup ? 'bg-warning-subtle text-warning-emphasis' : 'bg-primary-subtle text-primary-emphasis'}">${isOpen ? 'zwiń' : '+' + (all.length - 1)}</button>` : '';
   // zwinięte: pierwszy IP + licznik w jednej linii; rozwinięte: adresy jeden pod drugim
-  return `<div class="flex ${isOpen ? 'flex-col items-start' : 'flex-wrap items-center'} gap-1.5">${chips}${more}${scanBtn}</div>`;
+  return `<div class="d-flex ${isOpen ? 'flex-column align-items-start' : 'flex-wrap align-items-center'} gap-1">${chips}${more}${scanBtn}</div>`;
 }
 
 const depBtn = (d, arrow, cls) =>
-  `<button data-act="jump" data-id="${d.id}" class="${BADGE} ${cls} hover:bg-slate-200"><span class="mr-1 text-slate-400">${arrow}</span>${esc(d.name)}</button>`;
+  `<button data-act="jump" data-id="${d.id}" class="${BADGE} ${cls} hv3"><span class="me-1 text-body-tertiary">${arrow}</span>${esc(d.name)}</button>`;
 function depChips(m, M, rev){
   const deps  = (m.deps || []).map(id => M.get(id)).filter(Boolean).map(d => depBtn(d, '←', 'bg-slate-100 text-slate-700')).join('');
   const users = (rev[m.id] || []).map(d => depBtn(d, '→', 'bg-slate-50 text-slate-500')).join('');
   return deps + users;
 }
 
-const nameBlock = m => `<div class="flex items-center gap-1.5">
-  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="min-w-0 break-all text-left font-semibold text-slate-800 hover:text-blue-600">${esc(m.name)}</button>
-  ${m.key ? `<span title="Sprzęt kluczowy" class="shrink-0 text-blue-600">${svg(I.star,'h-3.5 w-3.5')}</span>` : ''}
+const nameBlock = m => `<div class="d-flex align-items-center gap-1">
+  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="minw0 brk text-start fw-semibold text-body-emphasis hvp">${esc(m.name)}</button>
+  ${m.key ? `<span title="Sprzęt kluczowy" class="flex-shrink-0 text-primary">${svg(I.star,'h-3.5 w-3.5')}</span>` : ''}
   ${tools(m.name, false, m, 'name')}
 </div>`;
 
@@ -505,49 +524,49 @@ const nameBlock = m => `<div class="flex items-center gap-1.5">
 const noteHtml = (m, extra = '') => {
   if (!m.note) return '';
   const o = openNotes.has(m.id);
-  return `<button data-act="note" data-id="${m.id}" title="${o ? 'Zwiń' : 'Rozwiń'} notatkę" class="${extra} flex w-full items-start gap-1 text-left text-xs text-slate-500 hover:text-slate-700">
-    <span class="min-w-0 flex-1 ${o ? 'whitespace-pre-wrap break-words' : 'truncate'}">${esc(m.note)}</span>
-    <span class="shrink-0 text-[10px] text-slate-400">${o ? '▲' : '▼'}</span>
+  return `<button data-act="note" data-id="${m.id}" title="${o ? 'Zwiń' : 'Rozwiń'} notatkę" class="${extra} d-flex w-100 align-items-start gap-1 text-start tx-xs text-body-secondary hvt">
+    <span class="minw0 flex-fill ${o ? 'pre-wrap brk' : 'text-truncate'}">${esc(m.note)}</span>
+    <span class="flex-shrink-0 tx-10 text-body-tertiary">${o ? '▲' : '▼'}</span>
   </button>`;
 };
 
 const actions = m => `<button data-act="edit" data-id="${m.id}" title="Edytuj" class="${ICON_BTN}">${svg(I.edit)}</button>
-  <button data-act="del" data-id="${m.id}" title="Usuń" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>`;
+  <button data-act="del" data-id="${m.id}" title="Usuń" class="${ICON_BTN} hvd">${svg(I.trash)}</button>`;
 
 const locBadge = m => m.location
-  ? `<span class="${BADGE} bg-sky-50 text-sky-700">${svg(I.pin,'mr-1 h-3 w-3')}${esc(m.location)}</span>` : '';
+  ? `<span class="${BADGE} bg-info-subtle text-info-emphasis">${svg(I.pin,'mr-1 h-3 w-3')}${esc(m.location)}</span>` : '';
 
 function row(m, M, rev){
   const deps = depChips(m, M, rev), ips = ipChips(m);
-  return `<tr class="border-b border-slate-100 align-top hover:bg-slate-50">
-    <td class="px-4 py-3"><div class="flex items-start gap-2">
-      <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-5 w-5')}</span>
-      <div class="min-w-0 flex-1">${nameBlock(m)}${noteHtml(m, 'mt-0.5')}</div>
+  return `<tr class="border-bottom align-top hv1">
+    <td class="px-3 py-2"><div class="d-flex align-items-start gap-2">
+      <span class="mt-1 text-body-tertiary">${svg(T(m)[1],'h-5 w-5')}</span>
+      <div class="minw0 flex-fill">${nameBlock(m)}${noteHtml(m, 'mt-0.5')}</div>
     </div></td>
-    <td class="px-4 py-3 text-slate-600">${esc(T(m)[0])}</td>
-    <td class="px-4 py-3">${locBadge(m) || '<span class="text-slate-400">—</span>'}</td>
-    <td class="px-4 py-3">${ips || '<span class="text-slate-400">—</span>'}</td>
-    <td class="px-4 py-3"><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">—</span>'}</div></td>
-    <td class="whitespace-nowrap px-4 py-3 text-right">${actions(m)}</td>
+    <td class="px-3 py-2 text-body-secondary">${esc(T(m)[0])}</td>
+    <td class="px-3 py-2">${locBadge(m) || '<span class="text-body-tertiary">—</span>'}</td>
+    <td class="px-3 py-2">${ips || '<span class="text-body-tertiary">—</span>'}</td>
+    <td class="px-3 py-2"><div class="d-flex flex-wrap gap-1">${deps || '<span class="text-body-tertiary">—</span>'}</div></td>
+    <td class="text-nowrap px-3 py-2 text-end">${actions(m)}</td>
   </tr>`;
 }
 
 function card(m, M, rev){
   const deps = depChips(m, M, rev), ips = ipChips(m);
-  return `<article class="h-full rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <div class="flex items-start gap-3">
-      <span class="mt-0.5 text-slate-400">${svg(T(m)[1],'h-6 w-6')}</span>
-      <div class="min-w-0 flex-1">
+  return `<article class="card h-100 p-3 shadow-sm">
+    <div class="d-flex align-items-start gap-2">
+      <span class="mt-1 text-body-tertiary">${svg(T(m)[1],'h-6 w-6')}</span>
+      <div class="minw0 flex-fill">
         ${nameBlock(m)}
-        <div class="mt-1.5 flex flex-wrap gap-1.5">
-          <span class="${BADGE} bg-slate-100 text-slate-700">${esc(T(m)[0])}</span>${locBadge(m)}
+        <div class="mt-1 d-flex flex-wrap gap-1">
+          <span class="${BADGE} bg-body-secondary text-body">${esc(T(m)[0])}</span>${locBadge(m)}
         </div>
       </div>
-      <div class="flex shrink-0">${actions(m)}</div>
+      <div class="d-flex flex-shrink-0">${actions(m)}</div>
     </div>
-    ${ips ? `<div class="mt-3">${ips}</div>` : ''}
-    ${deps ? `<div class="mt-3 flex flex-wrap gap-1">${deps}</div>` : ''}
-    ${m.note ? `<div class="mt-3 border-t border-slate-100 pt-3">${noteHtml(m)}</div>` : ''}
+    ${ips ? `<div class="mt-2">${ips}</div>` : ''}
+    ${deps ? `<div class="mt-2 d-flex flex-wrap gap-1">${deps}</div>` : ''}
+    ${m.note ? `<div class="mt-2 border-top pt-2">${noteHtml(m)}</div>` : ''}
   </article>`;
 }
 
@@ -579,11 +598,10 @@ function render(){
   // liczniki typów (klikalne)
   const cnt = {};
   db.forEach(m => cnt[m.type] = (cnt[m.type] || 0) + 1);
-  const chip = on => 'rounded-full border px-3 py-1 text-xs font-medium transition ' +
-    (on ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50');
+  const chip = on => 'btn btn-sm rounded-pill ' + (on ? 'btn-primary' : 'btn-outline-secondary');
   if (!dups.size) dupOnly = false;
   const dupChip = dups.size
-    ? `<button data-dup="1" class="rounded-full border px-3 py-1 text-xs font-medium transition ${dupOnly ? 'border-amber-500 bg-amber-500 text-white' : 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'}">Duplikaty IP ${dups.size}</button>` : '';
+    ? `<button data-dup="1" class="btn btn-sm rounded-pill ${dupOnly ? 'btn-warning' : 'btn-outline-warning'}">Duplikaty IP ${dups.size}</button>` : '';
   $('stats').innerHTML =
     `<button data-type="" class="${chip(!tf)}">Wszystkie ${db.length}</button>` +
     Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k,v]) =>
@@ -591,8 +609,8 @@ function render(){
 
   // widok: kafelki / tabela (na telefonie zawsze kafelki)
   const tiles = view === 'tiles' || innerWidth < 768;
-  $('tbl').classList.toggle('hidden', tiles);
-  $('cards').classList.toggle('hidden', !tiles);
+  $('tbl').classList.toggle('d-none', tiles);
+  $('cards').classList.toggle('d-none', !tiles);
   $('view').innerHTML = view === 'tiles' ? svg(I.list) + 'Tabela' : svg(I.grid) + 'Kafelki';
   document.querySelectorAll('#tbl th[data-sort]').forEach(th => {
     th.textContent = th.dataset.label + (sort.k === th.dataset.sort ? (sort.d > 0 ? ' ▲' : ' ▼') : '');
@@ -623,10 +641,10 @@ function render(){
 
   if (!list.length){
     $('rows').innerHTML = ''; $('cards').innerHTML = '';
-    $('empty').classList.remove('hidden');
+    $('empty').classList.remove('d-none');
     $('empty').textContent = db.length ? 'Brak wyników dla wybranych filtrów.' : 'Brak maszyn. Kliknij „Dodaj”, aby dodać pierwszą.';
   } else {
-    $('empty').classList.add('hidden');
+    $('empty').classList.add('d-none');
     $('rows').innerHTML  = tiles ? '' : list.map(m => row(m, M, rev)).join('');
     $('cards').innerHTML = tiles ? list.map(m => card(m, M, rev)).join('') : '';
   }
@@ -634,13 +652,13 @@ function render(){
 }
 
 /* ===== Modal ===== */
-const FIELD = 'rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20';
+const FIELD = 'form-control';
 function ipRow(ip = '', label = ''){
   const d = document.createElement('div');
   d.className = 'flex gap-2';
-  d.innerHTML = `<input class="ipv min-w-0 flex-1 font-mono ${FIELD}" placeholder="10.0.0.1" value="${esc(ip)}">
-    <input class="ipl w-32 ${FIELD}" placeholder="opis" value="${esc(label)}">
-    <button type="button" title="Usuń adres" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>`;
+  d.innerHTML = `<input class="ipv minw0 flex-fill font-monospace ${FIELD}" placeholder="10.0.0.1" value="${esc(ip)}">
+    <input class="ipl w32 ${FIELD}" placeholder="opis" value="${esc(label)}">
+    <button type="button" title="Usuń adres" class="${ICON_BTN} hvd">${svg(I.trash)}</button>`;
   d.querySelector('button').onclick = () => d.remove();
   return d;
 }
@@ -648,18 +666,18 @@ let curDeps = [], editId = '';       // wybrane zależności i edytowana maszyna
 function renderDeps(){
   $('depChips').innerHTML = curDeps.map(id => {
     const d = db.find(x => x.id === id);
-    return d ? `<span class="${BADGE} bg-slate-100 text-slate-700">${esc(d.name)}<button type="button" data-rmdep="${id}" title="Usuń zależność" class="ml-1.5 text-slate-400 hover:text-red-600">✕</button></span>` : '';
+    return d ? `<span class="${BADGE} bg-body-secondary text-body">${esc(d.name)}<button type="button" data-rmdep="${id}" title="Usuń zależność" class="ms-1 text-body-tertiary hvd">✕</button></span>` : '';
   }).join('');
   const toks = $('depQ').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = $('depList');
-  if (!toks.length) { list.classList.add('hidden'); list.innerHTML = ''; return; }
+  if (!toks.length) { list.classList.add('d-none'); list.innerHTML = ''; return; }
   const found = db.filter(x => x.id !== editId && !curDeps.includes(x.id))
     .filter(x => { const h = [x.name, x.location, ...(x.ips || []).map(i => i.ip)].filter(Boolean).join(' ').toLowerCase(); return toks.every(t => h.includes(t)); })
     .sort((a,b) => a.name.localeCompare(b.name, 'pl', { numeric: true })).slice(0, 8);
-  list.classList.remove('hidden');
+  list.classList.remove('d-none');
   list.innerHTML = found.length
-    ? found.map(x => `<button type="button" data-adddep="${x.id}" class="flex w-full items-center justify-between gap-2 border-b border-slate-100 px-3 py-2 text-left text-sm last:border-0 hover:bg-slate-50"><span class="font-medium text-slate-800">${esc(x.name)}</span><span class="truncate text-xs text-slate-500">${esc(x.location || '')}</span></button>`).join('')
-    : '<div class="px-3 py-2 text-xs text-slate-500">Brak pasujących maszyn.</div>';
+    ? found.map(x => `<button type="button" data-adddep="${x.id}" class="d-flex w-100 align-items-center justify-content-between gap-2 border-bottom px-2 py-2 text-start small lastb0 hv1"><span class="fw-medium text-body-emphasis">${esc(x.name)}</span><span class="text-truncate tx-xs text-body-secondary">${esc(x.location || '')}</span></button>`).join('')
+    : '<div class="px-2 py-2 tx-xs text-body-secondary">Brak pasujących maszyn.</div>';
 }
 
 function openModal(m){
@@ -676,10 +694,10 @@ function openModal(m){
   editId = m?.id || '';
   curDeps = [...(m?.deps || [])].filter(id => db.some(x => x.id === id));
   $('depQ').value = ''; renderDeps();
-  $('modal').classList.remove('hidden'); $('modal').classList.add('flex');
+  showM('modal');
   $('fName').focus();
 }
-function closeModal(){ $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+function closeModal(){ hideM('modal'); }
 
 /* ===== Zdarzenia ===== */
 $('icoAdd').innerHTML = svg(I.plus);
@@ -705,8 +723,6 @@ $('depChips').onclick = e => {
   if (!b) return;
   curDeps = curDeps.filter(id => id !== b.dataset.rmdep); renderDeps();
 };
-$('modal').onclick = e => { if (e.target === $('modal')) closeModal() };
-document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeCfg(); closeBk(); closePg(); closeCfm(false) } });
 
 $('form').onsubmit = e => {
   e.preventDefault();
@@ -792,27 +808,26 @@ addEventListener('resize', render);
 let cfmResolve = null;
 function askConfirm(msg, okLabel = 'OK'){
   $('cfmMsg').textContent = msg; $('cfmOk').textContent = okLabel;
-  $('cfmModal').classList.remove('hidden'); $('cfmModal').classList.add('flex');
+  showM('cfmModal');
   return new Promise(res => { cfmResolve = res; });
 }
 function closeCfm(v){
-  $('cfmModal').classList.add('hidden'); $('cfmModal').classList.remove('flex');
+  hideM('cfmModal');
   if (cfmResolve) { cfmResolve(v); cfmResolve = null; }
 }
 $('cfmOk').onclick = () => closeCfm(true);
 $('cfmNo').onclick = () => closeCfm(false);
-$('cfmModal').onclick = e => { if (e.target === $('cfmModal')) closeCfm(false) };
 
 /* ===== Ustawienia ===== */
 $('icoCfg').innerHTML = svg(I.gear);
 let draftCmds = [];                                  // edytowana lista własnych komend
 let draftCats = [];                                  // edytowana lista własnych kategorii
 function renderCats(){
-  $('catList').innerHTML = draftCats.length ? draftCats.map((c, i) => `<div class="flex items-center gap-2">
-    <span class="text-slate-400">${svg(I.tag)}</span>
-    <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="min-w-0 flex-1 ${FIELD}">
-    <button type="button" data-delcat="${i}" title="Usuń kategorię" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>
-  </div>`).join('') : '<div class="text-xs text-slate-400">Brak własnych kategorii.</div>';
+  $('catList').innerHTML = draftCats.length ? draftCats.map((c, i) => `<div class="d-flex align-items-center gap-2">
+    <span class="text-body-tertiary">${svg(I.tag)}</span>
+    <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="minw0 flex-fill ${FIELD}">
+    <button type="button" data-delcat="${i}" title="Usuń kategorię" class="${ICON_BTN} hvd">${svg(I.trash)}</button>
+  </div>`).join('') : '<div class="tx-xs text-body-tertiary">Brak własnych kategorii.</div>';
 }
 function addDraftCat(){
   const n = $('catNew').value.trim();
@@ -828,12 +843,12 @@ const cfgPreview = () => {
   $('cPrev').textContent = `ping ${a ? a + ' ' : ''}host\nssh -L ${p}:localhost:${p} ${u ? u + '@' : ''}host`;
 };
 function renderCmds(){
-  $('cList').innerHTML = draftCmds.length ? draftCmds.map((c, i) => `<div class="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
-    <span class="${BADGE} border border-slate-200 bg-white text-slate-700">${esc(c.label)}</span>
-    <span class="min-w-0 flex-1 truncate font-mono text-xs text-slate-600" title="${esc(c.tpl)}">${esc(c.tpl)}</span>
-    <span class="shrink-0 text-xs text-slate-500">${TARGETS[c.target] || ''}</span>
-    <button type="button" data-delcmd="${i}" title="Usuń komendę" class="${ICON_BTN} hover:!bg-red-50 hover:!text-red-600">${svg(I.trash)}</button>
-  </div>`).join('') : '<div class="text-xs text-slate-400">Brak własnych komend.</div>';
+  $('cList').innerHTML = draftCmds.length ? draftCmds.map((c, i) => `<div class="d-flex align-items-center gap-2 rounded-3 border bg-body-tertiary px-2 py-2">
+    <span class="${BADGE} border bg-body text-body">${esc(c.label)}</span>
+    <span class="minw0 flex-fill text-truncate font-monospace tx-xs text-body-secondary" title="${esc(c.tpl)}">${esc(c.tpl)}</span>
+    <span class="flex-shrink-0 tx-xs text-body-secondary">${TARGETS[c.target] || ''}</span>
+    <button type="button" data-delcmd="${i}" title="Usuń komendę" class="${ICON_BTN} hvd">${svg(I.trash)}</button>
+  </div>`).join('') : '<div class="tx-xs text-body-tertiary">Brak własnych komend.</div>';
 }
 function addDraftCmd(){
   const label = $('cmdLabel').value.trim(), tpl = $('cmdTpl').value.trim();
@@ -842,14 +857,14 @@ function addDraftCmd(){
   $('cmdLabel').value = ''; $('cmdTpl').value = ''; renderCmds();
   return true;
 }
-function closeCfg(){ $('cfgModal').classList.add('hidden'); $('cfgModal').classList.remove('flex'); applyTheme(); }  // applyTheme cofa niezapisany podgląd
+function closeCfg(){ hideM('cfgModal'); }  // applyTheme cofa niezapisany podgląd
 $('cfgBtn').onclick = () => {
   $('cTheme').value = cfg.theme;
   $('sPing').checked = cfg.show.ping; $('sVnc').checked = cfg.show.vnc; $('sWeb').checked = cfg.show.web; $('sScan').checked = cfg.show.scan;
   $('cPing').value = cfg.pingArgs; $('cSsh').value = cfg.sshUser; $('cPort').value = cfg.vncPort;
   draftCmds = cfg.cmds.map(c => ({ ...c })); renderCmds(); cfgPreview();
   draftCats = cfg.cats.map(c => ({ ...c })); renderCats();
-  $('cfgModal').classList.remove('hidden'); $('cfgModal').classList.add('flex');
+  showM('cfgModal');
   $('cPing').focus();
 };
 ['cPing','cSsh','cPort'].forEach(id => $(id).oninput = cfgPreview);
@@ -868,7 +883,6 @@ $('cList').onclick = e => {
   draftCmds.splice(+b.dataset.delcmd, 1); renderCmds();
 };
 $('cCancel').onclick = closeCfg;
-$('cfgModal').onclick = e => { if (e.target === $('cfgModal')) closeCfg() };
 $('cfgForm').onsubmit = e => {
   e.preventDefault();
   addDraftCmd();                                     // dopisz komendę wpisaną, a niedodaną
@@ -903,18 +917,17 @@ function openBk(mode){
   $('bkHelp').textContent = exp
     ? 'Pobierz plik JSON albo skopiuj zawartość poniżej i zapisz ją w bezpiecznym miejscu.'
     : 'Wybierz plik JSON lub wklej jego zawartość poniżej, a potem kliknij „Wczytaj”.';
-  $('bkImpBox').classList.toggle('hidden', exp);
-  ['bkCopy', 'bkDl'].forEach(id => $(id).classList.toggle('hidden', !exp));
-  $('bkGo').classList.toggle('hidden', exp);
+  $('bkImpBox').classList.toggle('d-none', exp);
+  ['bkCopy', 'bkDl'].forEach(id => $(id).classList.toggle('d-none', !exp));
+  $('bkGo').classList.toggle('d-none', exp);
   $('bkText').readOnly = exp;
   $('bkText').value = exp ? bkJson() : '';
-  $('bkModal').classList.remove('hidden'); $('bkModal').classList.add('flex');
+  showM('bkModal');
 }
-function closeBk(){ $('bkModal').classList.add('hidden'); $('bkModal').classList.remove('flex'); }
+function closeBk(){ hideM('bkModal'); }
 $('exp').onclick = () => openBk('exp');
 $('imp').onclick = () => openBk('imp');
 $('bkClose').onclick = closeBk;
-$('bkModal').onclick = e => { if (e.target === $('bkModal')) closeBk() };
 $('bkText').onclick = e => { if (e.target.readOnly) e.target.select() };
 $('bkCopy').onclick = () => copy(bkJson(), 'dane (JSON)');
 $('bkDl').onclick = () => {
@@ -952,7 +965,7 @@ $('bkGo').onclick = () => {
   }
   // normalizacja importowanych danych
   const items = d.filter(x => x && typeof x === 'object' && x.name).map(x => ({
-    id: x.id ? String(x.id) : uid(),
+    id: String(x.id || '').replace(/[^\w-]/g, '') || uid(),
     name: String(x.name),
     type: TYPES[x.type] ? x.type : 'other',
     location: String(x.location || ''),
@@ -1111,7 +1124,7 @@ function pgBuild(pause = false){
   return pgMode === 'group' ? buildGroupPingScript(pgGroupId, o) : buildPingScript(o);
 }
 function renderPg(){ $('pgText').value = pgBuild(false); }
-function closePg(){ $('pgModal').classList.add('hidden'); $('pgModal').classList.remove('flex'); }
+function closePg(){ hideM('pgModal'); }
 function openPgKey(){
   const n = db.filter(m => m.key).length;
   if (!n) { toast('Brak kluczowych maszyn. Zaznacz je w edycji („Sprzęt kluczowy”).', 4000); return; }
@@ -1119,7 +1132,7 @@ function openPgKey(){
   $('pgTitle').textContent = 'Ping kluczowych maszyn';
   $('pgHelp').textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do okna PowerShell. Pinguje po IP, a gdy go brak, po nazwie hosta.`;
   renderPg();
-  $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
+  showM('pgModal');
 }
 function openPgGroup(id){
   const m = db.find(x => x.id === id);
@@ -1136,11 +1149,10 @@ function openPgGroup(id){
   $('pgTitle').textContent = 'Ping grupy: ' + m.name;
   $('pgHelp').textContent = `Maszyna: ${m.name}${parts.length ? ' (' + parts.join(', ') + ')' : ''}. Skrypt pinguje wszystkie adresy tej maszyny oraz maszyn, od których zależy, i tych, które zależą od niej.`;
   renderPg();
-  $('pgModal').classList.remove('hidden'); $('pgModal').classList.add('flex');
+  showM('pgModal');
 }
 $('pg').onclick = openPgKey;
 $('pgClose').onclick = closePg;
-$('pgModal').onclick = e => { if (e.target === $('pgModal')) closePg() };
 $('pgText').onclick = e => e.target.select();
 ['pgLive','pgEvery','pgTimeout'].forEach(id => $(id).oninput = renderPg);
 $('pgCopy').onclick = () => copy(pgBuild(false), 'skrypt PowerShell');
@@ -1162,10 +1174,14 @@ $('pgDl').onclick = () => {
 };
 
 /* ===== Start ===== */
+// zdarzenia modali Bootstrap: fokus, cofnięcie podglądu motywu, anulowanie potwierdzenia (Esc / tło)
+$('cfgModal').addEventListener('hidden.bs.modal', () => applyTheme());
+$('cfmModal').addEventListener('hidden.bs.modal', () => { if (cfmResolve) { cfmResolve(false); cfmResolve = null; } });
+document.addEventListener('shown.bs.modal', e => { if (['modal', 'cfgModal'].includes(e.target.id)) e.target.querySelector('input:not([type=hidden]):not([type=checkbox]),textarea')?.focus(); });
 $('q').value = ui.q || '';
 applyTheme();
 try { localStorage.setItem('_t','1'); localStorage.removeItem('_t') }
-catch(e){ $('warn').classList.remove('hidden') }
+catch(e){ $('warn').classList.remove('d-none') }
 
 // PWA: service worker (działa tylko przez http/https)
 try {
