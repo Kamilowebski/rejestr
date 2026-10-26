@@ -18,7 +18,7 @@ show: { ping: true, vnc: true, web: true, scan: true }
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
 String(s ?? "").replace(/[&<>"']/g, (c) => ({
-"&": "&", "<": "<", ">": ">", '"': """, "'": "'"
+"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
 }[c]));
 const load = (k, def) => { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch (e) { return def; } };
 const ICONS = {
