@@ -1,9 +1,15 @@
 "use strict";
 
 /* =========================================================
-   Rejestr maszyn — logika aplikacji
+   Rejestr maszyn — Konfiguracja Supabase
    ========================================================= */
-const KEY = "machines_v1";
+const SUPABASE_URL = "https://jccbausmoykoqohfuyqw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_xv8yXGbIiF44_6KjWo8uFg_4Mg4PS8P";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+let db = [];
+
 const CFG_KEY = "machines_settings";
 const UI_KEY = "machines_ui";
 const SAFE = /^[\w.:\-]+$/;
@@ -38,7 +44,8 @@ const ICONS = {
   sun:   '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon:  '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
   copy:  '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-  tree:  '<path d="M12 3v4m0 0l-4 4m4-4l4 4M5 13v7h14v-7M5 13h14"/>'
+  tree:  '<path d="M12 3v4m0 0l-4 4m4-4l4 4M5 13v7h14v-7M5 13h14"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
 };
 
 const svg = (d, cls = "icon") =>
@@ -57,9 +64,6 @@ const TYPES = {
 };
 const T = (m) => TYPES[m.type] || TYPES.other;
 
-/* ===== Stan ===== */
-let db = load(KEY, []);
-if (!Array.isArray(db)) db = [];
 let cfg = { ...DEFAULT_CFG, ...load(CFG_KEY, {}) };
 if (!Array.isArray(cfg.cmds)) cfg.cmds = [];
 if (!Array.isArray(cfg.cats)) cfg.cats = [];
@@ -81,7 +85,6 @@ let draftCats = [];
 let REV = {};
 
 const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { toast("Brak miejsca w pamięci!", 4000); } };
 const saveCfg = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} };
 const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $("q").value, sort })); } catch (e) {} };
 
@@ -373,9 +376,9 @@ function openModal(m) {
   $("ips").innerHTML = "";
   ((m?.ips?.length) ? m.ips : [{ ip: "", label: "" }]).forEach((x) => $("ips").appendChild(ipRow(x.ip, x.label)));
  
-  if (m && m.createdAt) {
-    const created = new Date(m.createdAt).toLocaleString("pl-PL");
-    const updated = m.updatedAt ? new Date(m.updatedAt).toLocaleString("pl-PL") : created;
+  if (m && m.created_at) {
+    const created = new Date(m.created_at).toLocaleString("pl-PL");
+    const updated = m.updated_at ? new Date(m.updated_at).toLocaleString("pl-PL") : created;
     $("auditInfo").textContent = `Utworzono: ${created} | Ostatnia zmiana: ${updated}`;
   } else {
     $("auditInfo").textContent = "";
@@ -440,12 +443,50 @@ function openTreeModal(id) {
 
 $("treeClose").onclick = () => $("treeModal").close();
 
+/* ===== Operacje Supabase ===== */
+async function loadDataFromSupabase() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    $("loginModal").showModal();
+    return;
+  }
+  currentUser = session.user;
+  $("logoutBtn").classList.remove("d-none");
+
+  const { data, error } = await supabase.from('machines').select('*');
+  if (error) {
+    toast("Błąd pobierania danych z chmury");
+    return;
+  }
+  db = data || [];
+  render();
+}
+
+async function saveMachineToSupabase(obj) {
+  if (!currentUser) return;
+  obj.user_id = currentUser.id;
+  const { error } = await supabase.from('machines').upsert(obj);
+  if (error) {
+    toast("Błąd zapisu w chmurze!");
+    console.error(error);
+  }
+}
+
+async function deleteMachineFromSupabase(id) {
+  const { error } = await supabase.from('machines').delete().eq('id', id);
+  if (error) {
+    toast("Błąd usuwania z chmury!");
+    console.error(error);
+  }
+}
+
 /* ===== Bind events ===== */
 $("icoAdd").innerHTML = svg(ICONS.plus);
 $("icoExp").innerHTML = svg(ICONS.down);
 $("icoImp").innerHTML = svg(ICONS.up);
 $("icoCfg").innerHTML = svg(ICONS.gear);
 $("icoPg").innerHTML = svg(ICONS.pulse);
+$("icoLogout").innerHTML = svg(ICONS.logout);
 
 let raf;
 const scheduleRender = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
@@ -487,7 +528,34 @@ $("depChips").onclick = (e) => {
   renderDeps();
 };
 
-$("form").onsubmit = (e) => {
+/* Logowanie */
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+ 
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    toast("Błąd logowania: " + error.message, 4000);
+    return;
+  }
+  currentUser = data.session.user;
+  $("loginModal").close();
+  toast("Zalogowano pomyślnie!");
+  loadDataFromSupabase();
+};
+
+/* Wylogowanie */
+$("logoutBtn").onclick = async () => {
+  await supabase.auth.signOut();
+  currentUser = null;
+  db = [];
+  $("logoutBtn").classList.add("d-none");
+  render();
+  $("loginModal").showModal();
+};
+
+$("form").onsubmit = async (e) => {
   e.preventDefault();
   const id = $("fId").value;
   const ips = [...$("ips").children]
@@ -505,14 +573,15 @@ $("form").onsubmit = (e) => {
     ips, deps: [...curDeps],
     tags,
     note: $("fNote").value.trim(),
-    key: $("fKey").checked,
-    createdAt: existing?.createdAt || now,
-    updatedAt: now
+    key: !!$("fKey").checked,
+    created_at: existing?.created_at || now,
+    updated_at: now
   };
 
   if (id) db[db.findIndex((m) => m.id === id)] = obj;
   else db.push(obj);
-  save();
+
+  await saveMachineToSupabase(obj);
   $("modal").close();
   render();
   const clash = [...new Set(ips.map((x) => x.ip).filter((ip) => db.some((m) => m.id !== obj.id && (m.ips || []).some((i) => i.ip === ip))))];
@@ -548,11 +617,11 @@ function handleClick(e) {
   if (act === "edit") openModal(m);
   if (act === "jump") { $("q").value = m.name; saveUi(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
   if (act === "del") {
-    askConfirm("Usunąć „" + m.name + "”?", "Usuń").then((ok) => {
+    askConfirm("Usunąć „" + m.name + "”?", "Usuń").then(async (ok) => {
       if (!ok) return;
       db = db.filter((x) => x.id !== id);
       db.forEach((x) => (x.deps = (x.deps || []).filter((d) => d !== id)));
-      save();
+      await deleteMachineFromSupabase(id);
       render();
       toast("Usunięto");
     });
@@ -700,7 +769,7 @@ $("cfgForm").onsubmit = (e) => {
   };
   const keep = new Set(draftCats.map((c) => c.id));
   const gone = new Set(oldCats.filter((c) => !keep.has(c.id)).map((c) => c.id));
-  if (gone.size) { db.forEach((m) => { if (gone.has(m.type)) m.type = "other"; }); save(); }
+  if (gone.size) { db.forEach((m) => { if (gone.has(m.type)) m.type = "other"; }); }
   syncTypes();
   saveCfg();
   $("cfgModal").close();
@@ -750,7 +819,7 @@ $("file").onchange = () => {
   }
   $("file").value = "";
 };
-$("bkGo").onclick = () => {
+$("bkGo").onclick = async () => {
   let raw;
   try { raw = JSON.parse($("bkText").value); } catch (e) { toast("Niepoprawny JSON"); return; }
   const d = Array.isArray(raw) ? raw : raw?.machines;
@@ -771,22 +840,30 @@ $("bkGo").onclick = () => {
     tags: Array.isArray(x.tags) ? x.tags.map(String) : [],
     note: String(x.note || ""),
     key: !!x.key,
-    createdAt: x.createdAt || now,
-    updatedAt: x.updatedAt || now
+    created_at: x.created_at || now,
+    updated_at: now,
+    user_id: currentUser.id
   }));
   if (!items.length) { toast("Brak poprawnych maszyn"); return; }
+ 
   const applyImportedCats = () => {
     importedCats.filter((c) => !cfg.cats.some((x) => x.id === c.id))
       .forEach((c) => cfg.cats.push(c));
     syncTypes();
     saveCfg();
   };
+
   if ($("bkMode").value === "replace") {
-    askConfirm(`Zastąpić wszystkie obecne dane ${db.length} maszynami z pliku? Tej operacji nie można cofnąć.`, "Zastąp dane").then((ok) => {
+    askConfirm(`Zastąpić wszystkie obecne dane ${db.length} maszynami z pliku?`, "Zastąp dane").then(async (ok) => {
       if (!ok) return;
       applyImportedCats();
-      db = items;
-      save();
+      // Usuń stare z chmury i wrzuć nowe
+      for (const m of db) await deleteMachineFromSupabase(m.id);
+      db = [];
+      for (const item of items) {
+        db.push(item);
+        await saveMachineToSupabase(item);
+      }
       $("bkModal").close();
       render();
       toast("Zastąpiono dane. Zaimportowano " + items.length + " maszyn");
@@ -794,11 +871,15 @@ $("bkGo").onclick = () => {
     return;
   } else {
     applyImportedCats();
-    const M = new Map(db.map((m) => [m.id, m]));
-    items.forEach((m) => M.set(m.id, m));
-    db = [...M.values()];
+    for (const item of items) {
+      const idx = db.findIndex(m => m.id === item.id);
+      if (idx >= 0) db[idx] = item;
+      else db.push(item);
+      await saveMachineToSupabase(item);
+    }
   }
-  save(); $("bkModal").close(); render();
+  $("bkModal").close();
+  render();
   toast("Zaimportowano " + items.length + " maszyn");
 };
 
@@ -1004,7 +1085,5 @@ $("themeToggle").onclick = () => {
 
 /* ===== Start ===== */
 applyTheme();
-try { localStorage.setItem("_t", "1"); localStorage.removeItem("_t"); }
-catch (e) { $("warn").classList.remove("d-none"); }
 $("q").value = ui.q || "";
-render();
+loadDataFromSupabase();
