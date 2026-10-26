@@ -37,6 +37,7 @@ a.mini{text-decoration:none}
 
 /* ===== Klasy pomocnicze ===== */
 .wrap{max-width:72rem}
+.wrap-wide{max-width:min(100rem,100%)}
 .tfix{table-layout:fixed}.minw0{min-width:0}.minw220{min-width:220px}.minw980{min-width:980px}.mh44{max-height:11rem}
 .ox{overflow-x:auto}.pre-wrap{white-space:pre-wrap}.brk{word-break:break-all}.cp{cursor:pointer}
 .tx-xs{font-size:.75rem}.tx-11{font-size:11px}.tx-10{font-size:10px}
@@ -77,6 +78,10 @@ a.mini{text-decoration:none}
 #hub-apps .bg-blue-50{background:var(--bs-primary-bg-subtle)}#hub-apps .text-blue-700{color:var(--bs-primary-text-emphasis)}
 #hub-apps a{text-decoration:none}
 #hub-apps .hover\:bg-slate-100:hover{background:var(--bs-secondary-bg)}
+
+/* ===== Filtry: wyszukiwarka + lokalizacja + typ w jednym wierszu ===== */
+#q{flex:1 1 220px;width:auto;min-width:220px}
+#loc,#typ{flex:0 1 auto;width:auto!important;max-width:100%}
 </style>
 </head>
 <body class="min-vh-100">
@@ -509,8 +514,8 @@ function ipChips(m){
 const depBtn = (d, arrow, cls) =>
   `<button data-act="jump" data-id="${d.id}" class="${BADGE} ${cls} hv3"><span class="me-1 text-body-tertiary">${arrow}</span>${esc(d.name)}</button>`;
 function depChips(m, M, rev){
-  const deps  = (m.deps || []).map(id => M.get(id)).filter(Boolean).map(d => depBtn(d, '←', 'bg-slate-100 text-slate-700')).join('');
-  const users = (rev[m.id] || []).map(d => depBtn(d, '→', 'bg-slate-50 text-slate-500')).join('');
+  const deps  = (m.deps || []).map(id => M.get(id)).filter(Boolean).map(d => depBtn(d, '←', 'bg-body-secondary text-body')).join('');
+  const users = (rev[m.id] || []).map(d => depBtn(d, '→', 'bg-body-tertiary text-body-secondary')).join('');
   return deps + users;
 }
 
@@ -541,7 +546,7 @@ function row(m, M, rev){
   return `<tr class="border-bottom align-top hv1">
     <td class="px-3 py-2"><div class="d-flex align-items-start gap-2">
       <span class="mt-1 text-body-tertiary">${svg(T(m)[1],'h-5 w-5')}</span>
-      <div class="minw0 flex-fill">${nameBlock(m)}${noteHtml(m, 'mt-0.5')}</div>
+      <div class="minw0 flex-fill">${nameBlock(m)}${noteHtml(m, 'mt-1')}</div>
     </div></td>
     <td class="px-3 py-2 text-body-secondary">${esc(T(m)[0])}</td>
     <td class="px-3 py-2">${locBadge(m) || '<span class="text-body-tertiary">—</span>'}</td>
@@ -610,6 +615,7 @@ function render(){
   // widok: kafelki / tabela (na telefonie zawsze kafelki)
   const tiles = view === 'tiles' || innerWidth < 768;
   $('tbl').classList.toggle('d-none', tiles);
+  document.querySelector('.wrap').classList.toggle('wrap-wide', !tiles);
   $('cards').classList.toggle('d-none', !tiles);
   $('view').innerHTML = view === 'tiles' ? svg(I.list) + 'Tabela' : svg(I.grid) + 'Kafelki';
   document.querySelectorAll('#tbl th[data-sort]').forEach(th => {
