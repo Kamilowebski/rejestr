@@ -6,18 +6,14 @@
 <title>Rejestr maszyn</title>
 
 <meta name="description" content="Rejestr maszyn — lokalny spis urządzeń sieciowych z adresami IP, zależnościami, lokalizacjami i szybkimi komendami.">
-<meta name="keywords" content="rejestr maszyn, inwentarz, sieć, IP, zależności, monitoring">
 <meta name="author" content="Kamil Owębski">
-<meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f8fafc">
 
-<meta property="og:type" content="website">
-<meta property="og:title" content="Rejestr maszyn">
-<meta property="og:description" content="Lokalny rejestr urządzeń sieciowych z adresami IP i zależnościami.">
-<meta property="og:locale" content="pl_PL">
-
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='14' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='20' width='18' height='5' rx='1.5' fill='white'/%3E%3C/svg%3E">
+
+<!-- Supabase JS Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 try {
@@ -44,13 +40,14 @@ try {
       <button id="exp" class="btn" title="Eksport JSON"><span id="icoExp"></span><span class="hide-sm">Eksport</span></button>
       <button id="imp" class="btn" title="Import JSON"><span id="icoImp"></span><span class="hide-sm">Import</span></button>
       <button id="cfgBtn" class="btn" title="Ustawienia"><span id="icoCfg"></span><span class="hide-sm">Ustawienia</span></button>
+      <button id="logoutBtn" class="btn btn-ghost d-none" title="Wyloguj"><span id="icoLogout"></span><span class="hide-sm">Wyloguj</span></button>
       <button id="themeToggle" class="btn btn-icon" title="Tryb dzień/noc" aria-label="Tryb dzień/noc"><span id="icoTheme"></span></button>
       <input type="file" id="file" accept=".json,application/json" hidden>
     </div>
   </header>
 
   <div id="warn" class="alert d-none">
-    Brak dostępu do localStorage — dane nie będą zapisywane. Otwórz stronę bezpośrednio (nie w ramce) lub użyj Importu JSON.
+    Brak dostępu do pamięci lokalnej.
   </div>
 
   <section class="card filters" aria-label="Wyszukiwanie i filtrowanie urządzeń">
@@ -102,6 +99,25 @@ try {
     <div id="empty" class="empty d-none"></div>
   </section>
 </main>
+
+<!-- Modal: logowanie -->
+<dialog id="loginModal" class="dialog dialog-sm">
+  <form id="loginForm" class="dialog-body">
+    <h2 class="dialog-title">Logowanie do bazy</h2>
+    <p class="text-sm text-muted mb-3">Zaloguj się, aby uzyskać dostęp do swoich maszyn.</p>
+    <div class="field">
+      <label for="loginEmail">E-mail</label>
+      <input id="loginEmail" type="email" required class="input" placeholder="twoj@email.com">
+    </div>
+    <div class="field">
+      <label for="loginPassword">Hasło</label>
+      <input id="loginPassword" type="password" required class="input" placeholder="••••••••">
+    </div>
+    <div class="dialog-actions" style="margin-top:1.5rem">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center">Zaloguj się</button>
+    </div>
+  </form>
+</dialog>
 
 <!-- Modal: maszyna -->
 <dialog id="modal" class="dialog"><form id="form" class="dialog-body">
