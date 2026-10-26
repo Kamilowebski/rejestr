@@ -165,7 +165,7 @@ textarea.input{resize:vertical;min-height:3rem;font-family:inherit}
 .table-wrap{overflow-x:auto}
 table{
   width:100%; border-collapse:collapse; font-size:.875rem;
-  table-layout:fixed; /* ← klucz: stałe szerokości kolumn z <colgroup> */
+  table-layout:fixed;
 }
 thead{background:var(--surface-2)}
 thead th{
@@ -182,7 +182,7 @@ tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:color-mix(in srgb,var(--primary) 4%,transparent)}
 tbody td{
   padding:.75rem 1rem; vertical-align:top;
-  overflow:hidden; /* ← klucz: nic nie rozpycha kolumny */
+  overflow:hidden;
 }
 
 /* Empty state */
@@ -204,6 +204,7 @@ tbody td{
 .badge-info{background:var(--info-bg);color:var(--info-text)}
 .badge-warn{background:var(--warning-bg);color:var(--warning-text)}
 .badge-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.6875rem}
+.badge-tag{background:var(--surface-3);color:var(--text);font-size:.6875rem}
 
 /* Mini chip (IP, komendy) */
 .mini{
@@ -289,6 +290,14 @@ code{
 .dep-item .name{font-weight:500;color:var(--text)}
 .dep-item .sub{font-size:.75rem;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* Visual Tree */
+.tree-container{font-size:.875rem;padding:.5rem 0}
+.tree-section{margin-bottom:1rem}
+.tree-section-title{font-weight:600;font-size:.75rem;text-transform:uppercase;color:var(--text-2);margin-bottom:.5rem;letter-spacing:.04em}
+.tree-list{display:flex;flex-direction:column;gap:.375rem;padding-left:1rem;border-left:2px solid var(--border-2)}
+.tree-node{display:flex;align-items:center;gap:.5rem;padding:.375rem .625rem;background:var(--surface-2);border-radius:var(--radius-sm)}
+.tree-node.current{background:var(--primary-subtle);color:var(--primary-text);font-weight:600;border:1px solid var(--primary)}
+
 /* Category/command rows in settings */
 .row-item{
   display:flex; align-items:center; gap:.5rem;
@@ -363,9 +372,8 @@ code{
   .filter-row .input{flex:1 1 auto;min-width:0;width:100%}
   .field-row{flex-direction:column;gap:0}
   .ip-row .input:last-of-type{flex:0 0 6rem}
-   }
+}
 
-/* ===== Usprawnienia UX i dostępności ===== */
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
@@ -403,7 +411,6 @@ code{
 }
 .filters #stats { padding-top: .15rem; }
 
-/* Lepsza obsługa tabeli i długich wartości */
 .table-wrap { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
 thead th[data-sort] { cursor: pointer; }
 thead th[data-sort]::after { content: ""; }
@@ -413,7 +420,6 @@ tbody td:last-child { overflow-wrap: normal; }
 .ibtn { min-width: 2rem; min-height: 2rem; }
 .mini, .badge { max-width: 100%; }
 
-/* Dialogi: wygodniejsze na niskich ekranach */
 .dialog { max-height: calc(100dvh - 1.5rem); }
 .dialog-body { overscroll-behavior: contain; }
 .dialog-actions { flex-wrap: wrap; }
