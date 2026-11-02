@@ -19,23 +19,23 @@
 <script>
 tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
 </script>
+<script src="https://kamilowebski.github.io/hub/apps.js" defer></script>
 </head>
 <body class="bg-page text-sm text-slate-900 antialiased has-[dialog[open]]:overflow-hidden">
 
 <main class="mx-auto max-w-7xl space-y-6 px-4 py-8">
   <header class="flex flex-wrap items-start justify-between gap-4">
-    <div>
+    <div class="min-w-0">
       <h1 class="text-2xl font-semibold tracking-tight">Rejestr maszyn</h1>
       <p id="count" class="text-sm text-slate-600"></p>
+      <p id="userBox" class="mt-1 flex hidden items-center gap-1.5 text-xs text-slate-600"><span id="icoUser" class="shrink-0 text-slate-400"></span><span id="userEmail" class="min-w-0 truncate"></span></p>
     </div>
-    <div class="flex flex-wrap gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <button id="add" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700"><span id="icoAdd"></span>Dodaj</button>
       <button id="pg" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Skrypt PowerShell pingujący kluczowe maszyny"><span id="icoPg"></span><span class="hidden sm:inline">Ping</span></button>
-      <button id="exp" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Eksport JSON"><span id="icoExp"></span><span class="hidden sm:inline">Eksport</span></button>
-      <button id="imp" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Import JSON"><span id="icoImp"></span><span class="hidden sm:inline">Import</span></button>
       <button id="cfgBtn" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Ustawienia"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
       <button id="logoutBtn" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 hidden" title="Wyloguj"><span id="icoLogout"></span><span class="hidden sm:inline">Wyloguj</span></button>
-      <input type="file" id="file" accept=".json,application/json" hidden>
+      <div id="hub-apps" class="flex items-center"></div>
     </div>
   </header>
 
@@ -221,26 +221,6 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   </div>
 </form></dialog>
 
-<!-- Modal: kopia zapasowa -->
-<dialog id="bkModal" class="m-auto w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100dvh-1rem)] rounded-2xl border-0 bg-transparent p-0 text-slate-900 backdrop:bg-slate-900/40 max-w-[560px]"><div class="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-  <h2 id="bkTitle" class="mb-5 text-lg font-semibold text-slate-900"></h2>
-  <p id="bkHelp" class="text-sm text-slate-600 mb-3"></p>
-  <div id="bkImpBox" class="flex flex-wrap gap-2 mb-3">
-    <button type="button" id="bkPick" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50">Wybierz plik JSON</button>
-    <select id="bkMode" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm !w-auto flex-auto basis-52 pr-8">
-      <option value="merge">Dołącz i zaktualizuj</option>
-      <option value="replace">Zastąp wszystkie dane</option>
-    </select>
-  </div>
-  <textarea id="bkText" rows="10" spellcheck="false" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm font-mono text-xs resize-y"></textarea>
-  <div class="mt-6 flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-auto max-sm:[&>button]:justify-center">
-    <button type="button" id="bkClose" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50">Zamknij</button>
-    <button type="button" id="bkCopy" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50">Kopiuj</button>
-    <button type="button" id="bkDl" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700">Pobierz</button>
-    <button type="button" id="bkGo" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700">Wczytaj</button>
-  </div>
-</div></dialog>
-
 <!-- Modal: ping -->
 <dialog id="pgModal" class="m-auto w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100dvh-1rem)] rounded-2xl border-0 bg-transparent p-0 text-slate-900 backdrop:bg-slate-900/40 max-w-[820px]"><div class="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
   <h2 id="pgTitle" class="mb-5 text-lg font-semibold text-slate-900">Ping</h2>
@@ -322,8 +302,6 @@ const ICONS = {
   plus:  '<path d="M12 5v14M5 12h14"/>',
   edit:  '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
   trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
-  down:  '<path d="M12 4v12M7 11l5 5 5-5M5 20h14"/>',
-  up:    '<path d="M12 20V8M7 13l5-5 5 5M5 4h14"/>',
   pin:   '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   term:  '<path d="M5 8l4 4-4 4M12 17h7"/>',
   gear:  '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
@@ -334,7 +312,8 @@ const ICONS = {
   share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.7l7.6-3.4M8.2 13.3l7.6 3.4"/>',
   copy:  '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   tree:  '<path d="M12 3v4m0 0l-4 4m4-4l4 4M5 13v7h14v-7M5 13h14"/>',
-  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>'
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  user:  '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
 };
 
 const ICON = "size-4 shrink-0";
@@ -739,6 +718,14 @@ function openTreeModal(id) {
 $("treeClose").onclick = () => $("treeModal").close();
 
 const showLogin = () => { if (!$("loginModal").open) $("loginModal").showModal(); };
+
+// e-mail zalogowanego użytkownika w nagłówku
+function setUserEmail(user) {
+  const email = (user && user.email) || "";
+  $("userEmail").textContent = email;
+  $("userEmail").title = email;
+  $("userBox").classList.toggle("hidden", !email);
+}
 let settingsWarned = false;
 
 async function loadSettingsFromSupabase() {
@@ -775,6 +762,7 @@ async function loadDataFromSupabase() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) { showLogin(); return; }
     currentUser = session.user;
+    setUserEmail(currentUser);
     $("logoutBtn").classList.remove("hidden");
     const { data, error } = await supabaseClient.from("machines").select("*");
     if (error) throw error;
@@ -809,11 +797,10 @@ async function deleteMachinesFromSupabase(ids) {
    Event Listeners i Formularze (Część 4)
    ========================================================= */
 $("icoAdd").innerHTML = svg(ICONS.plus);
-$("icoExp").innerHTML = svg(ICONS.down);
-$("icoImp").innerHTML = svg(ICONS.up);
 $("icoCfg").innerHTML = svg(ICONS.gear);
 $("icoPg").innerHTML = svg(ICONS.pulse);
 $("icoLogout").innerHTML = svg(ICONS.logout);
+$("icoUser").innerHTML = svg(ICONS.user);
 
 let raf;
 const scheduleRender = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
@@ -875,6 +862,7 @@ $("logoutBtn").onclick = async () => {
   await supabaseClient.auth.signOut();
   currentUser = null;
   db = [];
+  setUserEmail(null);
   $("logoutBtn").classList.add("hidden");
   render();
   $("loginModal").showModal();
@@ -883,6 +871,7 @@ $("logoutBtn").onclick = async () => {
 supabaseClient?.auth.onAuthStateChange((ev) => {
   if (ev !== "SIGNED_OUT") return;
   currentUser = null; db = [];
+  setUserEmail(null);
   $("logoutBtn").classList.add("hidden");
   render();
   showLogin();
@@ -1129,104 +1118,6 @@ $("cfgForm").onsubmit = (e) => {
 /* =========================================================
    Generator Skryptów Ping PowerShell i Start (Część 5)
    ========================================================= */
-const bkJson = () => JSON.stringify({ version: 2, machines: db, cats: cfg.cats }, null, 1);
-function openBk(mode) {
-  const exp = mode === "exp";
-  $("bkTitle").textContent = exp ? "Eksport danych" : "Import danych";
-  $("bkHelp").textContent = exp
-    ? "Pobierz plik JSON lub skopiuj zawartość."
-    : "Wybierz plik JSON lub wklej jego zawartość, a potem kliknij „Wczytaj”.";
-  $("bkImpBox").classList.toggle("hidden", exp);
-  ["bkCopy", "bkDl"].forEach((id) => $(id).classList.toggle("hidden", !exp));
-  $("bkGo").classList.toggle("hidden", exp);
-  $("bkText").readOnly = exp;
-  $("bkText").value = exp ? bkJson() : "";
-  $("bkModal").showModal();
-}
-$("exp").onclick = () => openBk("exp");
-$("imp").onclick = () => openBk("imp");
-$("bkClose").onclick = () => $("bkModal").close();
-$("bkText").onclick = (e) => { if (e.target.readOnly) e.target.select(); };
-$("bkCopy").onclick = () => copy(bkJson(), "dane (JSON)");
-$("bkDl").onclick = () => {
-  try {
-    const url = URL.createObjectURL(new Blob([bkJson()], { type: "application/json" }));
-    const a = document.createElement("a");
-    a.href = url; a.download = "maszyny-" + new Date().toISOString().slice(0, 10) + ".json";
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast("Pobieranie rozpoczęte", 3500);
-  } catch (e) { toast("Pobieranie niedostępne", 3500); }
-};
-$("bkPick").onclick = () => $("file").click();
-$("file").onchange = () => {
-  const f = $("file").files[0];
-  if (f) {
-    const r = new FileReader();
-    r.onload = () => { $("bkText").value = r.result; toast("Wczytano plik, kliknij „Wczytaj”"); };
-    r.onerror = () => toast("Nie udało się odczytać pliku");
-    r.readAsText(f);
-  }
-  $("file").value = "";
-};
-$("bkGo").onclick = async () => {
-  if (!currentUser) { toast("Zaloguj się, aby importować dane", 4000); return; }
-  let raw;
-  try { raw = JSON.parse($("bkText").value); } catch (e) { toast("Niepoprawny JSON"); return; }
-  const d = Array.isArray(raw) ? raw : raw?.machines;
-  if (!Array.isArray(d)) { toast("Brak listy maszyn"); return; }
-  const importedCats = Array.isArray(raw?.cats)
-    ? raw.cats.filter((c) => c && /^c_\w+$/.test(c.id) && c.name)
-      .map((c) => ({ id: c.id, name: String(c.name) }))
-    : [];
-  const validTypes = new Set([...Object.keys(TYPES), ...importedCats.map((c) => c.id)]);
-  const now = new Date().toISOString();
-  const items = d.filter((x) => x && typeof x === "object" && x.name).map((x) => ({
-    id: String(x.id || "").replace(/[^\w-]/g, "") || uid(),
-    name: String(x.name),
-    type: validTypes.has(x.type) ? x.type : "other",
-    location: String(x.location || ""),
-    ips: Array.isArray(x.ips) ? x.ips.filter((i) => i && i.ip).map((i) => ({ ip: String(i.ip), label: String(i.label || "") })) : [],
-    deps: Array.isArray(x.deps) ? x.deps.map(String) : [],
-    tags: Array.isArray(x.tags) ? x.tags.map(String) : [],
-    note: String(x.note || ""),
-    key: !!x.key,
-    created_at: x.created_at || now,
-    updated_at: now,
-    user_id: currentUser.id
-  }));
-  if (!items.length) { toast("Brak poprawnych maszyn"); return; }
-  
-  const applyImportedCats = () => {
-    importedCats.filter((c) => !cfg.cats.some((x) => x.id === c.id))
-      .forEach((c) => cfg.cats.push(c));
-    syncTypes();
-    saveCfg();
-  };
-
-  const list = [...new Map(items.map((m) => [m.id, m])).values()]; // bez duplikatów id
-  const doImport = async (replace) => {
-    applyImportedCats();
-    // najpierw jeden zapis nowych danych (upsert), dopiero potem usunięcie reszty
-    let ok = await saveMachinesToSupabase(list);
-    if (ok && replace) {
-      const keep = new Set(list.map((m) => m.id));
-      ok = await deleteMachinesFromSupabase(db.filter((m) => !keep.has(m.id)).map((m) => m.id));
-    }
-    if (!ok) { await loadDataFromSupabase(); toast("Import nie powiódł się, odświeżono dane z chmury", 5000); return; }
-    const byId = new Map(list.map((m) => [m.id, m]));
-    db = replace ? [...list] : [...db.filter((m) => !byId.has(m.id)), ...list];
-    $("bkModal").close();
-    render();
-    toast((replace ? "Zastąpiono dane. Zaimportowano " : "Zaimportowano ") + list.length + " maszyn");
-  };
-  if ($("bkMode").value === "replace") {
-    askConfirm(`Zastąpić obecne dane (${db.length} maszyn) danymi z pliku (${list.length})?`, "Zastąp dane").then((ok) => { if (ok) doImport(true); });
-  } else {
-    doImport(false);
-  }
-};
-
 const psq = (s) => "'" + String(s).replace(/[\r\n]+/g, " ").replace(/'/g, "''") + "'";
 
 function buildPingScriptCore(rows, opts = {}) {
