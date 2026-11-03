@@ -1,12 +1,33 @@
 # Rejestr maszyn
 
-Aplikacja do ewidencji urządzeń sieciowych. Jeden plik statyczny (`index.html`, bez własnego CSS, stylowanie wyłącznie Tailwind), działa na GitHub Pages. Dane maszyn i ustawienia są w Supabase (logowanie e-mail + hasło); ustawienia są dodatkowo cache'owane w `localStorage`.
+Ewidencja urządzeń sieciowych: hosty, adresy IP, lokalizacje, tagi i zależności między maszynami. Jeden plik statyczny (`index.html`, bez własnego CSS, stylowanie wyłącznie Tailwind), działa na GitHub Pages. Dane i ustawienia są w Supabase (logowanie e-mail + hasło), ustawienia dodatkowo cache'owane w `localStorage`.
+
+Adres: https://kamilowebski.github.io/rejestr/
+
+## Funkcje
+
+- lista maszyn z wyszukiwaniem (kilka słów naraz), filtrem lokalizacji i typu oraz sortowaniem kolumn
+- wiele adresów IP na maszynę, wykrywanie duplikatów IP, tagi, notatki, oznaczenie sprzętu kluczowego
+- zależności między maszynami i okno z drzewem zależności
+- szybkie przyciski kopiujące komendy: `ping`, tunel SSH pod VNC, otwarcie `http://`, własne komendy ze zmiennymi `{host}`, `{name}`, `{ip}`, `{user}`, `{port}`
+- generator skryptu PowerShell pingującego kluczowe maszyny lub grupę (maszyna + zależności), także w trybie na żywo
+- ustawienia: własne kategorie sprzętu, widoczność przycisków, parametry pingu, login SSH i port VNC
+
+## Pliki
+
+| Plik | Opis |
+| --- | --- |
+| `index.html` | cała aplikacja (HTML, Tailwind przez CDN, JS) |
+| `manifest.webmanifest` | manifest PWA (nazwa, kolory, ikony) |
+| `icons/` | favicon, ikona Apple Touch, ikony 192/512 i maskable |
 
 ## Uruchomienie
 
-Wrzuć `index.html` na hosting statyczny (np. GitHub Pages) albo otwórz lokalnie. Wymagany jest dostęp do internetu: Tailwind (CDN 3.4.17 z wtyczką forms, config `colors.page = #f4f7f9`) i biblioteka Supabase (CDN, wersja przypięta).
+Wrzuć zawartość repozytorium na hosting statyczny (np. GitHub Pages, gałąź `main`, katalog główny) albo otwórz `index.html` lokalnie. Wymagany jest internet: Tailwind (CDN 3.4.17 z wtyczką forms, `colors.page = #f4f7f9`), biblioteka Supabase (CDN, wersja przypięta) oraz `kamilowebski.github.io/hub/apps.js` (przycisk huba).
 
 ## Konfiguracja Supabase (jednorazowo, SQL Editor)
+
+Tabela `machines` używa kolumn: `id`, `user_id`, `name`, `type`, `location`, `ips`, `deps`, `tags`, `note`, `key`, `created_at`, `updated_at`.
 
 ```sql
 -- RLS: każdy widzi tylko swoje rekordy
@@ -31,11 +52,19 @@ create trigger machines_updated_at before update on public.machines
   for each row execute function public.set_updated_at();
 ```
 
-Dodatkowo w panelu Supabase (Authentication) wyłącz rejestrację nowych użytkowników. Klucz „publishable" w kodzie jest bezpieczny tylko przy włączonym RLS.
+Konta zakładasz ręcznie: Authentication → Users → Add user (zaznacz Auto Confirm User). Wyłącz też rejestrację nowych użytkowników. Klucz „publishable" w kodzie jest bezpieczny tylko przy włączonym RLS.
 
-## Ważne
+## Wspólny wygląd (Rejestr, Todo, Diary)
+
+Wszystkie strony korzystają z tego samego systemu:
+
+- tylko jasny motyw, tło `bg-page` (`#f4f7f9`), jeden akcent `blue-600`
+- kontener `max-w-7xl mx-auto px-4 py-8 space-y-6`, nagłówek z tytułem po lewej i akcjami po prawej
+- te same przyciski: główny (Dodaj, Zapisz), drugorzędny (Wyloguj, Anuluj), niebezpieczny (Usuń), ikony jako inline SVG
+- logowanie jako karta `max-w-md` na stronie, okna `max-w-[560px]`, potwierdzenie `max-w-[400px]`
+- przycisk huba (kwadraciki) w prawym górnym rogu na każdej stronie, ładowany z `hub/apps.js` do `<div id="hub-apps">`
+
+## Uwagi
 
 - Bez tabeli `user_settings` aplikacja działa, ale ustawienia zostają tylko w danej przeglądarce.
-- Przed większym importem zrób eksport JSON jako kopię zapasową.
-- Import „Zastąp" najpierw zapisuje nowe dane, potem usuwa stare, więc przerwanie nie kasuje całej bazy. Wymaga potwierdzenia.
-- Okna logowania, edycji maszyny i ustawień nie zamykają się kliknięciem w tło.
+- Okna edycji maszyny i ustawień nie zamykają się kliknięciem w tło, żeby nie stracić wpisanych danych.

@@ -9,8 +9,11 @@
 <meta name="author" content="Kamil Owębski">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f4f7f9">
-
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232563eb'/%3E%3Crect x='7' y='8' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='14' width='18' height='5' rx='1.5' fill='white'/%3E%3Crect x='7' y='20' width='18' height='5' rx='1.5' fill='white'/%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-title" content="Rejestr">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
 
 <!-- Supabase JS Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -21,7 +24,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
 </script>
 <script src="https://kamilowebski.github.io/hub/apps.js" defer></script>
 </head>
-<body class="bg-page text-sm text-slate-900 antialiased has-[dialog[open]]:overflow-hidden">
+<body class="min-h-screen bg-page text-sm text-slate-900 antialiased has-[dialog[open]]:overflow-hidden">
 
 <main class="mx-auto max-w-7xl space-y-6 px-4 py-8">
   <header class="flex flex-wrap items-start justify-between gap-4">
@@ -31,11 +34,13 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
       <p id="userBox" class="mt-1 flex hidden items-center gap-1.5 text-xs text-slate-600"><span id="icoUser" class="shrink-0 text-slate-400"></span><span id="userEmail" class="min-w-0 truncate"></span></p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
-      <button id="add" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700"><span id="icoAdd"></span>Dodaj</button>
-      <button id="pg" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Skrypt PowerShell pingujący kluczowe maszyny"><span id="icoPg"></span><span class="hidden sm:inline">Ping</span></button>
-      <button id="cfgBtn" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Ustawienia"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
-      <button id="logoutBtn" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 hidden" title="Wyloguj"><span id="icoLogout"></span><span class="hidden sm:inline">Wyloguj</span></button>
-      <div id="hub-apps" class="flex items-center"></div>
+      <div id="sessionActions" class="flex hidden flex-wrap items-center gap-2">
+        <button id="add" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700"><span id="icoAdd"></span>Dodaj</button>
+        <button id="pg" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Skrypt PowerShell pingujący kluczowe maszyny"><span id="icoPg"></span><span class="hidden sm:inline">Ping</span></button>
+        <button id="cfgBtn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Ustawienia"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
+        <button id="logoutBtn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Wyloguj"><span id="icoLogout"></span><span class="hidden sm:inline">Wyloguj</span></button>
+      </div>
+      <div id="hub-apps"></div>
     </div>
   </header>
 
@@ -43,6 +48,26 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     Brak dostępu do pamięci lokalnej lub bibliotek.
   </div>
 
+  <!-- Logowanie (widoczne tylko bez sesji) -->
+  <section id="loginView" class="mx-auto hidden w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+    <form id="loginForm">
+      <h2 class="mb-2 text-lg font-semibold text-slate-900">Logowanie</h2>
+      <p class="text-sm text-slate-600 mb-3">Zaloguj się, aby uzyskać dostęp do swoich maszyn.</p>
+    <div class="mb-4">
+      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginEmail">E-mail</label>
+      <input id="loginEmail" type="email" required autocomplete="username" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="twoj@email.com">
+    </div>
+    <div class="mb-4">
+      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginPassword">Hasło</label>
+      <input id="loginPassword" type="password" required autocomplete="current-password" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="••••••••">
+    </div>
+      <div class="mt-6">
+        <button type="submit" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700 w-full">Zaloguj się</button>
+      </div>
+    </form>
+  </section>
+
+  <div id="appView" class="hidden space-y-6">
   <section class="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col gap-3 p-3 sm:p-4" aria-label="Wyszukiwanie i filtrowanie urządzeń">
     <div class="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(220px,1fr)_minmax(150px,.7fr)_minmax(150px,.7fr)] min-[981px]:grid-cols-[minmax(260px,1fr)_minmax(170px,230px)_minmax(170px,210px)_auto]">
       <div class="min-w-0">
@@ -91,26 +116,8 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     </div>
     <div id="empty" class="px-4 py-12 text-center text-sm text-slate-600 hidden"></div>
   </section>
+  </div>
 </main>
-
-<!-- Modal: logowanie -->
-<dialog id="loginModal" class="m-auto w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100dvh-1rem)] rounded-2xl border-0 bg-transparent p-0 text-slate-900 backdrop:bg-slate-900/40 max-w-[400px]">
-  <form id="loginForm" class="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-    <h2 class="mb-5 text-lg font-semibold text-slate-900">Logowanie do bazy</h2>
-    <p class="text-sm text-slate-600 mb-3">Zaloguj się, aby uzyskać dostęp do swoich maszyn.</p>
-    <div class="mb-4">
-      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginEmail">E-mail</label>
-      <input id="loginEmail" type="email" required autocomplete="username" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="twoj@email.com">
-    </div>
-    <div class="mb-4">
-      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginPassword">Hasło</label>
-      <input id="loginPassword" type="password" required autocomplete="current-password" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="••••••••">
-    </div>
-    <div class="mt-6 flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-auto max-sm:[&>button]:justify-center mt-6">
-      <button type="submit" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700 w-full justify-center">Zaloguj się</button>
-    </div>
-  </form>
-</dialog>
 
 <!-- Modal: maszyna -->
 <dialog id="modal" class="m-auto w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100dvh-1rem)] rounded-2xl border-0 bg-transparent p-0 text-slate-900 backdrop:bg-slate-900/40 max-w-[560px]"><form id="form" class="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
@@ -717,7 +724,13 @@ function openTreeModal(id) {
 
 $("treeClose").onclick = () => $("treeModal").close();
 
-const showLogin = () => { if (!$("loginModal").open) $("loginModal").showModal(); };
+// widok: zalogowany (aplikacja + przyciski) albo logowanie
+function setSession(on) {
+  $("loginView").classList.toggle("hidden", on);
+  $("appView").classList.toggle("hidden", !on);
+  $("sessionActions").classList.toggle("hidden", !on);
+}
+const showLogin = () => setSession(false);
 
 // e-mail zalogowanego użytkownika w nagłówku
 function setUserEmail(user) {
@@ -763,7 +776,7 @@ async function loadDataFromSupabase() {
     if (!session) { showLogin(); return; }
     currentUser = session.user;
     setUserEmail(currentUser);
-    $("logoutBtn").classList.remove("hidden");
+    setSession(true);
     const { data, error } = await supabaseClient.from("machines").select("*");
     if (error) throw error;
     db = data || [];
@@ -853,7 +866,7 @@ $("loginForm").onsubmit = async (e) => {
     return;
   }
   currentUser = data.session.user;
-  $("loginModal").close();
+  setSession(true);
   toast("Zalogowano pomyślnie!");
   loadDataFromSupabase();
 };
@@ -863,16 +876,15 @@ $("logoutBtn").onclick = async () => {
   currentUser = null;
   db = [];
   setUserEmail(null);
-  $("logoutBtn").classList.add("hidden");
   render();
-  $("loginModal").showModal();
+  $("loginPassword").value = "";
+  setSession(false);
 };
 
 supabaseClient?.auth.onAuthStateChange((ev) => {
   if (ev !== "SIGNED_OUT") return;
   currentUser = null; db = [];
   setUserEmail(null);
-  $("logoutBtn").classList.add("hidden");
   render();
   showLogin();
 });
@@ -1298,9 +1310,8 @@ $("pgDl").onclick = () => {
   } catch (e) { toast("Pobieranie niedostępne", 3500); }
 };
 
-const LOCKED = new Set(["loginModal", "modal", "cfgModal"]); // bez zamykania kliknięciem w tło
+const LOCKED = new Set(["modal", "cfgModal"]); // bez zamykania kliknięciem w tło
 document.querySelectorAll("dialog").forEach((dlg) => {
-  if (dlg.id === "loginModal") dlg.addEventListener("cancel", (e) => e.preventDefault());
   dlg.addEventListener("click", (e) => {
     if (!LOCKED.has(dlg.id) && e.target === dlg) {
       const r = dlg.getBoundingClientRect();
