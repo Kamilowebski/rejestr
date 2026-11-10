@@ -958,8 +958,8 @@ function buildPingScriptCore(rows, opts = {}) {
     ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3,-${ws}}  {4}' -f 'HOST', 'IP', 'DESC', 'STATUS', 'DELAY'`
     : `'{0,-${wh}}  {1,-${wi}}  {2,-${ws}}  {3}' -f 'HOST', 'IP', 'STATUS', 'DELAY'`;
   const fmtLine = hasDesc
-    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3,-${ws}}  {4}' -f $r.Host, $ip, $r.Desc, $r.Status, $r.Delay`
-    : `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${ws}}  {3}' -f $r.Host, $ip, $r.Status, $r.Delay`;
+    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3,-${ws}}  {4}' -f $r.Host, $r.Ip, $r.Desc, $r.Status, $r.Delay`
+    : `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${ws}}  {3}' -f $r.Host, $r.Ip, $r.Status, $r.Delay`;
   const hostsBlock = rows.map((r) => {
     const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
     if (r.desc) parts.push(`Desc = ${psq(r.desc)}`);
