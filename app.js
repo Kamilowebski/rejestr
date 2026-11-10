@@ -103,6 +103,7 @@ const openNotes = new Set();
 let dups = new Map();
 let dupOnly = false;
 let curDeps = [];
+let curDependents = [];
 let editId = "";
 let draftCmds = [];
 let draftCats = [];
@@ -401,6 +402,15 @@ function renderDeps() {
     : '<div class="px-3 py-2 text-xs text-slate-600">Brak pasujących maszyn.</div>';
 }
 
+function renderDependents() {
+  const dependents = curDependents
+    .map((id) => db.find((x) => x.id === id))
+    .filter(Boolean);
+  $("dependentChips").innerHTML = dependents.length
+    ? dependents.map((m) => `<span class="inline-flex max-w-full items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-xs font-medium leading-none text-amber-800">${esc(m.name)} <button type="button" data-rmdependent="${m.id}" class="ml-1 text-amber-800 hover:text-red-700" aria-label="Usuń zależność maszyny ${esc(m.name)}">✕</button></span>`).join("")
+    : '<span class="text-xs text-slate-500">Żadna maszyna nie zależy od tej maszyny.</span>';
+}
+
 function openModal(m) {
   $("mtitle").textContent = m ? "Edytuj maszynę" : "Nowa maszyna";
   $("fId").value = m?.id || "";
@@ -424,7 +434,9 @@ function openModal(m) {
 
   editId = m?.id || "";
   curDeps = [...(m?.deps || [])].filter((id) => db.some((x) => x.id === id));
+  curDependents = m ? db.filter((x) => (x.deps || []).includes(m.id)).map((x) => x.id) : [];
   $("depQ").value = ""; renderDeps();
+  renderDependents();
   $("modal").showModal();
   setTimeout(() => $("fName").focus(), 50);
 }
@@ -621,6 +633,12 @@ $("depChips").onclick = (e) => {
   curDeps = curDeps.filter((id) => id !== b.dataset.rmdep);
   renderDeps();
 };
+$("dependentChips").onclick = (e) => {
+  const b = e.target.closest("[data-rmdependent]");
+  if (!b) return;
+  curDependents = curDependents.filter((id) => id !== b.dataset.rmdependent);
+  renderDependents();
+};
 
 $("loginForm").onsubmit = async (e) => {
   e.preventDefault();
@@ -678,6 +696,9 @@ $("form").onsubmit = async (e) => {
     created_at: existing?.created_at || now,
     updated_at: now
   };
+  const dependentUpdates = db
+    .filter((m) => (m.deps || []).includes(obj.id) && !curDependents.includes(m.id))
+    .map((m) => ({ ...m, deps: m.deps.filter((depId) => depId !== obj.id), updated_at: now }));
 
   // walidacja: poprawny IPv4, niepusta nazwa, ostrzeżenie o duplikacie nazwy
   const badIp = ips.find((x) => /^[\d.]+$/.test(x.ip) && !IPV4.test(x.ip));
@@ -688,9 +709,19 @@ $("form").onsubmit = async (e) => {
 
   const idx = db.findIndex((m) => m.id === id);
   if (id && idx >= 0) db[idx] = obj; else db.push(obj);
-  if (!(await saveMachineToSupabase(obj))) {
+  const previousDependents = dependentUpdates.map((updated) => db.find((m) => m.id === updated.id));
+  dependentUpdates.forEach((updated) => {
+    const dependentIdx = db.findIndex((m) => m.id === updated.id);
+    if (dependentIdx >= 0) db[dependentIdx] = updated;
+  });
+  if (!(await saveMachinesToSupabase([obj, ...dependentUpdates]))) {
     // cofnięcie zmiany lokalnej; okno zostaje otwarte
     if (id && idx >= 0) db[idx] = existing; else db = db.filter((m) => m !== obj);
+    previousDependents.forEach((previous) => {
+      if (!previous) return;
+      const dependentIdx = db.findIndex((m) => m.id === previous.id);
+      if (dependentIdx >= 0) db[dependentIdx] = previous;
+    });
     render();
     return;
   }
@@ -699,6 +730,7 @@ $("form").onsubmit = async (e) => {
   render();
   const clash = [...new Set(ips.map((x) => x.ip).filter((ip) => db.some((m) => m.id !== obj.id && (m.ips || []).some((i) => i.ip === ip))))];
   if (clash.length) toast("Zapisano. Duplikat IP: " + clash.join(", "), 4500);
+  else if (dependentUpdates.length) toast(`Zapisano zmiany i usunięto ${dependentUpdates.length} zależności`);
   else toast(id ? "Zapisano zmiany" : "Dodano maszynę");
 };
 
@@ -926,28 +958,29 @@ function buildPingScriptCore(rows, opts = {}) {
     if (r.group) parts.push(`Group = ${psq(r.group)}`);
     return `  @{ ${parts.join("; ")} }`;
   }).join(",\n");
-  const objFields = (() => {
-    const fields = ["Host = $h.Host", "Ip = $h.Ip"];
-    if (hasDesc) fields.push("Desc = $h.Desc");
-    if (hasGroups) fields.push("Group = $h.Group");
-    fields.push("Task = $task");
-    return `  [pscustomobject]@{ ${fields.join("; ")} }`;
-  })();
   const body = [
-    "$jobs = foreach ($h in $hosts) {",
+    "$running = @()",
+    "foreach ($h in $hosts) {",
     "  $target = if ($h.Ip) { $h.Ip } else { $h.Host }",
-    "  $task = $null",
+    "  $process = [System.Diagnostics.Process]::new()",
+    "  $process.StartInfo.FileName = \"$env:SystemRoot\\System32\\PING.EXE\"",
+    "  $process.StartInfo.Arguments = '-n 1 -w ' + $pingMs + ' \"' + $target + '\"'",
+    "  $process.StartInfo.UseShellExecute = $false",
+    "  $process.StartInfo.CreateNoWindow = $true",
+    "  $process.StartInfo.RedirectStandardOutput = $true",
+    "  $watch = [System.Diagnostics.Stopwatch]::StartNew()",
     "  try {",
-    "    $ping = [System.Net.NetworkInformation.Ping]::new()",
-    "    $task = $ping.SendPingAsync($target, $pingMs)",
-    "  } catch {}",
-    objFields,
+    "    $null = $process.Start()",
+    "    $running += [pscustomobject]@{ Host = $h.Host; Ip = $h.Ip; Process = $process; Watch = $watch" + (hasDesc ? "; Desc = $h.Desc" : "") + (hasGroups ? "; Group = $h.Group" : "") + " }",
+    "  } catch {",
+    "    $watch.Stop()",
+    "    Write-Host ('PING ERROR: ' + $target) -ForegroundColor Red",
+    "    $process.Dispose()",
+    "  }",
     "}",
-    "$tasks = @($jobs | Where-Object { $_.Task -ne $null } | ForEach-Object { $_.Task })",
-    "if ($tasks.Count -gt 0) { try { [System.Threading.Tasks.Task]::WaitAll($tasks, [TimeSpan]::FromMilliseconds($pingMs)) | Out-Null } catch {} }",
     fmtHead,
     ...(hasGroups ? ["$lastGroup = $null"] : []),
-    "foreach ($j in $jobs) {",
+    "foreach ($j in $running) {",
     ...(hasGroups ? [
       "  if ($j.Group -and $j.Group -ne $lastGroup) {",
       "    if ($lastGroup -ne $null) { Write-Host '' }",
@@ -955,15 +988,21 @@ function buildPingScriptCore(rows, opts = {}) {
       "    $lastGroup = $j.Group",
       "  }"
     ] : []),
-    "  $delay = 'OFFLINE'; $ip = $j.Ip; $r = $null",
-    "  if ($j.Task -and $j.Task.IsCompleted) { try { $r = $j.Task.Result } catch {} }",
-    "  if ($r -and $r.Status -eq 'Success') {",
-    '    $delay = "$($r.RoundtripTime) ms"',
-    "    if (-not $ip) { $ip = $r.Address.IPAddressToString }",
+    "  $process = $j.Process",
+    "  $completed = $process.WaitForExit($pingMs + 5000)",
+    "  if (-not $completed) { $process.Kill(); $null = $process.WaitForExit() }",
+    "  $j.Watch.Stop()",
+    "  $output = $process.StandardOutput.ReadToEnd()",
+    "  $delay = 'OFFLINE'; $ip = $j.Ip",
+    "  if ($completed -and $process.ExitCode -eq 0) {",
+    "    $delay = [string]$j.Watch.ElapsedMilliseconds + ' ms'",
+    "    $pingMatch = [regex]::Match($output, '(?:time|czas)([=<])\\s*(\\d+)\\s*ms')",
+    "    if ($pingMatch.Success) { $delay = $(if ($pingMatch.Groups[1].Value -eq '<') { '<' } else { '' }) + $pingMatch.Groups[2].Value + ' ms' }",
     "  }",
     "  if (-not $ip) { $ip = '-' }",
     "  " + fmtLine,
     "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
+    "  $process.Dispose()",
     "}"
   ];
   const lines = [`# ${title} (Rejestr maszyn)`];
