@@ -18,7 +18,7 @@ const SAFE = /^[\w.:\-]+$/;
 const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
 const SETTINGS_TABLE = "user_settings";
 const DEFAULT_CFG = {
-  sshUser: "su-t", vncPort: 5900, pingArgs: "-a -t",
+  sshUser: "su-t", vncPort: 5900, pingArgs: "-a -t", pingRefreshSeconds: 5,
   cmds: [], cats: [],
   show: { ping: true, vnc: true, web: true, scan: true }
 };
@@ -86,6 +86,10 @@ function normCfg(c) {
   delete o.theme;
   if (!Array.isArray(o.cmds)) o.cmds = [];
   if (!Array.isArray(o.cats)) o.cats = [];
+  const pingRefreshSeconds = Number(o.pingRefreshSeconds);
+  o.pingRefreshSeconds = Number.isInteger(pingRefreshSeconds)
+    ? Math.min(60, Math.max(1, pingRefreshSeconds))
+    : DEFAULT_CFG.pingRefreshSeconds;
   o.show = { ...DEFAULT_CFG.show, ...(o.show || {}) };
   o.cats = o.cats.filter((x) => x && /^c_\w+$/.test(x.id) && x.name).map((x) => ({ id: x.id, name: String(x.name) }));
   return o;
@@ -878,6 +882,7 @@ $("cfgBtn").onclick = () => {
   $("sWeb").checked = cfg.show.web;
   $("sScan").checked = cfg.show.scan;
   $("cPing").value = cfg.pingArgs;
+  $("cPingRefresh").value = cfg.pingRefreshSeconds;
   $("cSsh").value = cfg.sshUser;
   $("cPort").value = cfg.vncPort;
   draftCmds = cfg.cmds.map((c) => ({ ...c })); renderCmds(); cfgPreview();
@@ -912,12 +917,14 @@ $("cfgForm").onsubmit = (e) => {
     used.add(c.name.toLowerCase());
   }
   const u = $("cSsh").value.trim(), p = parseInt($("cPort").value, 10), a = $("cPing").value.trim();
+  const pingRefreshSeconds = Number($("cPingRefresh").value);
   if (u && !/^[\w.\-]+$/.test(u)) { toast("Nieprawidłowy login"); return; }
   if (!(p >= 1 && p <= 65535)) { toast("Port 1–65535"); return; }
   if (!PING_OK.test(a)) { toast("Nieprawidłowe parametry ping"); return; }
+  if (!Number.isInteger(pingRefreshSeconds) || pingRefreshSeconds < 1 || pingRefreshSeconds > 60) { toast("Czas odświeżania pingów: 1–60 s"); return; }
   const oldCats = cfg.cats;
   cfg = {
-    sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds,
+    sshUser: u, vncPort: p, pingArgs: a, pingRefreshSeconds, cmds: draftCmds,
     show: { ping: $("sPing").checked, vnc: $("sVnc").checked, web: $("sWeb").checked, scan: $("sScan").checked },
     cats: draftCats
   };
@@ -1091,7 +1098,7 @@ function buildGroupPingScript(id, opts = {}) {
 let pgMode = "key", pgGroupId = null;
 const pgOpts = () => ({
   live: $("pgLive").checked,
-  refreshMs: Math.min(60000, Math.max(1000, parseInt($("pgEvery").value, 10) || 5) * 1000),
+  refreshMs: cfg.pingRefreshSeconds * 1000,
   timeoutMs: Math.min(10000, Math.max(200, parseInt($("pgTimeout").value, 10) || 900))
 });
 const pgBuild = (pause = false) => {
@@ -1132,7 +1139,7 @@ function openPgGroup(id) {
 $("pg").onclick = openPgKey;
 $("pgClose").onclick = () => $("pgModal").close();
 $("pgText").onclick = (e) => e.target.select();
-["pgLive", "pgEvery", "pgTimeout"].forEach((id) => ($(id).oninput = renderPg));
+["pgLive", "pgTimeout"].forEach((id) => ($(id).oninput = renderPg));
 $("pgCopy").onclick = () => copy(pgBuild(!pgOpts().live), "skrypt PowerShell");
 $("pgDl").onclick = () => {
   try {

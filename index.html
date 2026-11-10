@@ -210,6 +210,10 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="cPing">Parametry ping</label>
     <input id="cPing" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm font-mono" placeholder="np. -a -t">
   </div>
+  <div class="mb-4">
+    <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="cPingRefresh">Odświeżanie pingów na żywo (sekundy)</label>
+    <input id="cPingRefresh" type="number" min="1" max="60" step="1" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm">
+  </div>
   <div class="flex gap-3 max-sm:flex-col max-sm:gap-0 [&>*]:min-w-0 [&>*]:flex-1">
     <div class="mb-4">
       <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="cSsh">Login SSH</label>
@@ -259,7 +263,6 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   <p id="pgHelp" class="text-sm text-slate-600 mb-3"></p>
   <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-slate-100 p-3">
     <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="pgLive" class="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0"> Odświeżaj na żywo</label>
-    <label class="flex items-center gap-2 text-sm">Co <input type="number" id="pgEvery" min="1" max="60" step="1" value="5" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] !w-24"> s</label>
     <label class="flex items-center gap-2 text-sm">Timeout <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] !w-24"> ms</label>
   </div>
   <textarea id="pgText" rows="14" readonly spellcheck="false" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm font-mono text-xs resize-y"></textarea>
