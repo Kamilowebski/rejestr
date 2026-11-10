@@ -140,7 +140,10 @@ function copy(text, label) {
     const ta = document.createElement("textarea");
     ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); ok(); } catch (e) { toast("Nie udało się skopiować"); }
+    try {
+      if (!document.execCommand("copy")) throw new Error("Schowek odrzucił kopiowanie");
+      ok();
+    } catch (e) { toast("Nie udało się skopiować"); }
     ta.remove();
   };
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
@@ -188,7 +191,7 @@ function ipChips(m) {
   const hasRev = (REV[m.id] || []).length > 0;
   const qualifies = all.length > 1 || hasDeps || hasRev;
   const scanBtn = qualifies && cfg.show.scan
-    ? `<button data-act="scan" data-id="${m.id}" title="Ping grupy" aria-label="Ping grupy" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.share, "icon")}</button>`
+    ? `<button data-act="scan" data-id="${m.id}" title="Kopiuj skrypt pingowania grupy do schowka" aria-label="Kopiuj skrypt pingowania grupy do schowka" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.share, "icon")}</button>`
     : "";
   if (!all.length) return scanBtn ? `<div class="flex flex-wrap items-center gap-1">${scanBtn}</div>` : "";
   const isOpen = open.has(m.id);
@@ -283,7 +286,10 @@ function render() {
   $("typ").innerHTML = '<option value="">Wszystkie typy</option>' +
     Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${esc(v[0])}</option>`).join("");
   $("typ").value = TYPES[tv] ? tv : "";
-  $("locList").innerHTML = locs.map((l) => `<option value="${esc(l)}">`).join("");
+  const formLocation = $("fLoc").value;
+  $("fLoc").innerHTML = '<option value="">Wybierz lokalizację</option>' +
+    locs.map((l) => `<option value="${esc(l)}">${esc(l)}</option>`).join("");
+  $("fLoc").value = locs.includes(formLocation) ? formLocation : "";
 
   const qs = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const lf = $("loc").value, tf = $("typ").value;
@@ -704,7 +710,12 @@ function handleClick(e) {
   if (act === "tree") { openTreeModal(id); return; }
   if (act === "note") { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
   if (act === "more") { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
-  if (act === "scan") { openPgGroup(id); return; }
+  if (act === "scan") {
+    const script = buildGroupPingScript(id, { ...pgOpts(), live: false, pause: true });
+    if (!script) { toast("Nie udało się przygotować skryptu pingowania", 4000); return; }
+    copy(script, "skrypt pingowania grupy — wklej go w PowerShell");
+    return;
+  }
   if (act === "ping" || act === "vnc") {
     const h = b.dataset.ip;
     if (!SAFE.test(h)) { toast("Niedozwolone znaki"); return; }
