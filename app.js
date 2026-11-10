@@ -946,12 +946,13 @@ function buildPingScriptCore(rows, opts = {}) {
   const wh = Math.max(4, ...rows.map((r) => r.host.length));
   const wi = Math.max(15, ...rows.map((r) => r.ip.length));
   const wd = hasDesc ? Math.max(4, ...rows.map((r) => (r.desc || "").length)) : 0;
+  const ws = 18;
   const fmtHead = hasDesc
-    ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f 'HOST', 'IP', 'DESC', 'DELAY'`
-    : `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`;
+    ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3,-${ws}}  {4}' -f 'HOST', 'IP', 'DESC', 'STATUS', 'DELAY'`
+    : `'{0,-${wh}}  {1,-${wi}}  {2,-${ws}}  {3}' -f 'HOST', 'IP', 'STATUS', 'DELAY'`;
   const fmtLine = hasDesc
-    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
-    : `$line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
+    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3,-${ws}}  {4}' -f $r.Host, $ip, $r.Desc, $r.Status, $r.Delay`
+    : `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${ws}}  {3}' -f $r.Host, $ip, $r.Status, $r.Delay`;
   const hostsBlock = rows.map((r) => {
     const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
     if (r.desc) parts.push(`Desc = ${psq(r.desc)}`);
@@ -959,6 +960,8 @@ function buildPingScriptCore(rows, opts = {}) {
     return `  @{ ${parts.join("; ")} }`;
   }).join(",\n");
   const body = [
+    "$results = @()",
+    "$index = 0",
     "$running = @()",
     "foreach ($h in $hosts) {",
     "  $target = if ($h.Ip) { $h.Ip } else { $h.Host }",
@@ -971,45 +974,64 @@ function buildPingScriptCore(rows, opts = {}) {
     "  $watch = [System.Diagnostics.Stopwatch]::StartNew()",
     "  try {",
     "    $null = $process.Start()",
-    "    $running += [pscustomobject]@{ Host = $h.Host; Ip = $h.Ip; Process = $process; Watch = $watch" + (hasDesc ? "; Desc = $h.Desc" : "") + (hasGroups ? "; Group = $h.Group" : "") + " }",
+    "    $running += [pscustomobject]@{ Host = $h.Host; Ip = $h.Ip; Process = $process; Watch = $watch; Index = $index" + (hasDesc ? "; Desc = $h.Desc" : "") + (hasGroups ? "; Group = $h.Group" : "") + " }",
+    "    $index++",
     "  } catch {",
     "    $watch.Stop()",
     "    Write-Host ('PING ERROR: ' + $target) -ForegroundColor Red",
     "    $process.Dispose()",
     "  }",
     "}",
-    fmtHead,
-    ...(hasGroups ? ["$lastGroup = $null"] : []),
     "foreach ($j in $running) {",
-    ...(hasGroups ? [
-      "  if ($j.Group -and $j.Group -ne $lastGroup) {",
-      "    if ($lastGroup -ne $null) { Write-Host '' }",
-      '    Write-Host "=== $($j.Group) ===" -ForegroundColor Cyan',
-      "    $lastGroup = $j.Group",
-      "  }"
-    ] : []),
     "  $process = $j.Process",
     "  $completed = $process.WaitForExit($pingMs + 5000)",
     "  if (-not $completed) { $process.Kill(); $null = $process.WaitForExit() }",
     "  $j.Watch.Stop()",
     "  $output = $process.StandardOutput.ReadToEnd()",
-    "  $delay = 'OFFLINE'; $ip = $j.Ip",
+    "  $delay = 'No response'; $ip = $j.Ip",
     "  if ($completed -and $process.ExitCode -eq 0) {",
     "    $delay = [string]$j.Watch.ElapsedMilliseconds + ' ms'",
     "    $pingMatch = [regex]::Match($output, '(?:time|czas)([=<])\\s*(\\d+)\\s*ms')",
     "    if ($pingMatch.Success) { $delay = $(if ($pingMatch.Groups[1].Value -eq '<') { '<' } else { '' }) + $pingMatch.Groups[2].Value + ' ms' }",
     "  }",
     "  if (-not $ip) { $ip = '-' }",
-    "  " + fmtLine,
-    "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
+    "  $key = $j.Host + '|' + $j.Ip",
+    "  if (-not $stateByTarget.ContainsKey($key)) { $stateByTarget[$key] = [pscustomobject]@{ Failures = 0; Online = $null } }",
+    "  $state = $stateByTarget[$key]",
+    "  if ($completed -and $process.ExitCode -eq 0) { $state.Failures = 0; $state.Online = $true } else { $state.Failures++; if ($state.Failures -ge $offlineAfter) { $state.Online = $false }; $delay += ' (' + $state.Failures + '/' + $offlineAfter + ')' }",
+    "  if ($state.Online -eq $true) { $status = 'ONLINE'; if ($state.Failures -gt 0) { $status += ' (' + $state.Failures + '/' + $offlineAfter + ')' } }",
+    "  elseif ($state.Online -eq $false) { $status = 'OFFLINE' }",
+    "  else { $status = 'CHECKING (' + $state.Failures + '/' + $offlineAfter + ')' }",
+    "  $results += [pscustomobject]@{ Host = $j.Host; Ip = $ip; Desc = " + (hasDesc ? "$j.Desc" : "''") + "; Group = " + (hasGroups ? "$j.Group" : "''") + "; Status = $status; Online = $state.Online; Delay = $delay; Index = $j.Index }",
     "  $process.Dispose()",
-    "}"
+    "}",
+    "$onlineCount = @($results | Where-Object { $_.Online -eq $true }).Count",
+    "$offlineCount = @($results | Where-Object { $_.Online -eq $false }).Count",
+    "$checkingCount = @($results | Where-Object { $null -eq $_.Online }).Count",
+    "Write-Host ('Ostatnie odswiezenie: ' + (Get-Date -Format 'HH:mm:ss') + ' | ONLINE: ' + $onlineCount + ' | OFFLINE: ' + $offlineCount + ' | SPRAWDZANIE: ' + $checkingCount + ' (offline po ' + $offlineAfter + ' kolejnych nieudanych pingach)') -ForegroundColor White",
+    "Write-Host ''",
+    ...(hasGroups ? [
+      "foreach ($bucket in ($results | Group-Object -Property Group)) {",
+      "  if ($bucket.Name) { Write-Host ('=== ' + $bucket.Name + ' ===') -ForegroundColor Cyan }",
+      "  Write-Host (" + fmtHead + ") -ForegroundColor DarkGray",
+      "  foreach ($r in ($bucket.Group | Sort-Object @{ Expression = { if ($_.Online -eq $false) { 0 } elseif ($null -eq $_.Online) { 1 } else { 2 } } }, Index)) {",
+      "    " + fmtLine,
+      "    if ($r.Online -eq $false) { Write-Host $line -ForegroundColor Red } elseif ($null -eq $r.Online) { Write-Host $line -ForegroundColor Yellow } else { Write-Host $line -ForegroundColor Green }",
+      "  }",
+      "}"
+    ] : [
+      "Write-Host (" + fmtHead + ") -ForegroundColor DarkGray",
+      "foreach ($r in ($results | Sort-Object @{ Expression = { if ($_.Online -eq $false) { 0 } elseif ($null -eq $_.Online) { 1 } else { 2 } } }, Index)) {",
+      "  " + fmtLine,
+      "  if ($r.Online -eq $false) { Write-Host $line -ForegroundColor Red } elseif ($null -eq $r.Online) { Write-Host $line -ForegroundColor Yellow } else { Write-Host $line -ForegroundColor Green }",
+      "}"
+    ])
   ];
   const lines = [`# ${title} (Rejestr maszyn)`];
   if (live) {
     lines.push("# Tryb na zywo - Ctrl+C aby zakonczyc", "");
     lines.push("$hosts = @(", hostsBlock, ")", "");
-    lines.push(`$refreshMs = ${refreshMs}`, `$pingMs = ${timeoutMs}`, "");
+    lines.push(`$refreshMs = ${refreshMs}`, `$pingMs = ${timeoutMs}`, "$offlineAfter = 3", "$stateByTarget = @{}", "");
     lines.push("while ($true) {");
     lines.push("  $sw = [System.Diagnostics.Stopwatch]::StartNew()");
     lines.push("  Clear-Host");
@@ -1024,7 +1046,7 @@ function buildPingScriptCore(rows, opts = {}) {
   } else {
     lines.push("");
     lines.push("$hosts = @(", hostsBlock, ")", "");
-    lines.push(`$pingMs = ${timeoutMs}`, "");
+    lines.push(`$pingMs = ${timeoutMs}`, "$offlineAfter = 1", "$stateByTarget = @{}", "");
     body.forEach((l) => lines.push(l));
     if (pause) lines.push("", "Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'");
   }
@@ -1082,9 +1104,9 @@ function openPgKey() {
   const n = db.filter((m) => m.key).length;
   if (!n) { toast("Brak kluczowych maszyn", 4000); return; }
   pgMode = "key"; pgGroupId = null;
-  $("pgLive").checked = false;
+  $("pgLive").checked = true;
   $("pgTitle").textContent = "Ping kluczowych maszyn";
-  $("pgHelp").textContent = `Kluczowych maszyn: ${n}. Wklej do PowerShell. Pinguje po IP lub po nazwie.`;
+  $("pgHelp").textContent = `Kluczowych maszyn: ${n}. Wklej skrypt do PowerShell. Wyniki odświeżają się na żywo; offline po 3 kolejnych nieudanych pingach, offline na górze. Ctrl+C kończy działanie.`;
   renderPg();
   $("pgModal").showModal();
 }
@@ -1092,7 +1114,7 @@ function openPgGroup(id) {
   const m = db.find((x) => x.id === id);
   if (!m) return;
   pgMode = "group"; pgGroupId = id;
-  $("pgLive").checked = false;
+  $("pgLive").checked = true;
   const rev = {};
   db.forEach((x) => (x.deps || []).forEach((d) => (rev[d] ||= []).push(x)));
   const parts = [];
@@ -1103,7 +1125,7 @@ function openPgGroup(id) {
   if (depsN) parts.push(`${depsN} zależności`);
   if (revN) parts.push(`${revN} zależnych`);
   $("pgTitle").textContent = "Ping grupy: " + m.name;
-  $("pgHelp").textContent = `${m.name}${parts.length ? " (" + parts.join(", ") + ")" : ""}. Pinguje tę maszynę, jej zależności i maszyny zależne.`;
+  $("pgHelp").textContent = `${m.name}${parts.length ? " (" + parts.join(", ") + ")" : ""}. Pinguje tę maszynę, jej zależności i maszyny zależne. Tryb na żywo: offline po 3 kolejnych nieudanych pingach, offline na górze; Ctrl+C kończy działanie.`;
   renderPg();
   $("pgModal").showModal();
 }
