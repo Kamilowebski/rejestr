@@ -192,7 +192,7 @@ function ipChips(m) {
   const hasRev = (REV[m.id] || []).length > 0;
   const qualifies = all.length > 1 || hasDeps || hasRev;
   const scanBtn = qualifies && cfg.show.scan
-    ? `<button data-act="scan" data-id="${m.id}" title="Kopiuj skrypt pingowania grupy do schowka" aria-label="Kopiuj skrypt pingowania grupy do schowka" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.share, "icon")}</button>`
+    ? `<button data-act="scan" data-id="${m.id}" title="Kopiuj skrypt pingowania grupy na żywo; Ctrl+C kończy" aria-label="Kopiuj skrypt pingowania grupy na żywo; Ctrl+C kończy" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.share, "icon")}</button>`
     : "";
   if (!all.length) return scanBtn ? `<div class="flex flex-wrap items-center gap-1">${scanBtn}</div>` : "";
   const isOpen = open.has(m.id);
@@ -743,9 +743,9 @@ function handleClick(e) {
   if (act === "note") { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
   if (act === "more") { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
   if (act === "scan") {
-    const script = buildGroupPingScript(id, { ...pgOpts(), live: false, pause: true });
+    const script = buildGroupPingScript(id, { ...pgOpts(), live: true, pause: false });
     if (!script) { toast("Nie udało się przygotować skryptu pingowania", 4000); return; }
-    copy(script, "skrypt pingowania grupy — wklej go w PowerShell");
+    copy(script, `skrypt pingowania na żywo co ${pgOpts().refreshMs / 1000} s — Ctrl+C kończy`);
     return;
   }
   if (act === "ping" || act === "vnc") {
@@ -1014,7 +1014,7 @@ function buildPingScriptCore(rows, opts = {}) {
     lines.push("  $sw = [System.Diagnostics.Stopwatch]::StartNew()");
     lines.push("  Clear-Host");
     lines.push(`  Write-Host ${psq(title)} -ForegroundColor White`);
-    lines.push("  Write-Host ('Odswiezanie co ' + $refreshMs + ' ms - Ctrl+C') -ForegroundColor DarkGray");
+    lines.push("  Write-Host ('Odswiezanie co ' + ($refreshMs / 1000) + ' s - Ctrl+C') -ForegroundColor DarkGray");
     lines.push("  Write-Host ''", "");
     body.forEach((l) => lines.push("  " + l));
     lines.push("");
@@ -1069,7 +1069,7 @@ function buildGroupPingScript(id, opts = {}) {
 let pgMode = "key", pgGroupId = null;
 const pgOpts = () => ({
   live: $("pgLive").checked,
-  refreshMs: Math.min(60000, Math.max(300, parseInt($("pgEvery").value, 10) || 1000)),
+  refreshMs: Math.min(60000, Math.max(1000, parseInt($("pgEvery").value, 10) || 5) * 1000),
   timeoutMs: Math.min(10000, Math.max(200, parseInt($("pgTimeout").value, 10) || 900))
 });
 const pgBuild = (pause = false) => {
