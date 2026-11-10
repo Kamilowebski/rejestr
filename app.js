@@ -1032,6 +1032,7 @@ function openPgKey() {
   const n = db.filter((m) => m.key).length;
   if (!n) { toast("Brak kluczowych maszyn", 4000); return; }
   pgMode = "key"; pgGroupId = null;
+  $("pgLive").checked = false;
   $("pgTitle").textContent = "Ping kluczowych maszyn";
   $("pgHelp").textContent = `Kluczowych maszyn: ${n}. Wklej do PowerShell. Pinguje po IP lub po nazwie.`;
   renderPg();
@@ -1041,6 +1042,7 @@ function openPgGroup(id) {
   const m = db.find((x) => x.id === id);
   if (!m) return;
   pgMode = "group"; pgGroupId = id;
+  $("pgLive").checked = false;
   const rev = {};
   db.forEach((x) => (x.deps || []).forEach((d) => (rev[d] ||= []).push(x)));
   const parts = [];
@@ -1059,7 +1061,7 @@ $("pg").onclick = openPgKey;
 $("pgClose").onclick = () => $("pgModal").close();
 $("pgText").onclick = (e) => e.target.select();
 ["pgLive", "pgEvery", "pgTimeout"].forEach((id) => ($(id).oninput = renderPg));
-$("pgCopy").onclick = () => copy(pgBuild(false), "skrypt PowerShell");
+$("pgCopy").onclick = () => copy(pgBuild(!pgOpts().live), "skrypt PowerShell");
 $("pgDl").onclick = () => {
   try {
     const o = pgOpts();

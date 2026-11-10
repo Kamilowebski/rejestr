@@ -10,7 +10,7 @@ Adres: https://kamilowebski.github.io/rejestr/
 - wiele adresów IP na maszynę, wykrywanie duplikatów IP, tagi, notatki, oznaczenie sprzętu kluczowego
 - zależności między maszynami i okno z drzewem zależności
 - szybkie przyciski kopiujące komendy: `ping`, tunel SSH pod VNC, otwarcie `http://`, własne komendy ze zmiennymi `{host}`, `{name}`, `{ip}`, `{user}`, `{port}`
-- generator skryptu PowerShell pingującego kluczowe maszyny lub grupę (maszyna + zależności), także w trybie na żywo
+- generator skryptu PowerShell pingującego kluczowe maszyny lub grupę (maszyna + zależności); domyślnie jednorazowo, z pauzą po wyniku, opcjonalnie w trybie na żywo
 - ustawienia: własne kategorie sprzętu, widoczność przycisków, parametry pingu, login SSH i port VNC
 
 ## Pliki
