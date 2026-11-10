@@ -1,12 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Rejestr maszyn</title>
 
-<meta name="description" content="Rejestr maszyn â€” lokalny spis urzÄ…dzeĹ„ sieciowych z adresami IP, zaleĹĽnoĹ›ciami, lokalizacjami i szybkimi komendami.">
-<meta name="author" content="Kamil OwÄ™bski">
+<meta name="description" content="Rejestr maszyn — lokalny spis urządzeń sieciowych z adresami IP, zależnościami, lokalizacjami i szybkimi komendami.">
+<meta name="author" content="Kamil Owębski">
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#f4f7f9">
 <meta name="apple-mobile-web-app-title" content="Rejestr">
@@ -37,7 +37,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     <div class="flex flex-wrap items-center gap-2">
       <div id="sessionActions" class="flex hidden flex-wrap items-center gap-2">
         <button id="add" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700"><span id="icoAdd"></span>Dodaj</button>
-        <button id="pg" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Skrypt PowerShell pingujÄ…cy kluczowe maszyny"><span id="icoPg"></span><span class="hidden sm:inline">Ping</span></button>
+        <button id="pg" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Skrypt PowerShell pingujący kluczowe maszyny"><span id="icoPg"></span><span class="hidden sm:inline">Ping</span></button>
         <button id="cfgBtn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Ustawienia"><span id="icoCfg"></span><span class="hidden sm:inline">Ustawienia</span></button>
         <button id="logoutBtn" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Wyloguj"><span id="icoLogout"></span><span class="hidden sm:inline">Wyloguj</span></button>
       </div>
@@ -46,54 +46,54 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   </header>
 
   <div id="warn" class="rounded-lg border border-amber-500 bg-amber-100 px-4 py-3 text-sm text-amber-800 hidden">
-    Brak dostÄ™pu do pamiÄ™ci lokalnej lub bibliotek.
+    Brak dostępu do pamięci lokalnej lub bibliotek.
   </div>
 
   <!-- Logowanie (widoczne tylko bez sesji) -->
   <section id="loginView" class="mx-auto hidden w-full max-w-md rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
     <form id="loginForm">
       <h2 class="mb-2 text-lg font-semibold text-slate-900">Logowanie</h2>
-      <p class="text-sm text-slate-600 mb-3">Zaloguj siÄ™, aby uzyskaÄ‡ dostÄ™p do swoich maszyn.</p>
+      <p class="text-sm text-slate-600 mb-3">Zaloguj się, aby uzyskać dostęp do swoich maszyn.</p>
     <div class="mb-4">
       <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginEmail">E-mail</label>
       <input id="loginEmail" type="email" required autocomplete="username" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="twoj@email.com">
     </div>
     <div class="mb-4">
-      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginPassword">HasĹ‚o</label>
-      <input id="loginPassword" type="password" required autocomplete="current-password" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="â€˘â€˘â€˘â€˘â€˘â€˘â€˘â€˘">
+      <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loginPassword">Hasło</label>
+      <input id="loginPassword" type="password" required autocomplete="current-password" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="••••••••">
     </div>
       <div class="mt-6">
-        <button type="submit" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700 w-full">Zaloguj siÄ™</button>
+        <button type="submit" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-60 border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700 w-full">Zaloguj się</button>
       </div>
     </form>
   </section>
 
   <div id="appView" class="hidden space-y-6">
-  <section class="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col gap-3 p-3 sm:p-4" aria-label="Wyszukiwanie i filtrowanie urzÄ…dzeĹ„">
+  <section class="rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col gap-3 p-3 sm:p-4" aria-label="Wyszukiwanie i filtrowanie urządzeń">
     <div class="grid grid-cols-1 items-end gap-3 sm:grid-cols-[minmax(220px,1fr)_minmax(150px,.7fr)_minmax(150px,.7fr)] min-[981px]:grid-cols-[minmax(260px,1fr)_minmax(170px,230px)_minmax(170px,210px)_auto]">
       <div class="min-w-0">
         <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="q">Szukaj</label>
-        <input id="q" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" type="search" autocomplete="off" placeholder="Nazwa, IP, lokalizacja, typ, tagi, zaleĹĽnoĹ›ciâ€¦" aria-describedby="filterHelp">
+        <input id="q" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" type="search" autocomplete="off" placeholder="Nazwa, IP, lokalizacja, typ, tagi, zależności…" aria-describedby="filterHelp">
       </div>
       <div class="min-w-0">
         <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="loc">Lokalizacja</label>
-        <select id="loc" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm pr-8" aria-label="Filtruj wedĹ‚ug lokalizacji"></select>
+        <select id="loc" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm pr-8" aria-label="Filtruj według lokalizacji"></select>
       </div>
       <div class="min-w-0">
-        <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="typ">Typ urzÄ…dzenia</label>
-        <select id="typ" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm pr-8" aria-label="Filtruj wedĹ‚ug typu urzÄ…dzenia"></select>
+        <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="typ">Typ urządzenia</label>
+        <select id="typ" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm pr-8" aria-label="Filtruj według typu urządzenia"></select>
       </div>
       <div class="flex items-end sm:col-span-full sm:justify-end min-[981px]:col-auto min-[981px]:justify-start max-sm:[&>button]:w-full max-sm:[&>button]:justify-center">
-        <button id="clearFilters" type="button" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-2.5 py-1 text-[13px] border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="WyczyĹ›Ä‡ wyszukiwanie i filtry">WyczyĹ›Ä‡</button>
+        <button id="clearFilters" type="button" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-2.5 py-1 text-[13px] border-slate-300 bg-white text-slate-900 hover:bg-slate-50" title="Wyczyść wyszukiwanie i filtry">Wyczyść</button>
       </div>
     </div>
-    <p id="filterHelp" class="-mt-1 text-xs text-slate-400">MoĹĽesz wpisaÄ‡ kilka sĹ‚Ăłw â€” wynik musi pasowaÄ‡ do kaĹĽdego z nich.</p>
-    <div id="stats" class="flex flex-wrap gap-1.5" aria-label="Szybkie filtry wedĹ‚ug typu"></div>
+    <p id="filterHelp" class="-mt-1 text-xs text-slate-400">Możesz wpisać kilka słów — wynik musi pasować do każdego z nich.</p>
+    <div id="stats" class="flex flex-wrap gap-1.5" aria-label="Szybkie filtry według typu"></div>
   </section>
 
   <section class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
     <div class="overflow-x-auto max-sm:[&_table]:min-w-[900px]">
-      <table class="w-full table-fixed border-collapse text-sm [&_thead]:bg-slate-100 [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-slate-200 [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-600 [&_th[data-sort]]:cursor-pointer [&_th[data-sort]]:select-none [&_th[data-sort]:hover]:text-slate-900 [&_td]:overflow-hidden [&_td]:px-4 [&_td]:py-3 [&_td]:align-top [&_td]:[overflow-wrap:anywhere] [&_td:nth-child(2)]:[overflow-wrap:normal] [&_td:last-child]:[overflow-wrap:normal] [&_tbody_tr]:border-b [&_tbody_tr]:border-slate-200 [&_tbody_tr:last-child]:border-b-0 [&_tbody_tr:hover]:bg-blue-50/50" aria-label="Rejestr urzÄ…dzeĹ„">
+      <table class="w-full table-fixed border-collapse text-sm [&_thead]:bg-slate-100 [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-slate-200 [&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-slate-600 [&_th[data-sort]]:cursor-pointer [&_th[data-sort]]:select-none [&_th[data-sort]:hover]:text-slate-900 [&_td]:overflow-hidden [&_td]:px-4 [&_td]:py-3 [&_td]:align-top [&_td]:[overflow-wrap:anywhere] [&_td:nth-child(2)]:[overflow-wrap:normal] [&_td:last-child]:[overflow-wrap:normal] [&_tbody_tr]:border-b [&_tbody_tr]:border-slate-200 [&_tbody_tr:last-child]:border-b-0 [&_tbody_tr:hover]:bg-blue-50/50" aria-label="Rejestr urządzeń">
         <colgroup>
           <col class="w-[20%]">
           <col class="w-[10%]">
@@ -104,11 +104,11 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
         </colgroup>
         <thead>
           <tr>
-            <th data-sort="name" tabindex="0" scope="col" aria-label="Sortuj wedĹ‚ug nazwy">Nazwa</th>
-            <th data-sort="type" tabindex="0" scope="col" aria-label="Sortuj wedĹ‚ug typu">Typ</th>
-            <th data-sort="location" tabindex="0" scope="col" aria-label="Sortuj wedĹ‚ug lokalizacji">Lokalizacja</th>
-            <th data-sort="ip" tabindex="0" scope="col" aria-label="Sortuj wedĹ‚ug adresu IP">Adresy IP</th>
-            <th scope="col">ZaleĹĽnoĹ›ci</th>
+            <th data-sort="name" tabindex="0" scope="col" aria-label="Sortuj według nazwy">Nazwa</th>
+            <th data-sort="type" tabindex="0" scope="col" aria-label="Sortuj według typu">Typ</th>
+            <th data-sort="location" tabindex="0" scope="col" aria-label="Sortuj według lokalizacji">Lokalizacja</th>
+            <th data-sort="ip" tabindex="0" scope="col" aria-label="Sortuj według adresu IP">Adresy IP</th>
+            <th scope="col">Zależności</th>
             <th scope="col" class="!text-right">Akcje</th>
           </tr>
         </thead>
@@ -116,6 +116,24 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
       </table>
     </div>
     <div id="empty" class="px-4 py-12 text-center text-sm text-slate-600 hidden"></div>
+    <div id="pagination" class="flex flex-col gap-3 border-t border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Paginacja listy maszyn">
+      <div class="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+        <span id="pageInfo" aria-live="polite"></span>
+        <label for="pageSize" class="ml-1">Na stronie:</label>
+        <select id="pageSize" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20" aria-label="Liczba maszyn na stronie">
+          <option value="20">20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="200">200</option>
+          <option value="0">Wszystkie</option>
+        </select>
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <button id="prevPage" type="button" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" aria-label="Poprzednia strona">Poprzednia</button>
+        <span id="pageNumber" class="min-w-20 text-center text-xs text-slate-600"></span>
+        <button id="nextPage" type="button" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 border-slate-300 bg-white text-slate-900 hover:bg-slate-50" aria-label="Następna strona">Następna</button>
+      </div>
+    </div>
   </section>
   </div>
 </main>
@@ -147,9 +165,9 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     <div id="ips" role="group" aria-labelledby="ipsLbl"></div>
   </div>
   <div class="mb-4">
-    <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="depQ">ZaleĹĽy od</label>
+    <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="depQ">Zależy od</label>
     <div id="depChips" class="flex flex-wrap gap-1.5 mb-2"></div>
-    <input id="depQ" autocomplete="off" placeholder="Wpisz nazwÄ™, IP lub lokalizacjÄ™â€¦" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm">
+    <input id="depQ" autocomplete="off" placeholder="Wpisz nazwę, IP lub lokalizację…" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm">
     <div id="depList" class="mt-1 max-h-44 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow hidden"></div>
   </div>
   <div class="mb-4">
@@ -157,7 +175,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
     <input id="fTags" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm" placeholder="np. vlan10, parter, krytyczny">
   </div>
   <label class="flex items-center gap-2 text-sm mb-4">
-    <input type="checkbox" id="fKey" class="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0"> SprzÄ™t kluczowy
+    <input type="checkbox" id="fKey" class="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0"> Sprzęt kluczowy
   </label>
   <div class="mb-4">
     <label class="mb-1.5 block text-[13px] font-medium text-slate-900" for="fNote">Notatka</label>
@@ -199,7 +217,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   <p id="cPrev" class="mb-4 whitespace-pre-wrap break-all rounded-lg bg-slate-100 px-3 py-2 font-mono text-xs text-slate-600"></p>
 
   <div class="mt-4 border-t border-slate-200 pt-4">
-    <div class="mb-2 text-[13px] font-semibold text-slate-900">WĹ‚asne kategorie</div>
+    <div class="mb-2 text-[13px] font-semibold text-slate-900">Własne kategorie</div>
     <div id="catList"></div>
     <div class="flex gap-2 mt-2">
       <input id="catNew" maxlength="24" placeholder="Nazwa kategorii" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm">
@@ -208,7 +226,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   </div>
 
   <div class="mt-4 border-t border-slate-200 pt-4">
-    <div class="mb-2 text-[13px] font-semibold text-slate-900">WĹ‚asne komendy</div>
+    <div class="mb-2 text-[13px] font-semibold text-slate-900">Własne komendy</div>
     <p class="text-xs text-slate-600 mb-2">Zmienne: <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">{host}</code> <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">{name}</code> <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">{ip}</code> <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">{user}</code> <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-blue-700">{port}</code></p>
     <div id="cList"></div>
     <div class="flex flex-col gap-2 sm:grid sm:grid-cols-[6rem_1fr_7rem] mt-2">
@@ -220,7 +238,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
         <option value="both">Do obu</option>
       </select>
     </div>
-    <button type="button" id="cmdAdd" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-2.5 py-1 text-[13px] border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 mt-2 !text-blue-600">+ Dodaj komendÄ™</button>
+    <button type="button" id="cmdAdd" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-2.5 py-1 text-[13px] border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 mt-2 !text-blue-600">+ Dodaj komendę</button>
   </div>
 
   <div class="mt-6 flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-auto max-sm:[&>button]:justify-center">
@@ -234,7 +252,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   <h2 id="pgTitle" class="mb-5 text-lg font-semibold text-slate-900">Ping</h2>
   <p id="pgHelp" class="text-sm text-slate-600 mb-3"></p>
   <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-slate-100 p-3">
-    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="pgLive" checked class="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0"> OdĹ›wieĹĽaj na ĹĽywo</label>
+    <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="pgLive" checked class="size-4 shrink-0 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-600 focus:ring-offset-0"> Odświeżaj na żywo</label>
     <label class="flex items-center gap-2 text-sm">Co <input type="number" id="pgEvery" min="300" max="60000" step="100" value="1000" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] !w-24"> ms</label>
     <label class="flex items-center gap-2 text-sm">Timeout <input type="number" id="pgTimeout" min="200" max="10000" step="100" value="900" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] !w-24"> ms</label>
   </div>
@@ -246,9 +264,9 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   </div>
 </div></dialog>
 
-<!-- Modal: wizualne drzewo zaleĹĽnoĹ›ci -->
+<!-- Modal: wizualne drzewo zależności -->
 <dialog id="treeModal" class="m-auto w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-h-[calc(100dvh-1rem)] rounded-2xl border-0 bg-transparent p-0 text-slate-900 backdrop:bg-slate-900/40 max-w-[820px]"><div class="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white p-4 shadow-xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
-  <h2 id="treeTitle" class="mb-5 text-lg font-semibold text-slate-900">Drzewo zaleĹĽnoĹ›ci</h2>
+  <h2 id="treeTitle" class="mb-5 text-lg font-semibold text-slate-900">Drzewo zależności</h2>
   <div id="treeContent" class="py-2 text-sm mb-3"></div>
   <div class="mt-6 flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-auto max-sm:[&>button]:justify-center">
     <button type="button" id="treeClose" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50">Zamknij</button>
@@ -260,7 +278,7 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
   <p id="cfmMsg" class="text-sm mb-6"></p>
   <div class="mt-6 flex flex-wrap justify-end gap-2 max-sm:[&>button]:flex-auto max-sm:[&>button]:justify-center !mt-0">
     <button type="button" id="cfmNo" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-slate-300 bg-white text-slate-900 hover:bg-slate-50">Anuluj</button>
-    <button type="button" id="cfmOk" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-red-600 bg-red-600 text-white hover:brightness-95">UsuĹ„</button>
+    <button type="button" id="cfmOk" class="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-red-600 bg-red-600 text-white hover:brightness-95">Usuń</button>
   </div>
 </div></dialog>
 
@@ -268,4 +286,3 @@ tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } };
 <script src="app.js" defer></script>
 </body>
 </html>
-

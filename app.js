@@ -1,8 +1,8 @@
-﻿
+
 "use strict";
 
 /* =========================================================
-   Rejestr maszyn â€” Konfiguracja Supabase (CzÄ™Ĺ›Ä‡ 1)
+   Rejestr maszyn — Konfiguracja Supabase (Część 1)
    ========================================================= */
 const SUPABASE_URL = "https://jccbausmoykoqohfuyqw.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xv8yXGbIiF44_6KjWo8uFg_4Mg4PS8P";
@@ -61,7 +61,7 @@ const ICON = "size-4 shrink-0";
 const svg = (d, cls = "icon") =>
   `<svg class="${cls ==="icon" ? ICON : cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 
-// klasy Tailwind skĹ‚adane dynamicznie (odznaki, chipy)
+// klasy Tailwind składane dynamicznie (odznaki, chipy)
 const BADGE = {"": "bg-slate-100 text-slate-600", "primary": "bg-blue-50 text-blue-700", "info": "bg-sky-100 text-sky-800", "warn": "bg-amber-100 text-amber-800", "tag": "bg-slate-200 text-slate-900"};
 const bc = (v = "", mono = false) => `inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none ${BADGE[v]} ${mono || v === "tag" ? "text-[11px]" : "text-xs"}${mono ? " font-mono" : ""}`;
 const CHIP = "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors";
@@ -94,6 +94,9 @@ let cfg = normCfg(load(CFG_KEY, {}));
 
 let ui = load(UI_KEY, {});
 let sort = ui.sort && { k: ui.sort.k || "", d: ui.sort.d === -1 ? -1 : 1 } || { k: "", d: 1 };
+const PAGE_SIZES = [20, 50, 100, 200, 0];
+let pageSize = PAGE_SIZES.includes(Number(ui.pageSize)) ? Number(ui.pageSize) : 20;
+let page = 1;
 
 const open = new Set();
 const openNotes = new Set();
@@ -107,9 +110,9 @@ let REV = {};
 
 const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
 const saveCfgLocal = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} };
-// zapis lokalny + synchronizacja z chmurÄ…
+// zapis lokalny + synchronizacja z chmurą
 const saveCfg = () => { saveCfgLocal(); return saveSettingsToSupabase(); };
-const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $("q").value, sort })); } catch (e) {} };
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $("q").value, sort, pageSize })); } catch (e) {} };
 
 function syncTypes() {
   const other = TYPES.other;
@@ -120,7 +123,7 @@ function syncTypes() {
 syncTypes();
 
 /* =========================================================
-   Toast, Kopiowanie, Motyw i Renderowanie (CzÄ™Ĺ›Ä‡ 2)
+   Toast, Kopiowanie, Motyw i Renderowanie (Część 2)
    ========================================================= */
 let toastT;
 function toast(msg, ms = 1800) {
@@ -137,7 +140,7 @@ function copy(text, label) {
     const ta = document.createElement("textarea");
     ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); ok(); } catch (e) { toast("Nie udaĹ‚o siÄ™ skopiowaÄ‡"); }
+    try { document.execCommand("copy"); ok(); } catch (e) { toast("Nie udało się skopiować"); }
     ta.remove();
   };
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
@@ -159,6 +162,8 @@ function fillCmd(tpl, host, m, kind) {
   return bad ? null : out;
 }
 
+const hasMultipleIps = (m) => (m.ips || []).filter((x) => x.ip).length > 1;
+
 function tools(host, web, m, kind) {
   const custom = cfg.cmds
     .map((c, i) => ({ c, i }))
@@ -170,8 +175,8 @@ function tools(host, web, m, kind) {
   const sh = cfg.show;
   const parts = [
     sh.ping ? `<button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.term, "icon")}</button>` : "",
-    sh.vnc ? `<button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">VNC</button>` : "",
-    sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="OtwĂłrz http://${esc(host)}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.globe, "icon")}</a>` : "",
+    sh.vnc && !hasMultipleIps(m) ? `<button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">VNC</button>` : "",
+    sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="Otwórz http://${esc(host)}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.globe, "icon")}</a>` : "",
     custom
   ].join("");
   return parts.trim() ? `<span class="flex flex-wrap items-center gap-1 shrink-0">${parts}</span>` : "";
@@ -194,13 +199,13 @@ function ipChips(m) {
     const cls = bc(others ? "warn" : "", true);
     return `<span class="flex flex-wrap items-center gap-1">
       <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? "Duplikat IP: " + esc(others) : "Kopiuj IP"}" class="${cls}">
-        ${esc(i.ip)}${i.label ? `<span class="text-xs text-slate-600 font-sans">Â· ${esc(i.label)}</span>` : ""}
-      </button>${tools(i.ip, true, m, "ip")}
+        ${esc(i.ip)}${i.label ? `<span class="text-xs text-slate-600 font-sans">· ${esc(i.label)}</span>` : ""}
+      </button>${isOpen || all.length === 1 ? tools(i.ip, true, m, "ip") : ""}
     </span>`;
   }).join("");
   const hiddenDup = !isOpen && all.slice(1).some((i) => dups.has(i.ip));
   const more = all.length > 1
-    ? `<button data-act="more" data-id="${m.id}" class="${bc(hiddenDup ?"warn" : "primary")}">${isOpen ? "zwiĹ„" : "+" + (all.length - 1)}</button>`
+    ? `<button data-act="more" data-id="${m.id}" class="${bc(hiddenDup ?"warn" : "primary")}">${isOpen ? "zwiń" : "+" + (all.length - 1)}</button>`
     : "";
   return `<div class="flex ${isOpen ?"flex-col items-start" : "flex-wrap items-center"} gap-1">${chips}${more}${scanBtn}</div>`;
 }
@@ -209,15 +214,15 @@ const depBtn = (d, arrow, cls) =>
   `<button data-act="jump" data-id="${d.id}" class="${bc(cls)}">${arrow} ${esc(d.name)}</button>`;
 
 function depChips(m, M, rev) {
-  const deps = (m.deps || []).map((id) => M.get(id)).filter(Boolean).map((d) => depBtn(d, "â†", "")).join("");
-  const users = (rev[m.id] || []).map((d) => depBtn(d, "â†’", "")).join("");
+  const deps = (m.deps || []).map((id) => M.get(id)).filter(Boolean).map((d) => depBtn(d, "←", "")).join("");
+  const users = (rev[m.id] || []).map((d) => depBtn(d, "→", "")).join("");
   return deps + users;
 }
 
 const nameBlock = (m) => `<div class="flex items-center gap-1">
-  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwÄ™" class="font-semibold min-w-0 text-left text-slate-900">${esc(m.name)}</button>
+  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę" class="font-semibold min-w-0 text-left text-slate-900">${esc(m.name)}</button>
   ${m.key ? `<span title="Kluczowy" class="text-amber-600 shrink-0">${svg(ICONS.star, "icon")}</span>` : ""}
-  ${tools(m.name, false, m, "name")}
+  ${!hasMultipleIps(m) || open.has(m.id) ? tools(m.name, false, m, "name") : ""}
 </div>`;
 
 const tagChipsHtml = (m) => (m.tags || []).length
@@ -229,13 +234,13 @@ const noteHtml = (m, extra = "") => {
   const o = openNotes.has(m.id);
   return `<button data-act="note" data-id="${m.id}" class="flex w-full items-start gap-1 text-left text-xs text-slate-600 ${extra}">
     <span class="min-w-0 flex-1 ${o ?"whitespace-pre-wrap break-all" : "truncate"}">${esc(m.note)}</span>
-    <span class="shrink-0 opacity-60">${o ? "â–˛" : "â–Ľ"}</span>
+    <span class="shrink-0 opacity-60">${o ? "▲" : "▼"}</span>
   </button>`;
 };
 
-const actions = (m) => `<button data-act="tree" data-id="${m.id}" title="Drzewo zaleĹĽnoĹ›ci" aria-label="Drzewo zaleĹĽnoĹ›ci" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">${svg(ICONS.tree)}</button>
+const actions = (m) => `<button data-act="tree" data-id="${m.id}" title="Drzewo zależności" aria-label="Drzewo zależności" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">${svg(ICONS.tree)}</button>
   <button data-act="edit" data-id="${m.id}" title="Edytuj" aria-label="Edytuj" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">${svg(ICONS.edit)}</button>
-  <button data-act="del" data-id="${m.id}" title="UsuĹ„" aria-label="UsuĹ„" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>`;
+  <button data-act="del" data-id="${m.id}" title="Usuń" aria-label="Usuń" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>`;
 
 const locBadge = (m) => m.location
   ? `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-sky-100 text-sky-800 text-xs">${svg(ICONS.pin, "icon")} ${esc(m.location)}</span>`
@@ -250,16 +255,16 @@ function row(m, M, rev) {
       <div class="min-w-0 flex-1">${nameBlock(m)}${tagChipsHtml(m)}${noteHtml(m, "mt-1")}</div>
     </div></td>
     <td class="text-slate-600">${esc(T(m)[0])}</td>
-    <td>${locBadge(m) || '<span class="text-slate-400">â€”</span>'}</td>
-    <td>${ips || '<span class="text-slate-400">â€”</span>'}</td>
-    <td><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">â€”</span>'}</div></td>
+    <td>${locBadge(m) || '<span class="text-slate-400">—</span>'}</td>
+    <td>${ips || '<span class="text-slate-400">—</span>'}</td>
+    <td><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">—</span>'}</div></td>
     <td class="text-right whitespace-nowrap">${actions(m)}</td>
   </tr>`;
 }
 
 
 /* =========================================================
-   GĹ‚Ăłwny silnik Render, Modale i Supabase (CzÄ™Ĺ›Ä‡ 3)
+   Główny silnik Render, Modale i Supabase (Część 3)
    ========================================================= */
 function render() {
   const M = new Map(db.map((m) => [m.id, m]));
@@ -298,7 +303,7 @@ function render() {
   document.querySelectorAll("thead th[data-sort]").forEach((th) => {
     const k = th.dataset.sort;
     const label = { name: "Nazwa", type: "Typ", location: "Lokalizacja", ip: "Adresy IP" }[k];
-    th.textContent = label + (sort.k === k ? (sort.d > 0 ? " â–˛" : " â–Ľ") : "");
+    th.textContent = label + (sort.k === k ? (sort.d > 0 ? " ▲" : " ▼") : "");
     th.setAttribute("aria-sort", sort.k === k ? (sort.d > 0 ? "ascending" : "descending") : "none");
   });
 
@@ -336,15 +341,26 @@ function render() {
         a.name.localeCompare(b.name, "pl", { numeric: true });
     });
 
+  const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(list.length / pageSize));
+  page = Math.min(page, totalPages);
+  const start = list.length ? (page - 1) * pageSize : 0;
+  const end = pageSize === 0 ? list.length : Math.min(start + pageSize, list.length);
+  const pageRows = pageSize === 0 ? list : list.slice(start, end);
+
   if (!list.length) {
     $("rows").innerHTML = "";
     $("empty").classList.remove("hidden");
-    $("empty").textContent = db.length ? "Brak wynikĂłw dla wybranych filtrĂłw." : "Brak maszyn. Kliknij â€žDodajâ€ť, aby dodaÄ‡ pierwszÄ….";
+    $("empty").textContent = db.length ? "Brak wyników dla wybranych filtrów." : "Brak maszyn. Kliknij „Dodaj”, aby dodać pierwszą.";
   } else {
     $("empty").classList.add("hidden");
-    $("rows").innerHTML = list.map((m) => row(m, M, rev)).join("");
+    $("rows").innerHTML = pageRows.map((m) => row(m, M, rev)).join("");
   }
-  $("count").textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` â€˘ lokalizacja: ${lf}` : "");
+  $("pageSize").value = String(pageSize);
+  $("pageInfo").textContent = list.length ? `${start + 1}–${end} z ${list.length} maszyn` : "Brak maszyn do wyświetlenia";
+  $("pageNumber").textContent = `Strona ${page} z ${totalPages}`;
+  $("prevPage").disabled = page <= 1;
+  $("nextPage").disabled = page >= totalPages;
+  $("count").textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` • lokalizacja: ${lf}` : "");
 }
 
 const hasDup = (m) => (m.ips || []).some((i) => dups.has(i.ip));
@@ -354,7 +370,7 @@ function ipRow(ip = "", label = "") {
   d.className = "mb-2 flex items-center gap-2 [&>input]:flex-1 [&>input:last-of-type]:w-24 [&>input:last-of-type]:flex-none sm:[&>input:last-of-type]:w-32";
   d.innerHTML = `<input class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm ipv font-mono" aria-label="Adres IP" placeholder="10.0.0.1" value="${esc(ip)}">
     <input class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm ipl" aria-label="Opis adresu IP" placeholder="opis" value="${esc(label)}">
-    <button type="button" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600" title="UsuĹ„" aria-label="UsuĹ„ adres IP">${svg(ICONS.trash)}</button>`;
+    <button type="button" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600" title="Usuń" aria-label="Usuń adres IP">${svg(ICONS.trash)}</button>`;
   d.querySelector("button").onclick = () => d.remove();
   return d;
 }
@@ -362,7 +378,7 @@ function ipRow(ip = "", label = "") {
 function renderDeps() {
   $("depChips").innerHTML = curDeps.map((id) => {
     const d = db.find((x) => x.id === id);
-    return d ? `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-slate-100 text-slate-600 text-xs">${esc(d.name)} <button type="button" data-rmdep="${id}" class="ml-1 text-slate-600 hover:text-slate-900">âś•</button></span>` : "";
+    return d ? `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-slate-100 text-slate-600 text-xs">${esc(d.name)} <button type="button" data-rmdep="${id}" class="ml-1 text-slate-600 hover:text-slate-900">✕</button></span>` : "";
   }).join("");
   const toks = $("depQ").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const list = $("depList");
@@ -376,11 +392,11 @@ function renderDeps() {
   list.classList.remove("hidden");
   list.innerHTML = found.length
     ? found.map((x) => `<button type="button" data-adddep="${x.id}" class="flex w-full justify-between gap-2 border-b border-slate-200 px-3 py-2 text-left text-sm text-slate-900 last:border-b-0 hover:bg-slate-100"><span class="font-medium text-slate-900">${esc(x.name)}</span><span class="truncate text-xs text-slate-600">${esc(x.location || "")}</span></button>`).join("")
-    : '<div class="px-3 py-2 text-xs text-slate-600">Brak pasujÄ…cych maszyn.</div>';
+    : '<div class="px-3 py-2 text-xs text-slate-600">Brak pasujących maszyn.</div>';
 }
 
 function openModal(m) {
-  $("mtitle").textContent = m ? "Edytuj maszynÄ™" : "Nowa maszyna";
+  $("mtitle").textContent = m ? "Edytuj maszynę" : "Nowa maszyna";
   $("fId").value = m?.id || "";
   $("fName").value = m?.name || "";
   $("fType").innerHTML = Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${esc(v[0])}</option>`).join("");
@@ -414,7 +430,7 @@ function openTreeModal(id) {
   const rev = {};
   db.forEach(x => (x.deps || []).forEach(d => (rev[d] ||= []).push(x)));
 
-  $("treeTitle").textContent = "Drzewo zaleĹĽnoĹ›ci: " + m.name;
+  $("treeTitle").textContent = "Drzewo zależności: " + m.name;
 
   const renderNodeItem = (item, isCurrent = false) => {
     if (!item) return "";
@@ -430,25 +446,25 @@ function openTreeModal(id) {
   const dependents = (rev[m.id] || []).filter(Boolean);
 
   let html = `<div class="mb-4">
-    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">UrzÄ…dzenia, od ktĂłrych zaleĹĽy ta maszyna (W gĂłrÄ™)</div>`;
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">Urządzenia, od których zależy ta maszyna (W górę)</div>`;
   if (deps.length) {
     html += `<div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + deps.map(d => renderNodeItem(d)).join("") + `</div>`;
   } else {
-    html += `<div class="text-xs text-slate-400">Brak zaleĹĽnoĹ›ci nadrzÄ™dnych.</div>`;
+    html += `<div class="text-xs text-slate-400">Brak zależności nadrzędnych.</div>`;
   }
   html += `</div>`;
 
   html += `<div class="mb-4 mt-3">
-    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">BieĹĽÄ…ca maszyna</div>
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">Bieżąca maszyna</div>
     <div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + renderNodeItem(m, true) + `</div>
   </div>`;
 
   html += `<div class="mb-4 mt-3">
-    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">UrzÄ…dzenia zaleĹĽÄ…ce od tej maszyny (W dĂłĹ‚)</div>`;
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">Urządzenia zależące od tej maszyny (W dół)</div>`;
   if (dependents.length) {
     html += `<div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + dependents.map(d => renderNodeItem(d)).join("") + `</div>`;
   } else {
-    html += `<div class="text-xs text-slate-400">Brak maszyn zaleĹĽnych.</div>`;
+    html += `<div class="text-xs text-slate-400">Brak maszyn zależnych.</div>`;
   }
   html += `</div>`;
 
@@ -466,7 +482,7 @@ function setSession(on) {
 }
 const showLogin = () => setSession(false);
 
-// e-mail zalogowanego uĹĽytkownika w nagĹ‚Ăłwku
+// e-mail zalogowanego użytkownika w nagłówku
 function setUserEmail(user) {
   const email = (user && user.email) || "";
   $("userEmail").textContent = email;
@@ -484,7 +500,7 @@ async function loadSettingsFromSupabase() {
       syncTypes();
       saveCfgLocal();
     } else {
-      await saveSettingsToSupabase(); // pierwsza synchronizacja: wyĹ›lij ustawienia lokalne
+      await saveSettingsToSupabase(); // pierwsza synchronizacja: wyślij ustawienia lokalne
     }
   } catch (e) { warnSettings(e); }
 }
@@ -518,30 +534,30 @@ async function loadDataFromSupabase() {
     render();
   } catch (e) {
     console.error(e);
-    toast("BĹ‚Ä…d pobierania danych z chmury", 4000);
+    toast("Błąd pobierania danych z chmury", 4000);
   }
 }
 
 // zapis wielu maszyn jednym zapytaniem; zwraca true/false
 async function saveMachinesToSupabase(list) {
-  if (!currentUser) { toast("Zaloguj siÄ™, aby zapisywaÄ‡ dane", 4000); return false; }
+  if (!currentUser) { toast("Zaloguj się, aby zapisywać dane", 4000); return false; }
   list.forEach((o) => (o.user_id = currentUser.id));
   const { error } = await supabaseClient.from("machines").upsert(list);
-  if (error) { console.error(error); toast("BĹ‚Ä…d zapisu w chmurze!", 4000); return false; }
+  if (error) { console.error(error); toast("Błąd zapisu w chmurze!", 4000); return false; }
   return true;
 }
 const saveMachineToSupabase = (obj) => saveMachinesToSupabase([obj]);
 
 async function deleteMachinesFromSupabase(ids) {
   if (!ids.length) return true;
-  if (!currentUser) { toast("Zaloguj siÄ™, aby usuwaÄ‡ dane", 4000); return false; }
+  if (!currentUser) { toast("Zaloguj się, aby usuwać dane", 4000); return false; }
   const { error } = await supabaseClient.from("machines").delete().in("id", ids);
-  if (error) { console.error(error); toast("BĹ‚Ä…d usuwania z chmury!", 4000); return false; }
+  if (error) { console.error(error); toast("Błąd usuwania z chmury!", 4000); return false; }
   return true;
 }
 
 /* =========================================================
-   Event Listeners i Formularze (CzÄ™Ĺ›Ä‡ 4)
+   Event Listeners i Formularze (Część 4)
    ========================================================= */
 $("icoAdd").innerHTML = svg(ICONS.plus);
 $("icoCfg").innerHTML = svg(ICONS.gear);
@@ -550,15 +566,26 @@ $("icoLogout").innerHTML = svg(ICONS.logout);
 $("icoUser").innerHTML = svg(ICONS.user);
 
 let raf;
-const scheduleRender = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
+const scheduleRender = () => { page = 1; saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
 $("q").oninput = scheduleRender;
 $("loc").onchange = scheduleRender;
 $("typ").onchange = scheduleRender;
+$("pageSize").onchange = () => {
+  const selectedSize = Number($("pageSize").value);
+  if (!PAGE_SIZES.includes(selectedSize)) return;
+  pageSize = selectedSize;
+  page = 1;
+  saveUi();
+  render();
+};
+$("prevPage").onclick = () => { if (page > 1) { page--; render(); } };
+$("nextPage").onclick = () => { page++; render(); };
 $("clearFilters").onclick = () => {
   $("q").value = "";
   $("loc").value = "";
   $("typ").value = "";
   dupOnly = false;
+  page = 1;
   saveUi();
   render();
   $("q").focus();
@@ -596,12 +623,12 @@ $("loginForm").onsubmit = async (e) => {
   
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
   if (error) {
-    toast("BĹ‚Ä…d logowania: " + error.message, 4000);
+    toast("Błąd logowania: " + error.message, 4000);
     return;
   }
   currentUser = data.session.user;
   setSession(true);
-  toast("Zalogowano pomyĹ›lnie!");
+  toast("Zalogowano pomyślnie!");
   loadDataFromSupabase();
 };
 
@@ -646,26 +673,27 @@ $("form").onsubmit = async (e) => {
     updated_at: now
   };
 
-  // walidacja: poprawny IPv4, niepusta nazwa, ostrzeĹĽenie o duplikacie nazwy
+  // walidacja: poprawny IPv4, niepusta nazwa, ostrzeżenie o duplikacie nazwy
   const badIp = ips.find((x) => /^[\d.]+$/.test(x.ip) && !IPV4.test(x.ip));
-  if (badIp) { toast("NieprawidĹ‚owy adres IP: " + badIp.ip, 4000); return; }
-  if (!obj.name) { toast("Podaj nazwÄ™ hosta"); return; }
+  if (badIp) { toast("Nieprawidłowy adres IP: " + badIp.ip, 4000); return; }
+  if (!obj.name) { toast("Podaj nazwę hosta"); return; }
   const sameName = db.find((m) => m.id !== obj.id && (m.name || "").toLowerCase() === obj.name.toLowerCase());
-  if (sameName && !(await askConfirm("Maszyna â€ž" + obj.name + "â€ť juĹĽ istnieje. ZapisaÄ‡ mimo to?", "Zapisz", false))) return;
+  if (sameName && !(await askConfirm("Maszyna „" + obj.name + "” już istnieje. Zapisać mimo to?", "Zapisz", false))) return;
 
   const idx = db.findIndex((m) => m.id === id);
   if (id && idx >= 0) db[idx] = obj; else db.push(obj);
   if (!(await saveMachineToSupabase(obj))) {
-    // cofniÄ™cie zmiany lokalnej; okno zostaje otwarte
+    // cofnięcie zmiany lokalnej; okno zostaje otwarte
     if (id && idx >= 0) db[idx] = existing; else db = db.filter((m) => m !== obj);
     render();
     return;
   }
   $("modal").close();
+  page = 1;
   render();
   const clash = [...new Set(ips.map((x) => x.ip).filter((ip) => db.some((m) => m.id !== obj.id && (m.ips || []).some((i) => i.ip === ip))))];
   if (clash.length) toast("Zapisano. Duplikat IP: " + clash.join(", "), 4500);
-  else toast(id ? "Zapisano zmiany" : "Dodano maszynÄ™");
+  else toast(id ? "Zapisano zmiany" : "Dodano maszynę");
 };
 
 function handleClick(e) {
@@ -694,9 +722,9 @@ function handleClick(e) {
   if (act === "copy") copy(m.name);
   if (act === "copyip") copy(b.dataset.ip);
   if (act === "edit") openModal(m);
-  if (act === "jump") { $("q").value = m.name; saveUi(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  if (act === "jump") { $("q").value = m.name; page = 1; saveUi(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
   if (act === "del") {
-    askConfirm("UsunÄ…Ä‡ â€ž" + m.name + "â€ť?", "UsuĹ„").then(async (ok) => {
+    askConfirm("Usunąć „" + m.name + "”?", "Usuń").then(async (ok) => {
       if (!ok) return;
       const snap = JSON.stringify(db);
       db = db.filter((x) => x.id !== id);
@@ -707,23 +735,25 @@ function handleClick(e) {
       if (!(await deleteMachinesFromSupabase([id]))) { db = JSON.parse(snap); render(); return; }
       const saved = !touched.length || (await saveMachinesToSupabase(touched));
       render();
-      toast(saved ? "UsuniÄ™to" : "UsuniÄ™to, ale nie zapisano zaleĹĽnoĹ›ci");
+      toast(saved ? "Usunięto" : "Usunięto, ale nie zapisano zależności");
     });
   }
 }
 $("rows").addEventListener("click", handleClick);
 
 $("stats").onclick = (e) => {
-  if (e.target.closest("[data-dup]")) { dupOnly = !dupOnly; render(); return; }
+  if (e.target.closest("[data-dup]")) { dupOnly = !dupOnly; page = 1; render(); return; }
   const b = e.target.closest("[data-type]");
   if (!b) return;
   $("typ").value = b.dataset.type;
+  page = 1;
   render();
 };
 function sortFromHeader(th) {
   const k = th.dataset.sort;
   if (!k) return;
   sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
+  page = 1;
   saveUi();
   render();
 }
@@ -764,7 +794,7 @@ function renderCats() {
         <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] flex-1">
         <button type="button" data-delcat="${i}" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>
       </div>`).join("")
-    : '<div class="text-xs text-slate-400">Brak wĹ‚asnych kategorii.</div>';
+    : '<div class="text-xs text-slate-400">Brak własnych kategorii.</div>';
 }
 function addDraftCat() {
   const n = $("catNew").value.trim();
@@ -777,7 +807,7 @@ function addDraftCat() {
 const PING_OK = /^[\w\s.\-:=\/]*$/;
 const TARGETS = { ip: "IP", name: "nazwa", both: "IP i nazwa" };
 function cfgPreview() {
-  const u = $("cSsh").value.trim(), p = $("cPort").value || "â€¦", a = $("cPing").value.trim();
+  const u = $("cSsh").value.trim(), p = $("cPort").value || "…", a = $("cPing").value.trim();
   $("cPrev").textContent = `ping ${a ? a + " " : ""}host\nssh -L ${p}:localhost:${p} ${u ? u + "@" : ""}host`;
 }
 function renderCmds() {
@@ -788,7 +818,7 @@ function renderCmds() {
         <span class="text-xs text-slate-400">${TARGETS[c.target] || ""}</span>
         <button type="button" data-delcmd="${i}" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>
       </div>`).join("")
-    : '<div class="text-xs text-slate-400">Brak wĹ‚asnych komend.</div>';
+    : '<div class="text-xs text-slate-400">Brak własnych komend.</div>';
 }
 function addDraftCmd() {
   const label = $("cmdLabel").value.trim(), tpl = $("cmdTpl").value.trim();
@@ -812,7 +842,7 @@ $("cfgBtn").onclick = () => {
   $("cfgModal").showModal();
 };
 ["cPing", "cSsh", "cPort"].forEach((id) => ($(id).oninput = cfgPreview));
-$("catAdd").onclick = () => { if (!addDraftCat()) toast("Wpisz nazwÄ™ kategorii"); };
+$("catAdd").onclick = () => { if (!addDraftCat()) toast("Wpisz nazwę kategorii"); };
 $("catList").oninput = (e) => { const i = e.target.dataset.catname; if (i !== undefined) draftCats[+i].name = e.target.value; };
 $("catList").onclick = (e) => {
   const b = e.target.closest("[data-delcat]");
@@ -820,7 +850,7 @@ $("catList").onclick = (e) => {
   draftCats.splice(+b.dataset.delcat, 1);
   renderCats();
 };
-$("cmdAdd").onclick = () => { if (!addDraftCmd()) toast("Podaj etykietÄ™ i komendÄ™"); };
+$("cmdAdd").onclick = () => { if (!addDraftCmd()) toast("Podaj etykietę i komendę"); };
 $("cList").onclick = (e) => {
   const b = e.target.closest("[data-delcmd]");
   if (!b) return;
@@ -835,13 +865,13 @@ $("cfgForm").onsubmit = (e) => {
   draftCats = draftCats.map((c) => ({ ...c, name: c.name.trim() })).filter((c) => c.name);
   const used = new Set(Object.entries(TYPES).filter(([k]) => !k.startsWith("c_")).map(([, v]) => v[0].toLowerCase()));
   for (const c of draftCats) {
-    if (used.has(c.name.toLowerCase())) { toast("Kategoria â€ž" + c.name + "â€ť juĹĽ istnieje"); return; }
+    if (used.has(c.name.toLowerCase())) { toast("Kategoria „" + c.name + "” już istnieje"); return; }
     used.add(c.name.toLowerCase());
   }
   const u = $("cSsh").value.trim(), p = parseInt($("cPort").value, 10), a = $("cPing").value.trim();
-  if (u && !/^[\w.\-]+$/.test(u)) { toast("NieprawidĹ‚owy login"); return; }
-  if (!(p >= 1 && p <= 65535)) { toast("Port 1â€“65535"); return; }
-  if (!PING_OK.test(a)) { toast("NieprawidĹ‚owe parametry ping"); return; }
+  if (u && !/^[\w.\-]+$/.test(u)) { toast("Nieprawidłowy login"); return; }
+  if (!(p >= 1 && p <= 65535)) { toast("Port 1–65535"); return; }
+  if (!PING_OK.test(a)) { toast("Nieprawidłowe parametry ping"); return; }
   const oldCats = cfg.cats;
   cfg = {
     sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds,
@@ -862,7 +892,7 @@ $("cfgForm").onsubmit = (e) => {
 
 
 /* =========================================================
-   Generator SkryptĂłw Ping PowerShell i Start (CzÄ™Ĺ›Ä‡ 5)
+   Generator Skryptów Ping PowerShell i Start (Część 5)
    ========================================================= */
 const psq = (s) => "'" + String(s).replace(/[\r\n]+/g, " ").replace(/'/g, "''") + "'";
 
@@ -903,7 +933,7 @@ function buildPingScriptCore(rows, opts = {}) {
     objFields,
     "}",
     "$tasks = @($jobs | Where-Object { $_.Task -ne $null } | ForEach-Object { $_.Task })",
-    "if ($tasks.Count -gt 0) { [System.Threading.Tasks.Task]::WaitAll($tasks, [TimeSpan]::FromMilliseconds($pingMs)) | Out-Null }",
+    "if ($tasks.Count -gt 0) { try { [System.Threading.Tasks.Task]::WaitAll($tasks, [TimeSpan]::FromMilliseconds($pingMs)) | Out-Null } catch {} }",
     fmtHead,
     ...(hasGroups ? ["$lastGroup = $null"] : []),
     "foreach ($j in $jobs) {",
@@ -915,7 +945,7 @@ function buildPingScriptCore(rows, opts = {}) {
       "  }"
     ] : []),
     "  $delay = 'OFFLINE'; $ip = $j.Ip; $r = $null",
-    "  if ($j.Task -and $j.Task.IsCompleted) { $r = $j.Task.Result }",
+    "  if ($j.Task -and $j.Task.IsCompleted) { try { $r = $j.Task.Result } catch {} }",
     "  if ($r -and $r.Status -eq 'Success') {",
     '    $delay = "$($r.RoundtripTime) ms"',
     "    if (-not $ip) { $ip = $r.Address.IPAddressToString }",
@@ -1018,10 +1048,10 @@ function openPgGroup(id) {
   const depsN = (m.deps || []).filter((d) => db.some((x) => x.id === d)).length;
   const revN = (rev[id] || []).length;
   if (ipsN) parts.push(`${ipsN} adr. IP`);
-  if (depsN) parts.push(`${depsN} zaleĹĽnoĹ›ci`);
-  if (revN) parts.push(`${revN} zaleĹĽnych`);
+  if (depsN) parts.push(`${depsN} zależności`);
+  if (revN) parts.push(`${revN} zależnych`);
   $("pgTitle").textContent = "Ping grupy: " + m.name;
-  $("pgHelp").textContent = `${m.name}${parts.length ? " (" + parts.join(", ") + ")" : ""}. Pinguje tÄ™ maszynÄ™, jej zaleĹĽnoĹ›ci i maszyny zaleĹĽne.`;
+  $("pgHelp").textContent = `${m.name}${parts.length ? " (" + parts.join(", ") + ")" : ""}. Pinguje tę maszynę, jej zależności i maszyny zależne.`;
   renderPg();
   $("pgModal").showModal();
 }
@@ -1043,11 +1073,11 @@ $("pgDl").onclick = () => {
     a.href = url; a.download = safe;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    toast("Pobieranie rozpoczÄ™te", 3500);
-  } catch (e) { toast("Pobieranie niedostÄ™pne", 3500); }
+    toast("Pobieranie rozpoczęte", 3500);
+  } catch (e) { toast("Pobieranie niedostępne", 3500); }
 };
 
-const LOCKED = new Set(["modal", "cfgModal"]); // bez zamykania klikniÄ™ciem w tĹ‚o
+const LOCKED = new Set(["modal", "cfgModal"]); // bez zamykania kliknięciem w tło
 document.querySelectorAll("dialog").forEach((dlg) => {
   dlg.addEventListener("click", (e) => {
     if (!LOCKED.has(dlg.id) && e.target === dlg) {
@@ -1064,5 +1094,3 @@ if (supabaseClient) {
 } else {
   $("warn").classList.remove("hidden");
 }
-
-

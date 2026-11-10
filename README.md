@@ -1,12 +1,12 @@
 # Rejestr maszyn
 
-Ewidencja urządzeń sieciowych: hosty, adresy IP, lokalizacje, tagi i zależności między maszynami. Jeden plik statyczny (`index.html`, bez własnego CSS, stylowanie wyłącznie Tailwind), działa na GitHub Pages. Dane i ustawienia są w Supabase (logowanie e-mail + hasło), ustawienia dodatkowo cache'owane w `localStorage`.
+Ewidencja urządzeń sieciowych: hosty, adresy IP, lokalizacje, tagi i zależności między maszynami. Statyczna aplikacja (`index.html`, `app.js`, z Tailwind przez CDN), działa na GitHub Pages. Dane i ustawienia są w Supabase (logowanie e-mail + hasło), ustawienia dodatkowo cache'owane w `localStorage`.
 
 Adres: https://kamilowebski.github.io/rejestr/
 
 ## Funkcje
 
-- lista maszyn z wyszukiwaniem (kilka słów naraz), filtrem lokalizacji i typu oraz sortowaniem kolumn
+- lista maszyn z wyszukiwaniem (kilka słów naraz), filtrem lokalizacji i typu, sortowaniem kolumn oraz paginacją (domyślnie 20 rekordów na stronę)
 - wiele adresów IP na maszynę, wykrywanie duplikatów IP, tagi, notatki, oznaczenie sprzętu kluczowego
 - zależności między maszynami i okno z drzewem zależności
 - szybkie przyciski kopiujące komendy: `ping`, tunel SSH pod VNC, otwarcie `http://`, własne komendy ze zmiennymi `{host}`, `{name}`, `{ip}`, `{user}`, `{port}`
