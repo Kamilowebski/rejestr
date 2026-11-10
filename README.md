@@ -17,7 +17,9 @@ Adres: https://kamilowebski.github.io/rejestr/
 
 | Plik | Opis |
 | --- | --- |
-| `index.html` | cała aplikacja (HTML, Tailwind przez CDN, JS) |
+| `index.html` | szkielet strony i struktura widoków |
+| `app.js` | cała logika aplikacji, dane, Supabase, renderowanie i interakcje |
+| `styles.css` | małe style niestandardowe uzupełniające Tailwind |
 | `manifest.webmanifest` | manifest PWA (nazwa, kolory, ikony) |
 | `icons/` | favicon, ikona Apple Touch, ikony 192/512 i maskable |
 

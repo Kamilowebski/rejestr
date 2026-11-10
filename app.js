@@ -1,0 +1,1068 @@
+﻿
+"use strict";
+
+/* =========================================================
+   Rejestr maszyn â€” Konfiguracja Supabase (CzÄ™Ĺ›Ä‡ 1)
+   ========================================================= */
+const SUPABASE_URL = "https://jccbausmoykoqohfuyqw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_xv8yXGbIiF44_6KjWo8uFg_4Mg4PS8P";
+let supabaseClient = null;
+try { supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); } catch (e) { console.error(e); }
+
+let currentUser = null;
+let db = [];
+
+const CFG_KEY = "machines_settings";
+const UI_KEY = "machines_ui";
+const SAFE = /^[\w.:\-]+$/;
+const IPV4 = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+const SETTINGS_TABLE = "user_settings";
+const DEFAULT_CFG = {
+  sshUser: "su-t", vncPort: 5900, pingArgs: "-a -t",
+  cmds: [], cats: [],
+  show: { ping: true, vnc: true, web: true, scan: true }
+};
+
+const $ = (id) => document.getElementById(id);
+
+const esc = (s) =>
+  String(s !== null && s !== undefined ? s : "").replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+
+const load = (k, def) => { 
+  try { 
+    const val = JSON.parse(localStorage.getItem(k)); 
+    return val !== null && val !== undefined ? val : def; 
+  } catch (e) { 
+    return def; 
+  } 
+};
+
+const ICONS = {
+  plus:  '<path d="M12 5v14M5 12h14"/>',
+  edit:  '<path d="M4 20h4L19 9l-4-4L4 16z"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+  pin:   '<path d="M12 21s-7-6-7-11a7 7 0 0 1 14 0c0 5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  term:  '<path d="M5 8l4 4-4 4M12 17h7"/>',
+  gear:  '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  star:  '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
+  tag:   '<path d="M20 13l-7 7-9-9V4h7z"/><circle cx="8" cy="8" r="1.2"/>',
+  pulse: '<path d="M3 12h4l3-8 4 16 3-8h4"/>',
+  share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.7l7.6-3.4M8.2 13.3l7.6 3.4"/>',
+  copy:  '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  tree:  '<path d="M12 3v4m0 0l-4 4m4-4l4 4M5 13v7h14v-7M5 13h14"/>',
+  logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+  user:  '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
+};
+
+const ICON = "size-4 shrink-0";
+const svg = (d, cls = "icon") =>
+  `<svg class="${cls ==="icon" ? ICON : cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+
+// klasy Tailwind skĹ‚adane dynamicznie (odznaki, chipy)
+const BADGE = {"": "bg-slate-100 text-slate-600", "primary": "bg-blue-50 text-blue-700", "info": "bg-sky-100 text-sky-800", "warn": "bg-amber-100 text-amber-800", "tag": "bg-slate-200 text-slate-900"};
+const bc = (v = "", mono = false) => `inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none ${BADGE[v]} ${mono || v === "tag" ? "text-[11px]" : "text-xs"}${mono ? " font-mono" : ""}`;
+const CHIP = "inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-medium transition-colors";
+const chipCls = (on, warn) => CHIP + " " + (warn
+  ? (on ? "border-amber-600 bg-amber-600 text-white" : "border-amber-500 bg-amber-100 text-amber-800 hover:bg-amber-200")
+  : (on ? "border-blue-600 bg-blue-600 text-white hover:bg-blue-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900"));
+
+const TYPES = {
+  pc:      ["Komputer",        '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>'],
+  printer: ["Drukarka",        '<path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7"/>'],
+  scanner: ["Skaner",          '<path d="M3 12h18M5 7V5h2M17 5h2v2M5 17v2h2M17 19h2v-2"/>'],
+  camera:  ["Kamera",          '<path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/>'],
+  rpi:     ["Raspberry Pi",    '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="M8 10h2v2H8zM14 14h2M8 3v3M12 3v3M16 3v3"/>'],
+  bizerba: ["Bizerba",         '<path d="M5 20h14M12 20V8M6 8h12M6 8l-3 6a3 3 0 0 0 6 0zM18 8l-3 6a3 3 0 0 0 6 0z"/>'],
+  metal:   ["Detektor metalu", '<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17h.01"/>'],
+  other:   ["Inne",            '<path d="M21 8l-9-5-9 5 9 5zM3 8v8l9 5 9-5V8M12 13v8"/>']
+};
+const T = (m) => TYPES[m.type] || TYPES.other;
+
+function normCfg(c) {
+  const o = { ...DEFAULT_CFG, ...(c || {}) };
+  delete o.theme;
+  if (!Array.isArray(o.cmds)) o.cmds = [];
+  if (!Array.isArray(o.cats)) o.cats = [];
+  o.show = { ...DEFAULT_CFG.show, ...(o.show || {}) };
+  o.cats = o.cats.filter((x) => x && /^c_\w+$/.test(x.id) && x.name).map((x) => ({ id: x.id, name: String(x.name) }));
+  return o;
+}
+let cfg = normCfg(load(CFG_KEY, {}));
+
+let ui = load(UI_KEY, {});
+let sort = ui.sort && { k: ui.sort.k || "", d: ui.sort.d === -1 ? -1 : 1 } || { k: "", d: 1 };
+
+const open = new Set();
+const openNotes = new Set();
+let dups = new Map();
+let dupOnly = false;
+let curDeps = [];
+let editId = "";
+let draftCmds = [];
+let draftCats = [];
+let REV = {};
+
+const uid = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+const saveCfgLocal = () => { try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {} };
+// zapis lokalny + synchronizacja z chmurÄ…
+const saveCfg = () => { saveCfgLocal(); return saveSettingsToSupabase(); };
+const saveUi = () => { try { localStorage.setItem(UI_KEY, JSON.stringify({ q: $("q").value, sort })); } catch (e) {} };
+
+function syncTypes() {
+  const other = TYPES.other;
+  Object.keys(TYPES).filter((k) => k.startsWith("c_") || k === "other").forEach((k) => delete TYPES[k]);
+  cfg.cats.forEach((c) => (TYPES[c.id] = [c.name, ICONS.tag]));
+  TYPES.other = other;
+}
+syncTypes();
+
+/* =========================================================
+   Toast, Kopiowanie, Motyw i Renderowanie (CzÄ™Ĺ›Ä‡ 2)
+   ========================================================= */
+let toastT;
+function toast(msg, ms = 1800) {
+  const el = $("toast");
+  el.textContent = msg;
+  el.classList.add("opacity-100", "!translate-y-0");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove("opacity-100", "!translate-y-0"), ms);
+}
+
+function copy(text, label) {
+  const ok = () => toast("Skopiowano: " + (label || text));
+  const fb = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); ok(); } catch (e) { toast("Nie udaĹ‚o siÄ™ skopiowaÄ‡"); }
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
+  else fb();
+}
+
+const sshCmd = (h) => `ssh -L ${cfg.vncPort}:localhost:${cfg.vncPort} ${cfg.sshUser ? cfg.sshUser + "@" : ""}${h}`;
+const pingCmd = (h) => `ping ${cfg.pingArgs ? cfg.pingArgs + " " : ""}${h}`;
+
+function fillCmd(tpl, host, m, kind) {
+  const ip = kind === "ip" ? host : ((m.ips || []).find((x) => x.ip)?.ip || "");
+  const vars = { host, name: m.name, ip, user: cfg.sshUser, port: String(cfg.vncPort) };
+  let bad = false;
+  const out = tpl.replace(/\{(\w+)\}/g, (all, k) => {
+    if (!(k in vars)) return all;
+    if (["host", "name", "ip"].includes(k) && vars[k] && !SAFE.test(vars[k])) bad = true;
+    return vars[k];
+  });
+  return bad ? null : out;
+}
+
+function tools(host, web, m, kind) {
+  const custom = cfg.cmds
+    .map((c, i) => ({ c, i }))
+    .filter(({ c }) => c.target === kind || c.target === "both")
+    .map(({ c, i }) => {
+      const t = fillCmd(c.tpl, host, m, kind);
+      return `<button data-act="cmd" data-i="${i}" data-id="${m.id}" data-ip="${esc(host)}" data-kind="${kind}" title="Kopiuj: ${esc(t ?? "niedozwolone znaki")}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${esc(c.label)}</button>`;
+    }).join("");
+  const sh = cfg.show;
+  const parts = [
+    sh.ping ? `<button data-act="ping" data-ip="${esc(host)}" title="Kopiuj: ${esc(pingCmd(host))}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.term, "icon")}</button>` : "",
+    sh.vnc ? `<button data-act="vnc" data-ip="${esc(host)}" title="Kopiuj: ${esc(sshCmd(host))}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">VNC</button>` : "",
+    sh.web && web && SAFE.test(host) ? `<a href="http://${esc(host)}" target="_blank" rel="noopener" title="OtwĂłrz http://${esc(host)}" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.globe, "icon")}</a>` : "",
+    custom
+  ].join("");
+  return parts.trim() ? `<span class="flex flex-wrap items-center gap-1 shrink-0">${parts}</span>` : "";
+}
+
+function ipChips(m) {
+  const all = (m.ips || []).filter((x) => x.ip);
+  const hasDeps = (m.deps || []).length > 0;
+  const hasRev = (REV[m.id] || []).length > 0;
+  const qualifies = all.length > 1 || hasDeps || hasRev;
+  const scanBtn = qualifies && cfg.show.scan
+    ? `<button data-act="scan" data-id="${m.id}" title="Ping grupy" aria-label="Ping grupy" class="inline-flex max-w-full items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[11px] text-slate-600 hover:bg-slate-100 hover:text-blue-600">${svg(ICONS.share, "icon")}</button>`
+    : "";
+  if (!all.length) return scanBtn ? `<div class="flex flex-wrap items-center gap-1">${scanBtn}</div>` : "";
+  const isOpen = open.has(m.id);
+  const chips = (isOpen ? all : all.slice(0, 1)).map((i) => {
+    const others = dups.has(i.ip)
+      ? [...dups.get(i.ip)].filter((id) => id !== m.id).map((id) => db.find((x) => x.id === id)?.name).filter(Boolean).join(", ")
+      : "";
+    const cls = bc(others ? "warn" : "", true);
+    return `<span class="flex flex-wrap items-center gap-1">
+      <button data-act="copyip" data-ip="${esc(i.ip)}" title="${others ? "Duplikat IP: " + esc(others) : "Kopiuj IP"}" class="${cls}">
+        ${esc(i.ip)}${i.label ? `<span class="text-xs text-slate-600 font-sans">Â· ${esc(i.label)}</span>` : ""}
+      </button>${tools(i.ip, true, m, "ip")}
+    </span>`;
+  }).join("");
+  const hiddenDup = !isOpen && all.slice(1).some((i) => dups.has(i.ip));
+  const more = all.length > 1
+    ? `<button data-act="more" data-id="${m.id}" class="${bc(hiddenDup ?"warn" : "primary")}">${isOpen ? "zwiĹ„" : "+" + (all.length - 1)}</button>`
+    : "";
+  return `<div class="flex ${isOpen ?"flex-col items-start" : "flex-wrap items-center"} gap-1">${chips}${more}${scanBtn}</div>`;
+}
+
+const depBtn = (d, arrow, cls) =>
+  `<button data-act="jump" data-id="${d.id}" class="${bc(cls)}">${arrow} ${esc(d.name)}</button>`;
+
+function depChips(m, M, rev) {
+  const deps = (m.deps || []).map((id) => M.get(id)).filter(Boolean).map((d) => depBtn(d, "â†", "")).join("");
+  const users = (rev[m.id] || []).map((d) => depBtn(d, "â†’", "")).join("");
+  return deps + users;
+}
+
+const nameBlock = (m) => `<div class="flex items-center gap-1">
+  <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwÄ™" class="font-semibold min-w-0 text-left text-slate-900">${esc(m.name)}</button>
+  ${m.key ? `<span title="Kluczowy" class="text-amber-600 shrink-0">${svg(ICONS.star, "icon")}</span>` : ""}
+  ${tools(m.name, false, m, "name")}
+</div>`;
+
+const tagChipsHtml = (m) => (m.tags || []).length
+  ? `<div class="flex flex-wrap gap-1 mt-1">${(m.tags || []).map(t => `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-slate-200 text-slate-900 text-[11px]">#${esc(t)}</span>`).join("")}</div>`
+  : "";
+
+const noteHtml = (m, extra = "") => {
+  if (!m.note) return "";
+  const o = openNotes.has(m.id);
+  return `<button data-act="note" data-id="${m.id}" class="flex w-full items-start gap-1 text-left text-xs text-slate-600 ${extra}">
+    <span class="min-w-0 flex-1 ${o ?"whitespace-pre-wrap break-all" : "truncate"}">${esc(m.note)}</span>
+    <span class="shrink-0 opacity-60">${o ? "â–˛" : "â–Ľ"}</span>
+  </button>`;
+};
+
+const actions = (m) => `<button data-act="tree" data-id="${m.id}" title="Drzewo zaleĹĽnoĹ›ci" aria-label="Drzewo zaleĹĽnoĹ›ci" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">${svg(ICONS.tree)}</button>
+  <button data-act="edit" data-id="${m.id}" title="Edytuj" aria-label="Edytuj" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900">${svg(ICONS.edit)}</button>
+  <button data-act="del" data-id="${m.id}" title="UsuĹ„" aria-label="UsuĹ„" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>`;
+
+const locBadge = (m) => m.location
+  ? `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-sky-100 text-sky-800 text-xs">${svg(ICONS.pin, "icon")} ${esc(m.location)}</span>`
+  : "";
+
+function row(m, M, rev) {
+  const deps = depChips(m, M, rev);
+  const ips = ipChips(m);
+  return `<tr>
+    <td><div class="flex items-start gap-2">
+      <span class="text-slate-400 mt-0.5">${svg(T(m)[1], "icon")}</span>
+      <div class="min-w-0 flex-1">${nameBlock(m)}${tagChipsHtml(m)}${noteHtml(m, "mt-1")}</div>
+    </div></td>
+    <td class="text-slate-600">${esc(T(m)[0])}</td>
+    <td>${locBadge(m) || '<span class="text-slate-400">â€”</span>'}</td>
+    <td>${ips || '<span class="text-slate-400">â€”</span>'}</td>
+    <td><div class="flex flex-wrap gap-1">${deps || '<span class="text-slate-400">â€”</span>'}</div></td>
+    <td class="text-right whitespace-nowrap">${actions(m)}</td>
+  </tr>`;
+}
+
+
+/* =========================================================
+   GĹ‚Ăłwny silnik Render, Modale i Supabase (CzÄ™Ĺ›Ä‡ 3)
+   ========================================================= */
+function render() {
+  const M = new Map(db.map((m) => [m.id, m]));
+  const rev = {};
+  db.forEach((m) => (m.deps || []).forEach((id) => (rev[id] ||= []).push(m)));
+  REV = rev;
+
+  const owners = {};
+  db.forEach((m) => [...new Set((m.ips || []).map((i) => i.ip).filter(Boolean))].forEach((ip) => (owners[ip] ||= new Set()).add(m.id)));
+  dups = new Map(Object.entries(owners).filter(([, s]) => s.size > 1));
+
+  const locs = [...new Set(db.map((m) => m.location).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pl"));
+  const lv = $("loc").value, tv = $("typ").value;
+  $("loc").innerHTML = '<option value="">Wszystkie lokalizacje</option>' + locs.map((l) => `<option>${esc(l)}</option>`).join("");
+  $("loc").value = locs.includes(lv) ? lv : "";
+  $("typ").innerHTML = '<option value="">Wszystkie typy</option>' +
+    Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${esc(v[0])}</option>`).join("");
+  $("typ").value = TYPES[tv] ? tv : "";
+  $("locList").innerHTML = locs.map((l) => `<option value="${esc(l)}">`).join("");
+
+  const qs = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const lf = $("loc").value, tf = $("typ").value;
+
+  const cnt = {};
+  db.forEach((m) => (cnt[m.type] = (cnt[m.type] || 0) + 1));
+  if (!dups.size) dupOnly = false;
+  const dupChip = dups.size
+    ? `<button data-dup="1" class="${chipCls(dupOnly, true)}">Duplikaty IP ${dups.size}</button>`
+    : "";
+  $("stats").innerHTML =
+    `<button data-type="" class="${chipCls(!tf)}">Wszystkie ${db.length}</button>` +
+    Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k, v]) =>
+      `<button data-type="${k}" class="${chipCls(tf === k)}">${esc(v[0])} ${cnt[k]}</button>`).join("") +
+    dupChip;
+
+  document.querySelectorAll("thead th[data-sort]").forEach((th) => {
+    const k = th.dataset.sort;
+    const label = { name: "Nazwa", type: "Typ", location: "Lokalizacja", ip: "Adresy IP" }[k];
+    th.textContent = label + (sort.k === k ? (sort.d > 0 ? " â–˛" : " â–Ľ") : "");
+    th.setAttribute("aria-sort", sort.k === k ? (sort.d > 0 ? "ascending" : "descending") : "none");
+  });
+
+  const H = new Map(db.map((m) => [m.id, [
+    m.name, m.location, m.note, T(m)[0], m.type,
+    ...(m.tags || []),
+    ...(m.ips || []).flatMap((i) => [i.ip, i.label]),
+    ...(m.deps || []).map((id) => M.get(id)?.name),
+    ...(rev[m.id] || []).map((x) => x.name)
+  ].filter(Boolean).join(" ").toLowerCase()]));
+
+  const SORT_FN = {
+    name: (m) => m.name || "",
+    type: (m) => T(m)[0],
+    location: (m) => m.location || "",
+    ip: (m) => {
+      const ip = (m.ips || []).find((x) => x.ip)?.ip || "";
+      return ip.split(".").map((n) => (/^\d+$/.test(n) ? n.padStart(3, "0") : n)).join(".");
+    }
+  };
+
+  const list = db
+    .filter((m) => (!lf || m.location === lf) && (!tf || m.type === tf) && (!dupOnly || hasDup(m)) && qs.every((t) => H.get(m.id).includes(t)))
+    .sort((a, b) => {
+      if (sort.k && SORT_FN[sort.k]) {
+        const x = SORT_FN[sort.k](a), y = SORT_FN[sort.k](b);
+        if (x !== y) {
+          if (!x) return 1;
+          if (!y) return -1;
+          const c = x.localeCompare(y, "pl", { numeric: true });
+          if (c) return c * sort.d;
+        }
+      }
+      return (a.location || "").localeCompare(b.location || "", "pl") ||
+        a.name.localeCompare(b.name, "pl", { numeric: true });
+    });
+
+  if (!list.length) {
+    $("rows").innerHTML = "";
+    $("empty").classList.remove("hidden");
+    $("empty").textContent = db.length ? "Brak wynikĂłw dla wybranych filtrĂłw." : "Brak maszyn. Kliknij â€žDodajâ€ť, aby dodaÄ‡ pierwszÄ….";
+  } else {
+    $("empty").classList.add("hidden");
+    $("rows").innerHTML = list.map((m) => row(m, M, rev)).join("");
+  }
+  $("count").textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` â€˘ lokalizacja: ${lf}` : "");
+}
+
+const hasDup = (m) => (m.ips || []).some((i) => dups.has(i.ip));
+
+function ipRow(ip = "", label = "") {
+  const d = document.createElement("div");
+  d.className = "mb-2 flex items-center gap-2 [&>input]:flex-1 [&>input:last-of-type]:w-24 [&>input:last-of-type]:flex-none sm:[&>input:last-of-type]:w-32";
+  d.innerHTML = `<input class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm ipv font-mono" aria-label="Adres IP" placeholder="10.0.0.1" value="${esc(ip)}">
+    <input class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-3 py-2 text-sm ipl" aria-label="Opis adresu IP" placeholder="opis" value="${esc(label)}">
+    <button type="button" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600" title="UsuĹ„" aria-label="UsuĹ„ adres IP">${svg(ICONS.trash)}</button>`;
+  d.querySelector("button").onclick = () => d.remove();
+  return d;
+}
+
+function renderDeps() {
+  $("depChips").innerHTML = curDeps.map((id) => {
+    const d = db.find((x) => x.id === id);
+    return d ? `<span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-slate-100 text-slate-600 text-xs">${esc(d.name)} <button type="button" data-rmdep="${id}" class="ml-1 text-slate-600 hover:text-slate-900">âś•</button></span>` : "";
+  }).join("");
+  const toks = $("depQ").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const list = $("depList");
+  if (!toks.length) { list.classList.add("hidden"); list.innerHTML = ""; return; }
+  const found = db.filter((x) => x.id !== editId && !curDeps.includes(x.id))
+    .filter((x) => {
+      const h = [x.name, x.location, ...(x.ips || []).map((i) => i.ip)].filter(Boolean).join(" ").toLowerCase();
+      return toks.every((t) => h.includes(t));
+    })
+    .sort((a, b) => a.name.localeCompare(b.name, "pl", { numeric: true })).slice(0, 8);
+  list.classList.remove("hidden");
+  list.innerHTML = found.length
+    ? found.map((x) => `<button type="button" data-adddep="${x.id}" class="flex w-full justify-between gap-2 border-b border-slate-200 px-3 py-2 text-left text-sm text-slate-900 last:border-b-0 hover:bg-slate-100"><span class="font-medium text-slate-900">${esc(x.name)}</span><span class="truncate text-xs text-slate-600">${esc(x.location || "")}</span></button>`).join("")
+    : '<div class="px-3 py-2 text-xs text-slate-600">Brak pasujÄ…cych maszyn.</div>';
+}
+
+function openModal(m) {
+  $("mtitle").textContent = m ? "Edytuj maszynÄ™" : "Nowa maszyna";
+  $("fId").value = m?.id || "";
+  $("fName").value = m?.name || "";
+  $("fType").innerHTML = Object.entries(TYPES).map(([k, v]) => `<option value="${k}">${esc(v[0])}</option>`).join("");
+  $("fType").value = m?.type || "pc";
+  $("fLoc").value = m?.location || "";
+  $("fNote").value = m?.note || "";
+  $("fTags").value = (m?.tags || []).join(", ");
+  $("fKey").checked = !!m?.key;
+  $("ips").innerHTML = "";
+  ((m?.ips?.length) ? m.ips : [{ ip: "", label: "" }]).forEach((x) => $("ips").appendChild(ipRow(x.ip, x.label)));
+  
+  if (m && m.created_at) {
+    const created = new Date(m.created_at).toLocaleString("pl-PL");
+    const updated = m.updated_at ? new Date(m.updated_at).toLocaleString("pl-PL") : created;
+    $("auditInfo").textContent = `Utworzono: ${created} | Ostatnia zmiana: ${updated}`;
+  } else {
+    $("auditInfo").textContent = "";
+  }
+
+  editId = m?.id || "";
+  curDeps = [...(m?.deps || [])].filter((id) => db.some((x) => x.id === id));
+  $("depQ").value = ""; renderDeps();
+  $("modal").showModal();
+  setTimeout(() => $("fName").focus(), 50);
+}
+
+function openTreeModal(id) {
+  const m = db.find(x => x.id === id);
+  if (!m) return;
+  const M = new Map(db.map(x => [x.id, x]));
+  const rev = {};
+  db.forEach(x => (x.deps || []).forEach(d => (rev[d] ||= []).push(x)));
+
+  $("treeTitle").textContent = "Drzewo zaleĹĽnoĹ›ci: " + m.name;
+
+  const renderNodeItem = (item, isCurrent = false) => {
+    if (!item) return "";
+    const typeName = TYPES[item.type]?.[0] || "Inne";
+    const loc = item.location ? ` (${item.location})` : "";
+    return `<div class="${isCurrent ?"flex items-center gap-2 rounded-lg border border-blue-600 bg-blue-50 px-2.5 py-1.5 font-semibold text-blue-700" : "flex items-center gap-2 rounded-lg bg-slate-100 px-2.5 py-1.5"}">
+      <span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-blue-50 text-blue-700 text-xs">${esc(typeName)}</span>
+      <span class="font-medium text-slate-900 font-medium">${esc(item.name)}${esc(loc)}</span>
+    </div>`;
+  };
+
+  const deps = (m.deps || []).map(dId => M.get(dId)).filter(Boolean);
+  const dependents = (rev[m.id] || []).filter(Boolean);
+
+  let html = `<div class="mb-4">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">UrzÄ…dzenia, od ktĂłrych zaleĹĽy ta maszyna (W gĂłrÄ™)</div>`;
+  if (deps.length) {
+    html += `<div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + deps.map(d => renderNodeItem(d)).join("") + `</div>`;
+  } else {
+    html += `<div class="text-xs text-slate-400">Brak zaleĹĽnoĹ›ci nadrzÄ™dnych.</div>`;
+  }
+  html += `</div>`;
+
+  html += `<div class="mb-4 mt-3">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">BieĹĽÄ…ca maszyna</div>
+    <div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + renderNodeItem(m, true) + `</div>
+  </div>`;
+
+  html += `<div class="mb-4 mt-3">
+    <div class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">UrzÄ…dzenia zaleĹĽÄ…ce od tej maszyny (W dĂłĹ‚)</div>`;
+  if (dependents.length) {
+    html += `<div class="flex flex-col gap-1.5 border-l-2 border-slate-300 pl-4">` + dependents.map(d => renderNodeItem(d)).join("") + `</div>`;
+  } else {
+    html += `<div class="text-xs text-slate-400">Brak maszyn zaleĹĽnych.</div>`;
+  }
+  html += `</div>`;
+
+  $("treeContent").innerHTML = html;
+  $("treeModal").showModal();
+}
+
+$("treeClose").onclick = () => $("treeModal").close();
+
+// widok: zalogowany (aplikacja + przyciski) albo logowanie
+function setSession(on) {
+  $("loginView").classList.toggle("hidden", on);
+  $("appView").classList.toggle("hidden", !on);
+  $("sessionActions").classList.toggle("hidden", !on);
+}
+const showLogin = () => setSession(false);
+
+// e-mail zalogowanego uĹĽytkownika w nagĹ‚Ăłwku
+function setUserEmail(user) {
+  const email = (user && user.email) || "";
+  $("userEmail").textContent = email;
+  $("userEmail").title = email;
+  $("userBox").classList.toggle("hidden", !email);
+}
+let settingsWarned = false;
+
+async function loadSettingsFromSupabase() {
+  try {
+    const { data, error } = await supabaseClient.from(SETTINGS_TABLE).select("cfg").eq("user_id", currentUser.id).maybeSingle();
+    if (error) throw error;
+    if (data && data.cfg && typeof data.cfg === "object") {
+      cfg = normCfg(data.cfg);
+      syncTypes();
+      saveCfgLocal();
+    } else {
+      await saveSettingsToSupabase(); // pierwsza synchronizacja: wyĹ›lij ustawienia lokalne
+    }
+  } catch (e) { warnSettings(e); }
+}
+
+function warnSettings(e) {
+  console.warn("Ustawienia:", e);
+  if (!settingsWarned) { settingsWarned = true; toast("Ustawienia tylko lokalnie (brak tabeli user_settings?)", 4500); }
+}
+
+async function saveSettingsToSupabase() {
+  if (!currentUser || !supabaseClient) return false;
+  try {
+    const { error } = await supabaseClient.from(SETTINGS_TABLE).upsert({ user_id: currentUser.id, cfg });
+    if (error) throw error;
+    return true;
+  } catch (e) { warnSettings(e); return false; }
+}
+
+async function loadDataFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) { showLogin(); return; }
+    currentUser = session.user;
+    setUserEmail(currentUser);
+    setSession(true);
+    const { data, error } = await supabaseClient.from("machines").select("*");
+    if (error) throw error;
+    db = data || [];
+    await loadSettingsFromSupabase();
+    render();
+  } catch (e) {
+    console.error(e);
+    toast("BĹ‚Ä…d pobierania danych z chmury", 4000);
+  }
+}
+
+// zapis wielu maszyn jednym zapytaniem; zwraca true/false
+async function saveMachinesToSupabase(list) {
+  if (!currentUser) { toast("Zaloguj siÄ™, aby zapisywaÄ‡ dane", 4000); return false; }
+  list.forEach((o) => (o.user_id = currentUser.id));
+  const { error } = await supabaseClient.from("machines").upsert(list);
+  if (error) { console.error(error); toast("BĹ‚Ä…d zapisu w chmurze!", 4000); return false; }
+  return true;
+}
+const saveMachineToSupabase = (obj) => saveMachinesToSupabase([obj]);
+
+async function deleteMachinesFromSupabase(ids) {
+  if (!ids.length) return true;
+  if (!currentUser) { toast("Zaloguj siÄ™, aby usuwaÄ‡ dane", 4000); return false; }
+  const { error } = await supabaseClient.from("machines").delete().in("id", ids);
+  if (error) { console.error(error); toast("BĹ‚Ä…d usuwania z chmury!", 4000); return false; }
+  return true;
+}
+
+/* =========================================================
+   Event Listeners i Formularze (CzÄ™Ĺ›Ä‡ 4)
+   ========================================================= */
+$("icoAdd").innerHTML = svg(ICONS.plus);
+$("icoCfg").innerHTML = svg(ICONS.gear);
+$("icoPg").innerHTML = svg(ICONS.pulse);
+$("icoLogout").innerHTML = svg(ICONS.logout);
+$("icoUser").innerHTML = svg(ICONS.user);
+
+let raf;
+const scheduleRender = () => { saveUi(); cancelAnimationFrame(raf); raf = requestAnimationFrame(render); };
+$("q").oninput = scheduleRender;
+$("loc").onchange = scheduleRender;
+$("typ").onchange = scheduleRender;
+$("clearFilters").onclick = () => {
+  $("q").value = "";
+  $("loc").value = "";
+  $("typ").value = "";
+  dupOnly = false;
+  saveUi();
+  render();
+  $("q").focus();
+};
+$("q").addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("q").value) {
+    $("q").value = "";
+    scheduleRender();
+  }
+});
+$("add").onclick = () => openModal(null);
+$("cancel").onclick = () => $("modal").close();
+$("addIp").onclick = () => $("ips").appendChild(ipRow());
+$("depQ").oninput = renderDeps;
+$("depQ").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("depList").querySelector("[data-adddep]")?.click(); } };
+$("depList").onclick = (e) => {
+  const b = e.target.closest("[data-adddep]");
+  if (!b) return;
+  curDeps.push(b.dataset.adddep);
+  $("depQ").value = "";
+  renderDeps();
+  $("depQ").focus();
+};
+$("depChips").onclick = (e) => {
+  const b = e.target.closest("[data-rmdep]");
+  if (!b) return;
+  curDeps = curDeps.filter((id) => id !== b.dataset.rmdep);
+  renderDeps();
+};
+
+$("loginForm").onsubmit = async (e) => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+  if (error) {
+    toast("BĹ‚Ä…d logowania: " + error.message, 4000);
+    return;
+  }
+  currentUser = data.session.user;
+  setSession(true);
+  toast("Zalogowano pomyĹ›lnie!");
+  loadDataFromSupabase();
+};
+
+$("logoutBtn").onclick = async () => {
+  await supabaseClient.auth.signOut();
+  currentUser = null;
+  db = [];
+  setUserEmail(null);
+  render();
+  $("loginPassword").value = "";
+  setSession(false);
+};
+
+supabaseClient?.auth.onAuthStateChange((ev) => {
+  if (ev !== "SIGNED_OUT") return;
+  currentUser = null; db = [];
+  setUserEmail(null);
+  render();
+  showLogin();
+});
+
+$("form").onsubmit = async (e) => {
+  e.preventDefault();
+  const id = $("fId").value;
+  const ips = [...$("ips").children]
+    .map((r) => ({ ip: r.querySelector(".ipv").value.trim(), label: r.querySelector(".ipl").value.trim() }))
+    .filter((x) => x.ip);
+  const tags = $("fTags").value.split(",").map(t => t.trim()).filter(Boolean);
+  const now = new Date().toISOString();
+  const existing = db.find((m) => m.id === id);
+
+  const obj = {
+    id: id || uid(),
+    name: $("fName").value.trim(),
+    type: $("fType").value,
+    location: $("fLoc").value.trim(),
+    ips, deps: [...curDeps],
+    tags,
+    note: $("fNote").value.trim(),
+    key: !!$("fKey").checked,
+    created_at: existing?.created_at || now,
+    updated_at: now
+  };
+
+  // walidacja: poprawny IPv4, niepusta nazwa, ostrzeĹĽenie o duplikacie nazwy
+  const badIp = ips.find((x) => /^[\d.]+$/.test(x.ip) && !IPV4.test(x.ip));
+  if (badIp) { toast("NieprawidĹ‚owy adres IP: " + badIp.ip, 4000); return; }
+  if (!obj.name) { toast("Podaj nazwÄ™ hosta"); return; }
+  const sameName = db.find((m) => m.id !== obj.id && (m.name || "").toLowerCase() === obj.name.toLowerCase());
+  if (sameName && !(await askConfirm("Maszyna â€ž" + obj.name + "â€ť juĹĽ istnieje. ZapisaÄ‡ mimo to?", "Zapisz", false))) return;
+
+  const idx = db.findIndex((m) => m.id === id);
+  if (id && idx >= 0) db[idx] = obj; else db.push(obj);
+  if (!(await saveMachineToSupabase(obj))) {
+    // cofniÄ™cie zmiany lokalnej; okno zostaje otwarte
+    if (id && idx >= 0) db[idx] = existing; else db = db.filter((m) => m !== obj);
+    render();
+    return;
+  }
+  $("modal").close();
+  render();
+  const clash = [...new Set(ips.map((x) => x.ip).filter((ip) => db.some((m) => m.id !== obj.id && (m.ips || []).some((i) => i.ip === ip))))];
+  if (clash.length) toast("Zapisano. Duplikat IP: " + clash.join(", "), 4500);
+  else toast(id ? "Zapisano zmiany" : "Dodano maszynÄ™");
+};
+
+function handleClick(e) {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  const m = db.find((x) => x.id === id);
+  if (act === "tree") { openTreeModal(id); return; }
+  if (act === "note") { openNotes.has(id) ? openNotes.delete(id) : openNotes.add(id); render(); return; }
+  if (act === "more") { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
+  if (act === "scan") { openPgGroup(id); return; }
+  if (act === "ping" || act === "vnc") {
+    const h = b.dataset.ip;
+    if (!SAFE.test(h)) { toast("Niedozwolone znaki"); return; }
+    copy(act === "ping" ? pingCmd(h) : sshCmd(h));
+    return;
+  }
+  if (act === "cmd") {
+    const c = cfg.cmds[+b.dataset.i];
+    if (!c || !m) return;
+    const t = fillCmd(c.tpl, b.dataset.ip, m, b.dataset.kind);
+    if (t === null) toast("Niedozwolone znaki");
+    else copy(t);
+    return;
+  }
+  if (act === "copy") copy(m.name);
+  if (act === "copyip") copy(b.dataset.ip);
+  if (act === "edit") openModal(m);
+  if (act === "jump") { $("q").value = m.name; saveUi(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+  if (act === "del") {
+    askConfirm("UsunÄ…Ä‡ â€ž" + m.name + "â€ť?", "UsuĹ„").then(async (ok) => {
+      if (!ok) return;
+      const snap = JSON.stringify(db);
+      db = db.filter((x) => x.id !== id);
+      const touched = [];
+      db.forEach((x) => {
+        if ((x.deps || []).includes(id)) { x.deps = x.deps.filter((d) => d !== id); touched.push(x); }
+      });
+      if (!(await deleteMachinesFromSupabase([id]))) { db = JSON.parse(snap); render(); return; }
+      const saved = !touched.length || (await saveMachinesToSupabase(touched));
+      render();
+      toast(saved ? "UsuniÄ™to" : "UsuniÄ™to, ale nie zapisano zaleĹĽnoĹ›ci");
+    });
+  }
+}
+$("rows").addEventListener("click", handleClick);
+
+$("stats").onclick = (e) => {
+  if (e.target.closest("[data-dup]")) { dupOnly = !dupOnly; render(); return; }
+  const b = e.target.closest("[data-type]");
+  if (!b) return;
+  $("typ").value = b.dataset.type;
+  render();
+};
+function sortFromHeader(th) {
+  const k = th.dataset.sort;
+  if (!k) return;
+  sort = sort.k === k ? { k, d: -sort.d } : { k, d: 1 };
+  saveUi();
+  render();
+}
+document.querySelector("thead").addEventListener("click", (e) => {
+  const th = e.target.closest("[data-sort]");
+  if (th) sortFromHeader(th);
+});
+document.querySelector("thead").addEventListener("keydown", (e) => {
+  const th = e.target.closest("[data-sort]");
+  if (th && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    sortFromHeader(th);
+  }
+});
+
+function askConfirm(msg, okLabel = "OK", danger = true) {
+  const dlg = $("cfmModal");
+  $("cfmMsg").textContent = msg;
+  $("cfmOk").textContent = okLabel;
+  $("cfmOk").className = danger ? "inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-red-600 bg-red-600 text-white hover:brightness-95" : "inline-flex items-center gap-2 whitespace-nowrap rounded-lg border font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 px-4 py-2 text-sm border-blue-600 bg-blue-600 text-white shadow-sm hover:border-blue-700 hover:bg-blue-700";
+  return new Promise((resolve) => {
+    let answered = false;
+    const onClose = () => {
+      dlg.removeEventListener("close", onClose);
+      resolve(answered);
+    };
+    $("cfmOk").onclick = () => { answered = true; dlg.close(); };
+    $("cfmNo").onclick = () => { answered = false; dlg.close(); };
+    dlg.addEventListener("close", onClose);
+    dlg.showModal();
+  });
+}
+
+function renderCats() {
+  $("catList").innerHTML = draftCats.length
+    ? draftCats.map((c, i) => `<div class="mb-1 flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2">
+        <span class="text-slate-600">${svg(ICONS.tag, "icon")}</span>
+        <input data-catname="${i}" value="${esc(c.name)}" maxlength="24" class="block w-full rounded-lg border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 px-2 py-1 text-[13px] flex-1">
+        <button type="button" data-delcat="${i}" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>
+      </div>`).join("")
+    : '<div class="text-xs text-slate-400">Brak wĹ‚asnych kategorii.</div>';
+}
+function addDraftCat() {
+  const n = $("catNew").value.trim();
+  if (!n) return false;
+  draftCats.push({ id: "c_" + uid().replace(/[^a-z0-9]/gi, "").slice(0, 8), name: n });
+  $("catNew").value = "";
+  renderCats();
+  return true;
+}
+const PING_OK = /^[\w\s.\-:=\/]*$/;
+const TARGETS = { ip: "IP", name: "nazwa", both: "IP i nazwa" };
+function cfgPreview() {
+  const u = $("cSsh").value.trim(), p = $("cPort").value || "â€¦", a = $("cPing").value.trim();
+  $("cPrev").textContent = `ping ${a ? a + " " : ""}host\nssh -L ${p}:localhost:${p} ${u ? u + "@" : ""}host`;
+}
+function renderCmds() {
+  $("cList").innerHTML = draftCmds.length
+    ? draftCmds.map((c, i) => `<div class="mb-1 flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2">
+        <span class="inline-flex max-w-full items-center gap-1 rounded-md px-2 py-1 font-medium leading-none bg-blue-50 text-blue-700 text-xs">${esc(c.label)}</span>
+        <span class="text-xs text-slate-600 truncate flex-1 font-mono" title="${esc(c.tpl)}">${esc(c.tpl)}</span>
+        <span class="text-xs text-slate-400">${TARGETS[c.target] || ""}</span>
+        <button type="button" data-delcmd="${i}" class="inline-flex min-h-8 min-w-8 items-center justify-center rounded-lg p-1.5 text-slate-600 hover:bg-red-100 hover:text-red-600">${svg(ICONS.trash)}</button>
+      </div>`).join("")
+    : '<div class="text-xs text-slate-400">Brak wĹ‚asnych komend.</div>';
+}
+function addDraftCmd() {
+  const label = $("cmdLabel").value.trim(), tpl = $("cmdTpl").value.trim();
+  if (!label || !tpl) return false;
+  draftCmds.push({ label, tpl, target: $("cmdTarget").value });
+  $("cmdLabel").value = "";
+  $("cmdTpl").value = "";
+  renderCmds();
+  return true;
+}
+$("cfgBtn").onclick = () => {
+  $("sPing").checked = cfg.show.ping;
+  $("sVnc").checked = cfg.show.vnc;
+  $("sWeb").checked = cfg.show.web;
+  $("sScan").checked = cfg.show.scan;
+  $("cPing").value = cfg.pingArgs;
+  $("cSsh").value = cfg.sshUser;
+  $("cPort").value = cfg.vncPort;
+  draftCmds = cfg.cmds.map((c) => ({ ...c })); renderCmds(); cfgPreview();
+  draftCats = cfg.cats.map((c) => ({ ...c })); renderCats();
+  $("cfgModal").showModal();
+};
+["cPing", "cSsh", "cPort"].forEach((id) => ($(id).oninput = cfgPreview));
+$("catAdd").onclick = () => { if (!addDraftCat()) toast("Wpisz nazwÄ™ kategorii"); };
+$("catList").oninput = (e) => { const i = e.target.dataset.catname; if (i !== undefined) draftCats[+i].name = e.target.value; };
+$("catList").onclick = (e) => {
+  const b = e.target.closest("[data-delcat]");
+  if (!b) return;
+  draftCats.splice(+b.dataset.delcat, 1);
+  renderCats();
+};
+$("cmdAdd").onclick = () => { if (!addDraftCmd()) toast("Podaj etykietÄ™ i komendÄ™"); };
+$("cList").onclick = (e) => {
+  const b = e.target.closest("[data-delcmd]");
+  if (!b) return;
+  draftCmds.splice(+b.dataset.delcmd, 1);
+  renderCmds();
+};
+$("cCancel").onclick = () => $("cfgModal").close();
+$("cfgForm").onsubmit = (e) => {
+  e.preventDefault();
+  addDraftCmd();
+  addDraftCat();
+  draftCats = draftCats.map((c) => ({ ...c, name: c.name.trim() })).filter((c) => c.name);
+  const used = new Set(Object.entries(TYPES).filter(([k]) => !k.startsWith("c_")).map(([, v]) => v[0].toLowerCase()));
+  for (const c of draftCats) {
+    if (used.has(c.name.toLowerCase())) { toast("Kategoria â€ž" + c.name + "â€ť juĹĽ istnieje"); return; }
+    used.add(c.name.toLowerCase());
+  }
+  const u = $("cSsh").value.trim(), p = parseInt($("cPort").value, 10), a = $("cPing").value.trim();
+  if (u && !/^[\w.\-]+$/.test(u)) { toast("NieprawidĹ‚owy login"); return; }
+  if (!(p >= 1 && p <= 65535)) { toast("Port 1â€“65535"); return; }
+  if (!PING_OK.test(a)) { toast("NieprawidĹ‚owe parametry ping"); return; }
+  const oldCats = cfg.cats;
+  cfg = {
+    sshUser: u, vncPort: p, pingArgs: a, cmds: draftCmds,
+    show: { ping: $("sPing").checked, vnc: $("sVnc").checked, web: $("sWeb").checked, scan: $("sScan").checked },
+    cats: draftCats
+  };
+  const keep = new Set(draftCats.map((c) => c.id));
+  const gone = new Set(oldCats.filter((c) => !keep.has(c.id)).map((c) => c.id));
+  const changed = [];
+  if (gone.size) { db.forEach((m) => { if (gone.has(m.type)) { m.type = "other"; changed.push(m); } }); }
+  syncTypes();
+  saveCfg();
+  $("cfgModal").close();
+  render();
+  toast("Zapisano ustawienia");
+  if (changed.length) saveMachinesToSupabase(changed);
+};
+
+
+/* =========================================================
+   Generator SkryptĂłw Ping PowerShell i Start (CzÄ™Ĺ›Ä‡ 5)
+   ========================================================= */
+const psq = (s) => "'" + String(s).replace(/[\r\n]+/g, " ").replace(/'/g, "''") + "'";
+
+function buildPingScriptCore(rows, opts = {}) {
+  const { live = false, refreshMs = 1000, timeoutMs = 900, pause = false, title = "Ping" } = opts;
+  const hasGroups = rows.some((r) => r.group);
+  const hasDesc = rows.some((r) => r.desc);
+  const wh = Math.max(4, ...rows.map((r) => r.host.length));
+  const wi = Math.max(15, ...rows.map((r) => r.ip.length));
+  const wd = hasDesc ? Math.max(4, ...rows.map((r) => (r.desc || "").length)) : 0;
+  const fmtHead = hasDesc
+    ? `'{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f 'HOST', 'IP', 'DESC', 'DELAY'`
+    : `'{0,-${wh}}  {1,-${wi}}  {2}' -f 'HOST', 'IP', 'DELAY'`;
+  const fmtLine = hasDesc
+    ? `$line = '{0,-${wh}}  {1,-${wi}}  {2,-${wd}}  {3}' -f $j.Host, $ip, $j.Desc, $delay`
+    : `$line = '{0,-${wh}}  {1,-${wi}}  {2}' -f $j.Host, $ip, $delay`;
+  const hostsBlock = rows.map((r) => {
+    const parts = [`Host = ${psq(r.host)}`, `Ip = ${psq(r.ip)}`];
+    if (r.desc) parts.push(`Desc = ${psq(r.desc)}`);
+    if (r.group) parts.push(`Group = ${psq(r.group)}`);
+    return `  @{ ${parts.join("; ")} }`;
+  }).join(",\n");
+  const objFields = (() => {
+    const fields = ["Host = $h.Host", "Ip = $h.Ip"];
+    if (hasDesc) fields.push("Desc = $h.Desc");
+    if (hasGroups) fields.push("Group = $h.Group");
+    fields.push("Task = $task");
+    return `  [pscustomobject]@{ ${fields.join("; ")} }`;
+  })();
+  const body = [
+    "$jobs = foreach ($h in $hosts) {",
+    "  $target = if ($h.Ip) { $h.Ip } else { $h.Host }",
+    "  $task = $null",
+    "  try {",
+    "    $ping = [System.Net.NetworkInformation.Ping]::new()",
+    "    $task = $ping.SendPingAsync($target, $pingMs)",
+    "  } catch {}",
+    objFields,
+    "}",
+    "$tasks = @($jobs | Where-Object { $_.Task -ne $null } | ForEach-Object { $_.Task })",
+    "if ($tasks.Count -gt 0) { [System.Threading.Tasks.Task]::WaitAll($tasks, [TimeSpan]::FromMilliseconds($pingMs)) | Out-Null }",
+    fmtHead,
+    ...(hasGroups ? ["$lastGroup = $null"] : []),
+    "foreach ($j in $jobs) {",
+    ...(hasGroups ? [
+      "  if ($j.Group -and $j.Group -ne $lastGroup) {",
+      "    if ($lastGroup -ne $null) { Write-Host '' }",
+      '    Write-Host "=== $($j.Group) ===" -ForegroundColor Cyan',
+      "    $lastGroup = $j.Group",
+      "  }"
+    ] : []),
+    "  $delay = 'OFFLINE'; $ip = $j.Ip; $r = $null",
+    "  if ($j.Task -and $j.Task.IsCompleted) { $r = $j.Task.Result }",
+    "  if ($r -and $r.Status -eq 'Success') {",
+    '    $delay = "$($r.RoundtripTime) ms"',
+    "    if (-not $ip) { $ip = $r.Address.IPAddressToString }",
+    "  }",
+    "  if (-not $ip) { $ip = '-' }",
+    "  " + fmtLine,
+    "  if ($delay -eq 'OFFLINE') { Write-Host $line -ForegroundColor Red } else { Write-Host $line -ForegroundColor Green }",
+    "}"
+  ];
+  const lines = [`# ${title} (Rejestr maszyn)`];
+  if (live) {
+    lines.push("# Tryb na zywo - Ctrl+C aby zakonczyc", "");
+    lines.push("$hosts = @(", hostsBlock, ")", "");
+    lines.push(`$refreshMs = ${refreshMs}`, `$pingMs = ${timeoutMs}`, "");
+    lines.push("while ($true) {");
+    lines.push("  $sw = [System.Diagnostics.Stopwatch]::StartNew()");
+    lines.push("  Clear-Host");
+    lines.push(`  Write-Host ${psq(title)} -ForegroundColor White`);
+    lines.push("  Write-Host ('Odswiezanie co ' + $refreshMs + ' ms - Ctrl+C') -ForegroundColor DarkGray");
+    lines.push("  Write-Host ''", "");
+    body.forEach((l) => lines.push("  " + l));
+    lines.push("");
+    lines.push("  $remain = $refreshMs - $sw.ElapsedMilliseconds");
+    lines.push("  if ($remain -gt 0) { Start-Sleep -Milliseconds $remain }");
+    lines.push("}");
+  } else {
+    lines.push("");
+    lines.push("$hosts = @(", hostsBlock, ")", "");
+    lines.push(`$pingMs = ${timeoutMs}`, "");
+    body.forEach((l) => lines.push(l));
+    if (pause) lines.push("", "Write-Host ''", "Read-Host 'Nacisnij Enter, aby zamknac'");
+  }
+  return lines.join("\n");
+}
+
+function buildPingScript(opts = {}) {
+  const rows = db.filter((m) => m.key)
+    .sort((a, b) => a.name.localeCompare(b.name, "pl", { numeric: true }))
+    .map((m) => {
+      const f = (m.ips || []).find((x) => x.ip);
+      return { host: m.name, ip: f?.ip || "", desc: f?.label || "" };
+    });
+  return buildPingScriptCore(rows, { ...opts, title: "Ping kluczowych maszyn" });
+}
+
+function buildGroupPingScript(id, opts = {}) {
+  const target = db.find((x) => x.id === id);
+  if (!target) return "";
+  const M = new Map(db.map((m) => [m.id, m]));
+  const rev = {};
+  db.forEach((m) => (m.deps || []).forEach((d) => (rev[d] ||= []).push(m)));
+  const rows = [], seen = new Set();
+  const add = (m, group) => {
+    if (!m) return;
+    const ips = (m.ips || []).filter((x) => x.ip);
+    const entries = ips.length
+      ? ips.map((i) => ({ host: m.name, ip: i.ip, desc: i.label || "", group }))
+      : [{ host: m.name, ip: "", desc: "", group }];
+    entries.forEach((e) => {
+      const k = e.host + "|" + e.ip;
+      if (seen.has(k)) return;
+      seen.add(k); rows.push(e);
+    });
+  };
+  add(target, "TA MASZYNA");
+  (target.deps || []).forEach((dId) => add(M.get(dId), "ZALEZY OD"));
+  (rev[id] || []).forEach((u) => add(u, "ZALEZY OD NIEJ"));
+  return buildPingScriptCore(rows, { ...opts, title: `Ping grupy: ${target.name}` });
+}
+
+let pgMode = "key", pgGroupId = null;
+const pgOpts = () => ({
+  live: $("pgLive").checked,
+  refreshMs: Math.min(60000, Math.max(300, parseInt($("pgEvery").value, 10) || 1000)),
+  timeoutMs: Math.min(10000, Math.max(200, parseInt($("pgTimeout").value, 10) || 900))
+});
+const pgBuild = (pause = false) => {
+  const o = { ...pgOpts(), pause };
+  return pgMode === "group" ? buildGroupPingScript(pgGroupId, o) : buildPingScript(o);
+};
+const renderPg = () => { $("pgText").value = pgBuild(false); };
+
+function openPgKey() {
+  const n = db.filter((m) => m.key).length;
+  if (!n) { toast("Brak kluczowych maszyn", 4000); return; }
+  pgMode = "key"; pgGroupId = null;
+  $("pgTitle").textContent = "Ping kluczowych maszyn";
+  $("pgHelp").textContent = `Kluczowych maszyn: ${n}. Wklej do PowerShell. Pinguje po IP lub po nazwie.`;
+  renderPg();
+  $("pgModal").showModal();
+}
+function openPgGroup(id) {
+  const m = db.find((x) => x.id === id);
+  if (!m) return;
+  pgMode = "group"; pgGroupId = id;
+  const rev = {};
+  db.forEach((x) => (x.deps || []).forEach((d) => (rev[d] ||= []).push(x)));
+  const parts = [];
+  const ipsN = (m.ips || []).filter((x) => x.ip).length;
+  const depsN = (m.deps || []).filter((d) => db.some((x) => x.id === d)).length;
+  const revN = (rev[id] || []).length;
+  if (ipsN) parts.push(`${ipsN} adr. IP`);
+  if (depsN) parts.push(`${depsN} zaleĹĽnoĹ›ci`);
+  if (revN) parts.push(`${revN} zaleĹĽnych`);
+  $("pgTitle").textContent = "Ping grupy: " + m.name;
+  $("pgHelp").textContent = `${m.name}${parts.length ? " (" + parts.join(", ") + ")" : ""}. Pinguje tÄ™ maszynÄ™, jej zaleĹĽnoĹ›ci i maszyny zaleĹĽne.`;
+  renderPg();
+  $("pgModal").showModal();
+}
+$("pg").onclick = openPgKey;
+$("pgClose").onclick = () => $("pgModal").close();
+$("pgText").onclick = (e) => e.target.select();
+["pgLive", "pgEvery", "pgTimeout"].forEach((id) => ($(id).oninput = renderPg));
+$("pgCopy").onclick = () => copy(pgBuild(false), "skrypt PowerShell");
+$("pgDl").onclick = () => {
+  try {
+    const o = pgOpts();
+    const s = pgBuild(!o.live);
+    const body = "\ufeff" + s.replace(/\n/g, "\r\n");
+    const safe = pgMode === "group"
+      ? "ping-grupa-" + (db.find((x) => x.id === pgGroupId)?.name || "maszyna").replace(/[^\w.-]+/g, "_") + ".ps1"
+      : "ping-kluczowe.ps1";
+    const url = URL.createObjectURL(new Blob([body], { type: "text/plain;charset=utf-8" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = safe;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast("Pobieranie rozpoczÄ™te", 3500);
+  } catch (e) { toast("Pobieranie niedostÄ™pne", 3500); }
+};
+
+const LOCKED = new Set(["modal", "cfgModal"]); // bez zamykania klikniÄ™ciem w tĹ‚o
+document.querySelectorAll("dialog").forEach((dlg) => {
+  dlg.addEventListener("click", (e) => {
+    if (!LOCKED.has(dlg.id) && e.target === dlg) {
+      const r = dlg.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (!inside) dlg.close();
+    }
+  });
+});
+
+$("q").value = ui.q || "";
+if (supabaseClient) {
+  loadDataFromSupabase();
+} else {
+  $("warn").classList.remove("hidden");
+}
+
+
